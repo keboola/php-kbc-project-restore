@@ -1,0 +1,38 @@
+{
+  "name": "keboola/kbc-project-restore",
+  "authors": [
+    {
+      "name": "Erik Zigo",
+      "email": "erik.zigo@keboola.com"
+    }
+  ],
+  "require": {
+    "keboola/php-temp": "^1.0.0",
+    "keboola/storage-api-client": "^10.1.1",
+    "monolog/monolog": "^1.23"
+  },
+  "require-dev": {
+    "keboola/coding-standard": "^2.0",
+    "phpunit/phpunit": "^5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Keboola\\ProjectRestore\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Keboola\\ProjectRestore\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+    "build": [
+      "@phpcs"
+    ],
+    "ci": [
+      "@composer validate --no-check-publish --no-check-all",
+      "@build"
+    ]
+  }
+}

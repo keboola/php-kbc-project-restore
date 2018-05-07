@@ -1,0 +1,9 @@
+sudo: required
+language: bash
+services:
+  - docker
+install:
+  - docker-compose build
+  - docker-compose run --rm tests php tests/loadToS3.php
+script:
+  - docker-compose run --rm tests

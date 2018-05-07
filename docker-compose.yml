@@ -1,0 +1,23 @@
+version: "2"
+
+services:
+
+  tests:
+    build: .
+    volumes:
+      - .:/code
+    working_dir: /code
+    command: >
+       sh -c '
+       composer install
+       && ./vendor/bin/phpunit
+       '
+    tty: true
+    stdin_open: true
+    environment:
+      - TEST_STORAGE_API_URL
+      - TEST_STORAGE_API_TOKEN
+      - TEST_AWS_ACCESS_KEY_ID
+      - TEST_AWS_SECRET_ACCESS_KEY
+      - TEST_AWS_REGION
+      - TEST_AWS_S3_BUCKET
