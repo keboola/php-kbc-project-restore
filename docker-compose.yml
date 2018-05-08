@@ -10,6 +10,7 @@ services:
     command: >
        sh -c '
        composer install
+       && php tests/loadToS3.php
        && ./vendor/bin/phpunit
        '
     tty: true
