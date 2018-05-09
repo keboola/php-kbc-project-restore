@@ -31,6 +31,7 @@
   },
   "scripts": {
     "tests-phpunit": "phpunit",
+    "tests-prepare-s3": "php ./tests/loadToS3.php",
     "phplint": "parallel-lint -j 10 --exclude vendor .",
     "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
     "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
@@ -39,6 +40,7 @@
       "@phplint",
       "@phpcs",
       "@phpstan",
+      "@tests-prepare-s3",
       "@tests-phpunit"
     ]
   }

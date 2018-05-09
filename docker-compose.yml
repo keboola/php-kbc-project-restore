@@ -8,7 +8,6 @@ services:
     command: >
        sh -c '
        composer install
-       && php tests/loadToS3.php
        && composer tests
        '
     tty: true
