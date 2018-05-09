@@ -31,25 +31,25 @@ class S3RestoreTest extends TestCase
         parent::setUp();
 
         $this->sapiClient = new StorageApi([
-            'url' => TEST_STORAGE_API_URL,
-            'token' => TEST_STORAGE_API_TOKEN,
+            'url' => getenv('TEST_STORAGE_API_URL'),
+            'token' => getenv('TEST_STORAGE_API_TOKEN'),
         ]);
 
         $this->cleanupKbcProject();
 
-        putenv('AWS_ACCESS_KEY_ID=' . TEST_AWS_ACCESS_KEY_ID);
-        putenv('AWS_SECRET_ACCESS_KEY=' . TEST_AWS_SECRET_ACCESS_KEY);
+        putenv('AWS_ACCESS_KEY_ID=' . getenv('TEST_AWS_ACCESS_KEY_ID'));
+        putenv('AWS_SECRET_ACCESS_KEY=' . getenv('TEST_AWS_SECRET_ACCESS_KEY'));
 
         $this->s3Client = new S3Client([
             'version' => 'latest',
-            'region' => TEST_AWS_REGION,
+            'region' => getenv('TEST_AWS_REGION'),
         ]);
     }
 
     public function testRestoreBuckets(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'buckets', true);
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'buckets', true);
 
         $buckets = $this->sapiClient->listBuckets();
         self::assertCount(2, $buckets);
@@ -60,9 +60,9 @@ class S3RestoreTest extends TestCase
     public function testRestoreLinkedBuckets(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'buckets-linked-bucket', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'buckets-linked-bucket');
-        $backup->restoreTableAliases(TEST_AWS_S3_BUCKET, 'buckets-linked-bucket');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'buckets-linked-bucket', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'buckets-linked-bucket');
+        $backup->restoreTableAliases(getenv('TEST_AWS_S3_BUCKET'), 'buckets-linked-bucket');
 
         $buckets = $this->sapiClient->listBuckets();
         self::assertCount(2, $buckets);
@@ -77,7 +77,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreBucketsIgnoreStorageBackend(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'buckets-multiple-backends', false);
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'buckets-multiple-backends', false);
 
         $buckets = $this->sapiClient->listBuckets();
         self::assertCount(3, $buckets);
@@ -91,7 +91,7 @@ class S3RestoreTest extends TestCase
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
 
         try {
-            $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'buckets-multiple-backends', true);
+            $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'buckets-multiple-backends', true);
             self::fail('Restoring buckets with non-supported backends should fail');
         } catch (Exception $e) {
             self::assertContains('Missing', $e->getMessage());
@@ -102,7 +102,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreBucketAttributes(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'buckets', true);
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'buckets', true);
 
         self::assertEquals(
             [
@@ -124,8 +124,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableWithHeader(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-with-header', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-with-header');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-with-header', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-with-header');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -144,8 +144,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableWithoutHeader(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-without-header', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-without-header');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-without-header', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-without-header');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -164,8 +164,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableFromMultipleSlices(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-multiple-slices', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-multiple-slices');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-multiple-slices', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-multiple-slices');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -183,8 +183,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableFromMultipleSlicesSharedPrefix(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-multiple-slices-shared-prefix', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-multiple-slices-shared-prefix');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-multiple-slices-shared-prefix', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-multiple-slices-shared-prefix');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -213,8 +213,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableAttributes(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-properties', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-properties');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-properties', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-properties');
 
         self::assertEquals(
             [
@@ -236,8 +236,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTablePrimaryKeys(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-properties', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-properties');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-properties', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-properties');
 
         $accountTable = $this->sapiClient->getTable("in.c-bucket.Account");
         $account2Table = $this->sapiClient->getTable("in.c-bucket.Account2");
@@ -248,9 +248,9 @@ class S3RestoreTest extends TestCase
     public function testRestoreAlias(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'alias', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'alias');
-        $backup->restoreTableAliases(TEST_AWS_S3_BUCKET, 'alias');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'alias', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'alias');
+        $backup->restoreTableAliases(getenv('TEST_AWS_S3_BUCKET'), 'alias');
 
         $aliasTable = $this->sapiClient->getTable("out.c-bucket.Account");
         self::assertEquals(true, $aliasTable["isAlias"]);
@@ -262,9 +262,9 @@ class S3RestoreTest extends TestCase
     public function testRestoreAliasAttributes(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'alias-properties', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'alias-properties');
-        $backup->restoreTableAliases(TEST_AWS_S3_BUCKET, 'alias-properties');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'alias-properties', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'alias-properties');
+        $backup->restoreTableAliases(getenv('TEST_AWS_S3_BUCKET'), 'alias-properties');
 
         self::assertEquals(
             [
@@ -286,9 +286,9 @@ class S3RestoreTest extends TestCase
     public function testRestoreAliasMetadata(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'alias-metadata', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'alias-metadata');
-        $backup->restoreTableAliases(TEST_AWS_S3_BUCKET, 'alias-metadata');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'alias-metadata', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'alias-metadata');
+        $backup->restoreTableAliases(getenv('TEST_AWS_S3_BUCKET'), 'alias-metadata');
 
         self::assertTrue($this->sapiClient->tableExists("out.c-bucket.Account"));
 
@@ -302,9 +302,9 @@ class S3RestoreTest extends TestCase
     public function testRestoreFilteredAlias(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'alias-filtered', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'alias-filtered');
-        $backup->restoreTableAliases(TEST_AWS_S3_BUCKET, 'alias-filtered');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'alias-filtered', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'alias-filtered');
+        $backup->restoreTableAliases(getenv('TEST_AWS_S3_BUCKET'), 'alias-filtered');
 
         $aliasTable = $this->sapiClient->getTable("out.c-bucket.Account");
         self::assertEquals(true, $aliasTable["isAlias"]);
@@ -317,7 +317,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreConfigurations(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configurations');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configurations');
 
         $components = new Components($this->sapiClient);
         $componentsList = $components->listComponents();
@@ -342,7 +342,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreConfigurationsWithoutVersions(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configurations-no-versions');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configurations-no-versions');
 
         $components = new Components($this->sapiClient);
         $componentsList = $components->listComponents();
@@ -368,7 +368,7 @@ class S3RestoreTest extends TestCase
     public function testDoNotRestoreObsoleteConfigurations(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configuration-obsolete');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configuration-obsolete');
 
         $components = new Components($this->sapiClient);
         $componentsList = $components->listComponents();
@@ -381,7 +381,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreEmptyObjectInConfiguration(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configuration-empty-object');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configuration-empty-object');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -397,7 +397,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreConfigurationRows(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configuration-rows');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configuration-rows');
 
         $components = new Components($this->sapiClient);
         $componentsList = $components->listComponents();
@@ -433,7 +433,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreEmptyObjectInConfigurationRow(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(TEST_AWS_S3_BUCKET, 'configuration-rows');
+        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configuration-rows');
 
         $temp = new Temp();
         $temp->initRunFolder();
@@ -449,7 +449,7 @@ class S3RestoreTest extends TestCase
     public function testRestoreBucketWithoutPrefix(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'bucket-without-prefix', true);
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'bucket-without-prefix', true);
 
         $buckets = $this->sapiClient->listBuckets();
         self::assertCount(0, $buckets);
@@ -458,8 +458,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableWithoutPrefix(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-without-prefix', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-without-prefix');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-without-prefix', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-without-prefix');
 
         $buckets = $this->sapiClient->listBuckets();
         self::assertCount(0, $buckets);
@@ -468,8 +468,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreTableEmpty(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'table-empty', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'table-empty');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'table-empty', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'table-empty');
 
         self::assertTrue($this->sapiClient->tableExists("in.c-bucket.Account"));
     }
@@ -477,8 +477,8 @@ class S3RestoreTest extends TestCase
     public function testRestoreMetadata(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreBuckets(TEST_AWS_S3_BUCKET, 'metadata', true);
-        $backup->restoreTables(TEST_AWS_S3_BUCKET, 'metadata');
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), 'metadata', true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), 'metadata');
 
         self::assertTrue($this->sapiClient->tableExists("in.c-bucket.Account"));
 

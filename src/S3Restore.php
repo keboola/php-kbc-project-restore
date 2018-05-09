@@ -31,7 +31,7 @@ class S3Restore
     private $s3Client;
 
     /**
-     * @var NullLogger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -117,7 +117,7 @@ class S3Restore
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile), true);
+        $tables = json_decode(file_get_contents((string) $targetFile), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -189,7 +189,7 @@ class S3Restore
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile), true);
+        $tables = json_decode(file_get_contents((string) $targetFile), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -380,7 +380,7 @@ class S3Restore
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $buckets = json_decode(file_get_contents($targetFile), true);
+        $buckets = json_decode(file_get_contents((string) $targetFile), true);
 
         if ($checkBackend) {
             $token = $this->sapiClient->verifyToken();
@@ -471,7 +471,7 @@ class S3Restore
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $configurations = json_decode(file_get_contents($targetFile), true);
+        $configurations = json_decode(file_get_contents((string) $targetFile), true);
 
         $components = new Components($this->sapiClient);
 
@@ -506,7 +506,7 @@ class S3Restore
                 );
 
                 // configurations as objects to preserve empty arrays or empty objects
-                $configurationData = json_decode(file_get_contents($targetFile));
+                $configurationData = json_decode(file_get_contents((string) $targetFile));
 
                 // create empty configuration
                 $configuration = new Configuration();
