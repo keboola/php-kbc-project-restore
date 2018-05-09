@@ -40,8 +40,6 @@ class S3Restore
         $this->logger = $logger?: new NullLogger();
     }
 
-    //@FIXME check bucket compatibiliyty
-
     private function trimSourceBasePath(string $targetBasePath = null)
     {
         if (empty($targetBasePath) || $targetBasePath === '/') {
