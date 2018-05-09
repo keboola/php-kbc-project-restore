@@ -1,5 +1,6 @@
 {
   "name": "keboola/kbc-project-restore",
+  "license": "MIT",
   "authors": [
     {
       "name": "Erik Zigo",
