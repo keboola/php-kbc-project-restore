@@ -1,7 +1,5 @@
 version: "2"
-
 services:
-
   tests:
     build: .
     volumes:
@@ -11,7 +9,7 @@ services:
        sh -c '
        composer install
        && php tests/loadToS3.php
-       && ./vendor/bin/phpunit
+       && composer tests
        '
     tty: true
     stdin_open: true

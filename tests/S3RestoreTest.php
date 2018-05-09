@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\ProjectRestore\Tests;
 
 use Aws\S3\S3Client;
@@ -492,7 +494,7 @@ class S3RestoreTest extends TestCase
         self::assertEquals("bucketValue", $bucket["metadata"][0]["value"]);
     }
 
-    private function cleanupKbcProject()
+    private function cleanupKbcProject(): void
     {
         $components = new Components($this->sapiClient);
         foreach ($components->listComponents() as $component) {
