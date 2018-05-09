@@ -1,0 +1,3 @@
+parameters:
+    ignoreErrors:
+        - '#Parameter \#1 \$message of class Keboola\\StorageApi\\Exception constructor expects null, string given.#'

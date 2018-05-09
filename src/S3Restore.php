@@ -1,8 +1,11 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
-use Keboola\StorageApi\Client AS StorageApi;
+use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Exception as StorageApiException;
@@ -14,7 +17,6 @@ use Keboola\Temp\Temp;
 use Psr\Log\NullLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
-
 
 class S3Restore
 {
@@ -29,18 +31,18 @@ class S3Restore
     private $s3Client;
 
     /**
-     * @var NullLogger
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(S3Client $s3Client, StorageApi $sapiClient, LoggerInterface $logger = null)
+    public function __construct(S3Client $s3Client, StorageApi $sapiClient, ?LoggerInterface $logger = null)
     {
         $this->s3Client = $s3Client;
         $this->sapiClient = $sapiClient;
         $this->logger = $logger?: new NullLogger();
     }
 
-    private function trimSourceBasePath(string $targetBasePath = null)
+    private function trimSourceBasePath(?string $targetBasePath = null): string
     {
         if (empty($targetBasePath) || $targetBasePath === '/') {
             return '';
@@ -100,7 +102,7 @@ class S3Restore
         return false;
     }
 
-    public function restoreTableAliases(string $sourceBucket, string $sourceBasePath = null)
+    public function restoreTableAliases(string $sourceBucket, ?string $sourceBasePath = null): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading tables');
@@ -112,15 +114,19 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
-            'SaveAs' => (string) $targetFile
+            'SaveAs' => (string) $targetFile,
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile), true);
-        $restoredBuckets = array_map(function($bucket) { return $bucket['id']; }, $this->sapiClient->listBuckets());
+        $tables = json_decode(file_get_contents((string) $targetFile), true);
+        $restoredBuckets = array_map(
+            function ($bucket) {
+                return $bucket['id'];
+            },
+            $this->sapiClient->listBuckets()
+        );
         $metadataClient = new Metadata($this->sapiClient);
 
-        foreach ($tables as $tableInfo)
-        {
+        foreach ($tables as $tableInfo) {
             if ($tableInfo["isAlias"] !== true) {
                 continue;
             }
@@ -168,7 +174,7 @@ class S3Restore
         }
     }
 
-    public function restoreTables(string $sourceBucket, string $sourceBasePath = null)
+    public function restoreTables(string $sourceBucket, ?string $sourceBasePath = null): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading tables');
@@ -180,11 +186,16 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
-            'SaveAs' => (string) $targetFile
+            'SaveAs' => (string) $targetFile,
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile), true);
-        $restoredBuckets = array_map(function($bucket) { return $bucket['id']; }, $this->sapiClient->listBuckets());
+        $tables = json_decode(file_get_contents((string) $targetFile), true);
+        $restoredBuckets = array_map(
+            function ($bucket) {
+                return $bucket['id'];
+            },
+            $this->sapiClient->listBuckets()
+        );
         $metadataClient = new Metadata($this->sapiClient);
 
         foreach ($tables as $tableInfo) {
@@ -213,7 +224,7 @@ class S3Restore
                 $tableInfo["name"],
                 $headerFile,
                 [
-                    "primaryKey" => join(",", $tableInfo["primaryKey"])
+                    "primaryKey" => join(",", $tableInfo["primaryKey"]),
                 ]
             );
 
@@ -352,10 +363,9 @@ class S3Restore
             }
             unset($headerFile);
         }
-
     }
 
-    public function restoreBuckets(string $sourceBucket, string $sourceBasePath = null, bool $checkBackend = true): void
+    public function restoreBuckets(string $sourceBucket, ?string $sourceBasePath = null, bool $checkBackend = true): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading buckets');
@@ -367,10 +377,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'buckets.json',
-            'SaveAs' => (string) $targetFile
+            'SaveAs' => (string) $targetFile,
         ]);
 
-        $buckets = json_decode(file_get_contents($targetFile), true);
+        $buckets = json_decode(file_get_contents((string) $targetFile), true);
 
         if ($checkBackend) {
             $token = $this->sapiClient->verifyToken();
@@ -432,7 +442,6 @@ class S3Restore
                 }
             }
         }
-
     }
 
     private function prepareMetadata(array $rawMetadata): array
@@ -447,7 +456,7 @@ class S3Restore
         return $result;
     }
 
-    public function restoreConfigs($sourceBucket, $sourceBasePath = null): void
+    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading configurations');
@@ -459,10 +468,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'configurations.json',
-            'SaveAs' => (string) $targetFile
+            'SaveAs' => (string) $targetFile,
         ]);
 
-        $configurations = json_decode(file_get_contents($targetFile), true);
+        $configurations = json_decode(file_get_contents((string) $targetFile), true);
 
         $components = new Components($this->sapiClient);
 
@@ -472,7 +481,6 @@ class S3Restore
         }
 
         foreach ($configurations as $componentWithConfigurations) {
-
             // skip non-existing components
             if (!array_key_exists($componentWithConfigurations["id"], $componentList)) {
                 $this->logger->warning(sprintf('Skipping %s configurations - component does not exists', $componentWithConfigurations["id"]));
@@ -498,7 +506,7 @@ class S3Restore
                 );
 
                 // configurations as objects to preserve empty arrays or empty objects
-                $configurationData = json_decode(file_get_contents($targetFile));
+                $configurationData = json_decode(file_get_contents((string) $targetFile));
 
                 // create empty configuration
                 $configuration = new Configuration();
@@ -529,10 +537,7 @@ class S3Restore
 
                         // update row configuration and state
                         $configurationRow->setConfiguration($row->configuration);
-                        $configurationRow->setChangeDescription(sprintf(
-                            'Row %s restored from backup', $row->id
-
-                        ));
+                        $configurationRow->setChangeDescription(sprintf('Row %s restored from backup', $row->id));
                         if (isset($row->state)) {
                             $configurationRow->setState($row->state);
                         }
@@ -540,7 +545,6 @@ class S3Restore
                     }
                 }
             }
-
         }
     }
 }
