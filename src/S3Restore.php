@@ -114,10 +114,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
-            'SaveAs' => (string) $targetFile,
+            'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents((string) $targetFile), true);
+        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -186,10 +186,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
-            'SaveAs' => (string) $targetFile,
+            'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents((string) $targetFile), true);
+        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -267,13 +267,13 @@ class S3Restore
                     [
                         'Bucket' => $sourceBucket,
                         'Key' => $slices["Contents"][0]["Key"],
-                        'SaveAs' => (string) $targetFile,
+                        'SaveAs' => $targetFile->getPathname(),
                     ]
                 );
                 $fileUploadOptions = new FileUploadOptions();
                 $fileUploadOptions
                     ->setFileName(sprintf('%s.csv.gz', $tableId));
-                $fileId = $this->sapiClient->uploadFile((string) $targetFile, $fileUploadOptions);
+                $fileId = $this->sapiClient->uploadFile($targetFile->getPathname(), $fileUploadOptions);
                 $this->sapiClient->writeTableAsyncDirect(
                     $tableId,
                     [
@@ -377,10 +377,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'buckets.json',
-            'SaveAs' => (string) $targetFile,
+            'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $buckets = json_decode(file_get_contents((string) $targetFile), true);
+        $buckets = json_decode(file_get_contents($targetFile->getPathname()), true);
 
         if ($checkBackend) {
             $token = $this->sapiClient->verifyToken();
@@ -468,10 +468,10 @@ class S3Restore
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'configurations.json',
-            'SaveAs' => (string) $targetFile,
+            'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $configurations = json_decode(file_get_contents((string) $targetFile), true);
+        $configurations = json_decode(file_get_contents($targetFile->getPathname()), true);
 
         $components = new Components($this->sapiClient);
 
@@ -501,12 +501,12 @@ class S3Restore
                     [
                         'Bucket' => $sourceBucket,
                         'Key' => sprintf("%sconfigurations/%s/%s.json", $sourceBasePath, $componentWithConfigurations["id"], $componentConfiguration["id"]),
-                        'SaveAs' => (string) $targetFile,
+                        'SaveAs' => $targetFile->getPathname(),
                     ]
                 );
 
                 // configurations as objects to preserve empty arrays or empty objects
-                $configurationData = json_decode(file_get_contents((string) $targetFile));
+                $configurationData = json_decode(file_get_contents($targetFile->getPathname()));
 
                 // create empty configuration
                 $configuration = new Configuration();
