@@ -6,6 +6,7 @@ namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
+use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
 use Keboola\StorageApi\Components;
@@ -36,10 +37,16 @@ class S3Restore
      */
     private $logger;
 
+    /**
+     * @var Token
+     */
+    private $token;
+
     public function __construct(S3Client $s3Client, StorageApi $sapiClient, ?LoggerInterface $logger = null)
     {
         $this->s3Client = $s3Client;
         $this->sapiClient = $sapiClient;
+        $this->token = new Token($this->sapiClient);
         $this->logger = $logger?: new NullLogger();
     }
 
@@ -431,37 +438,23 @@ class S3Restore
 
     public function restoreBuckets(string $sourceBucket, ?string $sourceBasePath = null, bool $checkBackend = true): void
     {
-        $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
-        $this->logger->info('Downloading buckets');
-
-        $tmp = new Temp();
-        $tmp->initRunFolder();
-
-        $targetFile = $tmp->createFile("buckets.json");
-        $this->s3Client->getObject([
-            'Bucket' => $sourceBucket,
-            'Key' => $sourceBasePath . 'buckets.json',
-            'SaveAs' => $targetFile->getPathname(),
-        ]);
-
-        $buckets = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $buckets = $this->getBucketsInBackup($sourceBucket, $sourceBasePath);
 
         if ($checkBackend) {
-            $token = $this->sapiClient->verifyToken();
             foreach ($buckets as $bucketInfo) {
-                switch ($bucketInfo["backend"]) {
+                switch ($bucketInfo->getBackend()) {
                     case "mysql":
-                        if (!isset($token["owner"]["hasMysql"]) || $token["owner"]["hasMysql"] === false) {
+                        if (!$this->token->hasProjectMysqlBackend()) {
                             throw new StorageApiException('Missing MySQL backend');
                         }
                         break;
                     case "redshift":
-                        if (!isset($token["owner"]["hasRedshift"]) || $token["owner"]["hasRedshift"] === false) {
+                        if (!$this->token->hasProjectRedshiftBackend()) {
                             throw new StorageApiException('Missing Redshift backend');
                         }
                         break;
                     case "snowflake":
-                        if (!isset($token["owner"]["hasSnowflake"]) || $token["owner"]["hasSnowflake"] === false) {
+                        if (!$this->token->hasProjectSnowflakeBackend()) {
                             throw new StorageApiException('Missing Snowflake backend');
                         }
                         break;
@@ -469,40 +462,24 @@ class S3Restore
             }
         }
 
-        $restoredBuckets = [];
         $metadataClient = new Metadata($this->sapiClient);
 
         // buckets restore
         foreach ($buckets as $bucketInfo) {
-            if (isset($bucketInfo['sourceBucket']) || substr($bucketInfo["name"], 0, 2) !== 'c-') {
-                $this->logger->warning(sprintf('Skipping bucket %s - linked bucket', $bucketInfo["name"]));
+            try {
+                $this->restoreBucket($bucketInfo, !$checkBackend);
+            } catch (StorageApiException $e) {
+                $this->logger->warning(sprintf('Skipping bucket %s - %s', $bucketInfo->getId(), $e->getMessage()));
                 continue;
             }
 
-            $this->logger->info(sprintf('Restoring bucket %s', $bucketInfo["name"]));
-
-
-            $bucketName = substr($bucketInfo["name"], 2);
-            $restoredBuckets[] = $bucketInfo["id"];
-
-            if (!$checkBackend) {
-                $this->sapiClient->createBucket($bucketName, $bucketInfo['stage'], $bucketInfo['description']);
-            } else {
-                $this->sapiClient->createBucket(
-                    $bucketName,
-                    $bucketInfo['stage'],
-                    $bucketInfo['description'],
-                    $bucketInfo['backend']
-                );
-            }
-
             // bucket attributes
-            if (isset($bucketInfo["attributes"]) && count($bucketInfo["attributes"])) {
-                $this->sapiClient->replaceBucketAttributes($bucketInfo["id"], $bucketInfo["attributes"]);
+            if (count($bucketInfo->getAttributes())) {
+                $this->sapiClient->replaceBucketAttributes($bucketInfo->getId(), $bucketInfo->getAttributes());
             }
-            if (isset($bucketInfo["metadata"]) && count($bucketInfo["metadata"])) {
-                foreach ($this->prepareMetadata($bucketInfo["metadata"]) as $provider => $metadata) {
-                    $metadataClient->postBucketMetadata($bucketInfo["id"], $provider, $metadata);
+            if (count($bucketInfo->getMetadata())) {
+                foreach ($this->prepareMetadata($bucketInfo->getMetadata()) as $provider => $metadata) {
+                    $metadataClient->postBucketMetadata($bucketInfo->getId(), $provider, $metadata);
                 }
             }
         }
