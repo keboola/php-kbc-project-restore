@@ -82,7 +82,7 @@ class S3Restore
     {
         $componentId = $component['id'];
         if ($componentId === 'gooddata-writer') {
-            return true;
+            return false;
         }
 
         if ($componentId === 'transformation') {
