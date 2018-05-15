@@ -4,16 +4,184 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\Tests;
 
-use Aws\S3\S3Client;
-use Keboola\StorageApi\Client as StorageApi;
+use Keboola\ProjectRestore\StorageApi\BucketInfo;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
+use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
 
 class S3RestoreTest extends BaseTest
 {
+    public function testBucketsInBackup(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'buckets');
+
+        self::assertCount(2, $buckets);
+
+        foreach ($buckets as $bucketInfo) {
+            $this->assertInstanceOf(BucketInfo::class, $bucketInfo);
+        }
+
+        self::assertEquals("in.c-bucket1", $buckets[0]->getId());
+        self::assertEquals("in.c-bucket2", $buckets[1]->getId());
+    }
+
+    public function testBucketRestore(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'buckets');
+        foreach ($buckets as $bucketInfo) {
+            $backup->restoreBucket($bucketInfo);
+        }
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(2, $buckets);
+        self::assertEquals("in.c-bucket1", $buckets[0]["id"]);
+        self::assertEquals("in.c-bucket2", $buckets[1]["id"]);
+
+        // attributes check
+        $bucket = $this->sapiClient->getBucket("in.c-bucket1");
+        self::assertArrayHasKey('attributes', $bucket);
+        self::assertCount(2, $bucket['attributes']);
+
+        self::assertEquals(
+            [
+                [
+                    "name" => "myKey",
+                    "value" => "myValue",
+                    "protected" => false,
+                ],
+                [
+                    "name" => "myProtectedKey",
+                    "value" => "myProtectedValue",
+                    "protected" => true,
+                ],
+            ],
+            $bucket['attributes']
+        );
+    }
+
+    public function testBucketMetadataRestore(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'metadata');
+        foreach ($buckets as $bucketInfo) {
+            $backup->restoreBucket($bucketInfo);
+        }
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(1, $buckets);
+        self::assertEquals("in.c-bucket", $buckets[0]["id"]);
+
+        // attributes check
+        $bucket = $this->sapiClient->getBucket("in.c-bucket");
+
+        $metadata = new Metadata($this->sapiClient);
+        $bucketMetadata = $metadata->listBucketMetadata("in.c-bucket");
+
+        self::assertCount(1, $bucketMetadata);
+
+        self::assertArrayHasKey('key', $bucketMetadata[0]);
+        self::assertEquals('bucketKey', $bucketMetadata[0]['key']);
+
+        self::assertArrayHasKey('value', $bucketMetadata[0]);
+        self::assertEquals('bucketValue', $bucketMetadata[0]['value']);
+
+        self::assertArrayHasKey('provider', $bucketMetadata[0]);
+        self::assertEquals('system', $bucketMetadata[0]['provider']);
+    }
+
+    public function testBucketDefaultBackendRestore(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'buckets-multiple-backends');
+        foreach ($buckets as $bucketInfo) {
+            $backup->restoreBucket($bucketInfo, true);
+        }
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(3, $buckets);
+        self::assertTrue($this->sapiClient->bucketExists("in.c-snowflake"));
+        self::assertTrue($this->sapiClient->bucketExists("in.c-redshift"));
+        self::assertTrue($this->sapiClient->bucketExists("in.c-mysql"));
+    }
+
+    public function testBucketMissingBackend(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $tokenData = $this->sapiClient->verifyToken();
+        $projectData = $tokenData['owner'];
+
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'buckets-multiple-backends');
+        self::assertCount(3, $buckets);
+
+        $fails = 0;
+        foreach ($buckets as $bucketInfo) {
+            if ($bucketInfo->getBackend() === $projectData['defaultBackend']) {
+                continue;
+            }
+
+            try {
+                $backup->restoreBucket($bucketInfo);
+                self::fail('Restoring bucket with non-supported backend should fail');
+            } catch (ClientException $e) {
+                $message1 = 'is not supported for project';
+                $message2 = 'was not found in the haystack';
+
+                self::assertTrue(strpos($e->getMessage(), $message1) !== false || strpos($e->getMessage(), $message2) !== false);
+                $fails++;
+            }
+        }
+
+        self::assertGreaterThan(0, $fails);
+    }
+
+
+    public function testBucketWithoutPrefixRestore(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'bucket-without-prefix');
+
+        try {
+            $backup->restoreBucket(reset($buckets));
+            self::fail('Restoring bucket with non-supported backend should fail');
+        } catch (ClientException $e) {
+            self::assertContains('System bucket restore is not supported', $e->getMessage());
+        }
+    }
+
+    public function testBucketLinkRestore(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+        $buckets = $backup->getBucketsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'buckets-linked-bucket');
+
+        $fails = 0;
+        foreach ($buckets as $bucketInfo) {
+            if (!$bucketInfo->isLinkedBucket()) {
+                continue;
+            }
+
+            try {
+                $backup->restoreBucket($bucketInfo);
+                self::fail('Restoring bucket with non-supported backend should fail');
+            } catch (ClientException $e) {
+                self::assertContains('Linked bucket restore is not supported', $e->getMessage());
+                $fails++;
+            }
+        }
+
+        self::assertGreaterThan(0, $fails);
+    }
+
     public function testRestoreBuckets(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);

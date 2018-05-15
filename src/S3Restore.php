@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
+use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
 use Keboola\StorageApi\Components;
-use Keboola\StorageApi\Exception as StorageApiException;
+use Keboola\StorageApi\ClientException as StorageApiException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
@@ -363,6 +364,69 @@ class S3Restore
             }
             unset($headerFile);
         }
+    }
+
+    /**
+     * @param string $sourceBucket
+     * @param null|string $sourceBasePath
+     * @return BucketInfo[]
+     * @throws \Exception
+     */
+    public function getBucketsInBackup(string $sourceBucket, ?string $sourceBasePath = null): array
+    {
+        $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
+        $this->logger->info('Downloading buckets');
+
+        $tmp = new Temp();
+        $tmp->initRunFolder();
+
+        $targetFile = $tmp->createFile("buckets.json");
+        $this->s3Client->getObject([
+            'Bucket' => $sourceBucket,
+            'Key' => $sourceBasePath . 'buckets.json',
+            'SaveAs' => $targetFile->getPathname(),
+        ]);
+
+        $buckets = json_decode(file_get_contents($targetFile->getPathname()), true);
+
+        return array_map(function (array $bucketInfo) {
+            return new BucketInfo($bucketInfo);
+        }, $buckets);
+    }
+
+    public function restoreBucket(BucketInfo $bucket, bool $useDefaultBackend = false): bool
+    {
+        if ($bucket->isLinkedBucket()) {
+            throw new StorageApiException('Linked bucket restore is not supported');
+        }
+
+        if (substr($bucket->getName(), 0, 2) !== 'c-') {
+            throw new StorageApiException('System bucket restore is not supported');
+        }
+
+        $this->logger->info(sprintf('Restoring bucket %s', $bucket->getId()));
+
+        $this->sapiClient->createBucket(
+            substr($bucket->getName(), 2),
+            $bucket->getStage(),
+            $bucket->getDescription() ?: '',
+            $useDefaultBackend ? null : $bucket->getBackend()
+        );
+
+        // bucket attributes
+        if (count($bucket->getAttributes())) {
+            $this->sapiClient->replaceBucketAttributes($bucket->getId(), $bucket->getAttributes());
+        }
+
+        // bucket metadata
+        if (count($bucket->getMetadata())) {
+            $metadataClient = new Metadata($this->sapiClient);
+            foreach ($this->prepareMetadata($bucket->getMetadata()) as $provider => $metadata) {
+                $metadataClient->postBucketMetadata($bucket->getId(), $provider, $metadata);
+            }
+        }
+
+        return true;
     }
 
     public function restoreBuckets(string $sourceBucket, ?string $sourceBasePath = null, bool $checkBackend = true): void
