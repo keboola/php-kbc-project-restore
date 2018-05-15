@@ -11,41 +11,9 @@ use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
-use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 
-class S3RestoreTest extends TestCase
+class S3RestoreTest extends BaseTest
 {
-    /**
-     * @var StorageApi
-     */
-    private $sapiClient;
-
-    /**
-     * @var S3Client
-     */
-    private $s3Client;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $this->sapiClient = new StorageApi([
-            'url' => getenv('TEST_STORAGE_API_URL'),
-            'token' => getenv('TEST_STORAGE_API_TOKEN'),
-        ]);
-
-        $this->cleanupKbcProject();
-
-        putenv('AWS_ACCESS_KEY_ID=' . getenv('TEST_AWS_ACCESS_KEY_ID'));
-        putenv('AWS_SECRET_ACCESS_KEY=' . getenv('TEST_AWS_SECRET_ACCESS_KEY'));
-
-        $this->s3Client = new S3Client([
-            'version' => 'latest',
-            'region' => getenv('TEST_AWS_REGION'),
-        ]);
-    }
-
     public function testRestoreBuckets(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
@@ -492,29 +460,5 @@ class S3RestoreTest extends TestCase
         $bucket = $this->sapiClient->listBuckets(["include" => "metadata"])[0];
         self::assertEquals("bucketKey", $bucket["metadata"][0]["key"]);
         self::assertEquals("bucketValue", $bucket["metadata"][0]["value"]);
-    }
-
-    private function cleanupKbcProject(): void
-    {
-        $components = new Components($this->sapiClient);
-        foreach ($components->listComponents() as $component) {
-            foreach ($component['configurations'] as $configuration) {
-                $components->deleteConfiguration($component['id'], $configuration['id']);
-
-                // delete configuration from trash
-                $components->deleteConfiguration($component['id'], $configuration['id']);
-            }
-        }
-
-        // drop linked buckets
-        foreach ($this->sapiClient->listBuckets() as $bucket) {
-            if (isset($bucket['sourceBucket'])) {
-                $this->sapiClient->dropBucket($bucket["id"], ["force" => true]);
-            }
-        }
-
-        foreach ($this->sapiClient->listBuckets() as $bucket) {
-            $this->sapiClient->dropBucket($bucket["id"], ["force" => true]);
-        }
     }
 }
