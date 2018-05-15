@@ -63,5 +63,4 @@ class Token
     {
         return isset($this->tokenData["owner"]["hasSnowflake"]) && $this->tokenData["owner"]["hasSnowflake"] === true;
     }
-
 }

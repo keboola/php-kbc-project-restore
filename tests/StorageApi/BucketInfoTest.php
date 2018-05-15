@@ -27,8 +27,8 @@ class BucketInfoTest extends BaseTest
         $metadata->postBucketMetadata($bucketId, 'tester', [
             [
                 'key' => 'metaFoo',
-                'value' => 'metaBar'
-            ]
+                'value' => 'metaBar',
+            ],
         ]);
 
         return $bucketId;
@@ -47,7 +47,7 @@ class BucketInfoTest extends BaseTest
         }
     }
 
-    public function testErrorFromList()
+    public function testErrorFromList(): void
     {
         $this->createTestBucket();
 
