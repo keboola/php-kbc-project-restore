@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore\Tests\StorageApi;
 
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
+use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\ProjectRestore\Tests\BaseTest;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
@@ -110,5 +111,30 @@ class BucketInfoTest extends BaseTest
 
         $this->assertArrayHasKey('value', $metadata[0]);
         $this->assertEquals('metaBar', $metadata[0]['value']);
+    }
+
+    public function testLinkedInfo(): void
+    {
+        $token = new Token($this->sapiClient);
+
+        $bucketId = $this->createTestBucket();
+
+        $this->sapiClient->shareBucket($bucketId, ['sharing' => 'organization']);
+        $linkedBucketId = $this->sapiClient->linkBucket(self::BUCKET_NAME, Client::STAGE_OUT, $token->getProjectId(), $bucketId);
+
+        $buckets = $this->sapiClient->listBuckets(['include' => 'attributes,metadata']);
+        $this->assertCount(2, $buckets);
+
+
+        foreach ($buckets as $bucketInfo) {
+            $bucket = new BucketInfo($bucketInfo);
+
+            if ($bucket->getId() === $bucketId) {
+                $this->assertFalse($bucket->isLinkedBucket());
+            }
+            if ($bucket->getId() === $linkedBucketId) {
+                $this->assertTrue($bucket->isLinkedBucket());
+            }
+        }
     }
 }

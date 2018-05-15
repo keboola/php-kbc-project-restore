@@ -32,6 +32,11 @@ class BucketInfo
     private $description;
 
     /**
+     * @var bool
+     */
+    private $isLinkedBucket;
+
+    /**
      * @var array
      */
     private $attributes = [];
@@ -50,6 +55,7 @@ class BucketInfo
         $this->backend = $bucketInfo['backend'];
 
         $this->description = $bucketInfo['description'];
+        $this->isLinkedBucket = isset($bucketInfo['sourceBucket']);
 
         if (!array_key_exists('attributes', $bucketInfo)) {
             throw new \InvalidArgumentException(sprintf('Missing attributes info for bucket "%s"', $this->getId()));
@@ -86,6 +92,11 @@ class BucketInfo
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    public function isLinkedBucket(): bool
+    {
+        return $this->isLinkedBucket;
     }
 
     public function getAttributes(): array
