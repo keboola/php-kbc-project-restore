@@ -547,4 +547,36 @@ class S3Restore
             }
         }
     }
+
+    public function listConfigsInBackup(string $sourceBucket, ?string $sourceBasePath = null, string $componentId): array
+    {
+        $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
+        $this->logger->info('Downloading configurations');
+
+        $tmp = new Temp();
+        $tmp->initRunFolder();
+
+        $targetFile = $tmp->createFile("configurations.json");
+        $this->s3Client->getObject([
+            'Bucket' => $sourceBucket,
+            'Key' => $sourceBasePath . 'configurations.json',
+            'SaveAs' => (string) $targetFile,
+        ]);
+
+        $components = json_decode(file_get_contents((string) $targetFile), true);
+        foreach ($components as $component) {
+            if ($component['id'] !== $componentId) {
+                continue;
+            }
+
+            return array_map(
+                function(array $configuration) {
+                    return $configuration['id'];
+                },
+                $component['configurations']
+            );
+        }
+
+        return [];
+    }
 }

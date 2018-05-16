@@ -11,7 +11,6 @@ use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
-use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
 class S3RestoreTest extends TestCase
@@ -44,6 +43,24 @@ class S3RestoreTest extends TestCase
             'version' => 'latest',
             'region' => getenv('TEST_AWS_REGION'),
         ]);
+    }
+
+    public function testListConfigsInBackup()
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $componentId = "keboola.csv-import";
+        $configs = $backup->listConfigsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'configurations', $componentId);
+
+        self::assertCount(1, $configs);
+        self::assertEquals('213957449', reset($configs));
+
+        // component not in backup
+        $componentId = "orchestrator";
+        $configs = $backup->listConfigsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'configurations', $componentId);
+
+        self::assertTrue(is_array($configs));
+        self::assertCount(0, $configs);
     }
 
     public function testRestoreBuckets(): void
