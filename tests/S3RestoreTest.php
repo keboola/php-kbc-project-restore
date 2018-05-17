@@ -11,7 +11,6 @@ use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
-use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
 class S3RestoreTest extends TestCase
@@ -44,6 +43,24 @@ class S3RestoreTest extends TestCase
             'version' => 'latest',
             'region' => getenv('TEST_AWS_REGION'),
         ]);
+    }
+
+    public function testListConfigsInBackup(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $componentId = "keboola.csv-import";
+        $configs = $backup->listConfigsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'configurations', $componentId);
+
+        self::assertCount(1, $configs);
+        self::assertEquals('213957449', reset($configs));
+
+        // component not in backup
+        $componentId = "orchestrator";
+        $configs = $backup->listConfigsInBackup(getenv('TEST_AWS_S3_BUCKET'), 'configurations', $componentId);
+
+        self::assertTrue(is_array($configs));
+        self::assertCount(0, $configs);
     }
 
     public function testRestoreBuckets(): void
@@ -326,16 +343,16 @@ class S3RestoreTest extends TestCase
         self::assertEquals("keboola.csv-import", $componentsList[0]["id"]);
         self::assertEquals("keboola.ex-slack", $componentsList[1]["id"]);
 
-        $config = $components->getConfiguration("keboola.csv-import", 1);
+        $config = $components->getConfiguration("keboola.csv-import", '213957449');
         self::assertEquals(1, $config["version"]);
         self::assertEquals("Configuration created", $config["changeDescription"]);
         self::assertEquals("Accounts", $config["name"]);
         self::assertEquals("Default CSV Importer", $config["description"]);
         self::assertEquals(["key" => "value"], $config["state"]);
 
-        $config = $components->getConfiguration("keboola.ex-slack", 2);
+        $config = $components->getConfiguration("keboola.ex-slack", '213957518');
         self::assertEquals(2, $config["version"]);
-        self::assertEquals("Configuration 2 restored from backup", $config["changeDescription"]);
+        self::assertEquals("Configuration 213957518 restored from backup", $config["changeDescription"]);
         self::assertEmpty($config["state"]);
     }
 
