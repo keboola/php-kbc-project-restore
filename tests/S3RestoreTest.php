@@ -45,7 +45,7 @@ class S3RestoreTest extends TestCase
         ]);
     }
 
-    public function testListConfigsInBackup()
+    public function testListConfigsInBackup(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
 

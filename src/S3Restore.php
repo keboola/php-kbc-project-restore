@@ -570,7 +570,7 @@ class S3Restore
             }
 
             return array_map(
-                function(array $configuration) {
+                function (array $configuration) {
                     return $configuration['id'];
                 },
                 $component['configurations']
