@@ -1,5 +1,38 @@
 [
   {
+    "id": "gooddata-writer",
+    "type": "writer",
+    "name": "GoodData",
+    "description": "The Open Analytics Platform",
+    "longDescription": null,
+    "hasUI": true,
+    "hasRun": false,
+    "ico32": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/gooddata-writer\/32\/1.png",
+    "ico64": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/gooddata-writer\/64\/1.png",
+    "data": [],
+    "flags": [],
+    "configurationSchema": [],
+    "emptyConfiguration": [],
+    "uiOptions": [],
+    "configurationDescription": null,
+    "uri": "https:\/\/syrup.keboola.com\/gooddata-writer",
+    "configurations": [
+      {
+        "id": "48178597",
+        "name": "Main Orchestration",
+        "description": "",
+        "created": "2016-11-07T02:18:19+0100",
+        "creatorToken": {
+          "id": 63470,
+          "description": "ondrej.hlavacek@keboola.com"
+        },
+        "version": 1,
+        "changeDescription": "",
+        "configuration": []
+      }
+    ]
+  },
+  {
     "id": "keboola.csv-import",
     "type": "extractor",
     "name": "CSV Import",
