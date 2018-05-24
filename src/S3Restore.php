@@ -446,7 +446,7 @@ class S3Restore
         return $result;
     }
 
-    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null, $skipComponents = []): void
+    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null, array $skipComponents = []): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading configurations');
@@ -471,7 +471,6 @@ class S3Restore
         }
 
         foreach ($configurations as $componentWithConfigurations) {
-
             if (in_array($componentWithConfigurations["id"], $skipComponents)) {
                 $this->logger->warning(sprintf('Skipping %s configurations - component marked as skipped', $componentWithConfigurations["id"]));
                 continue;
