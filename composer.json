@@ -34,6 +34,7 @@
     "tests-prepare-s3": "php ./tests/loadToS3.php",
     "phplint": "parallel-lint -j 10 --exclude vendor .",
     "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+    "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
     "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
     "tests": [
       "@composer validate --no-check-publish --no-check-all",

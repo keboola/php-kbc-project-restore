@@ -486,11 +486,21 @@ class S3RestoreTest extends BaseTest
         self::assertEquals("Accounts", $config["name"]);
         self::assertEquals("Default CSV Importer", $config["description"]);
         self::assertEquals(["key" => "value"], $config["state"]);
+        self::assertEquals(
+            json_decode(file_get_contents(__DIR__ . '/data/backups/configurations/configurations/keboola.csv-import/213957449.json'), true)['configuration'],
+            $config['configuration']
+        );
 
         $config = $components->getConfiguration("keboola.ex-slack", '213957518');
+        $expectedConfigData = json_decode(
+            file_get_contents(__DIR__ . '/data/backups/configurations/configurations/keboola.ex-slack/213957518.json'),
+            true
+        )['configuration'];
+        $expectedConfigData['authorization']['oauth_api'] = [];
         self::assertEquals(2, $config["version"]);
         self::assertEquals("Configuration 213957518 restored from backup", $config["changeDescription"]);
         self::assertEmpty($config["state"]);
+        self::assertEquals($expectedConfigData, $config['configuration']);
     }
 
     public function testRestoreConfigurationsWithoutVersions(): void
