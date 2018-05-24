@@ -519,10 +519,18 @@ class S3RestoreTest extends BaseTest
         self::assertEmpty($config["state"]);
     }
 
-    public function testDoNotRestoreObsoleteConfigurations(): void
+    public function testSkipComponentsConfigurations(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
-        $backup->restoreConfigs(getenv('TEST_AWS_S3_BUCKET'), 'configuration-obsolete');
+        $backup->restoreConfigs(
+            getenv('TEST_AWS_S3_BUCKET'),
+            'configuration-skip',
+            [
+                'gooddata-writer',
+                'orchestrator',
+                'pigeon-importer',
+            ]
+        );
 
         $components = new Components($this->sapiClient);
         $componentsList = $components->listComponents();
