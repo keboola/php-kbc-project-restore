@@ -15,8 +15,10 @@ class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
      */
     public function testOauthFilter(array $inConfigData, array $expectedOutConfigData): void
     {
-        $filteredConfigData = ConfigurationFilter::removeOauthAuthorization($inConfigData);
-        $this->assertEquals($expectedOutConfigData, $filteredConfigData);
+        $filteredConfigData = ConfigurationFilter::removeOauthAuthorization(
+            json_decode(json_encode($inConfigData))
+        );
+        $this->assertEquals(json_decode(json_encode($expectedOutConfigData)), $filteredConfigData);
     }
 
     public function oauthFilterData(): array
@@ -44,7 +46,7 @@ class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
                         'something' => 'value',
                     ],
                     'authorization' => [
-                        'oauth_api' => [],
+                        'oauth_api' => (object) [],
                     ],
                 ],
             ],
