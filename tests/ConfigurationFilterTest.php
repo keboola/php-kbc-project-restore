@@ -19,7 +19,7 @@ class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedOutConfigData, $filteredConfigData);
     }
 
-    public function oauthFilterData()
+    public function oauthFilterData(): array
     {
         return [
             'with-oauth' => [
@@ -32,7 +32,7 @@ class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
                     ],
                     'authorization' => [
                         'oauth_api' => [
-                            'id' => '123'
+                            'id' => '123',
                         ],
                     ],
                 ],
