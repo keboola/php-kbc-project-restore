@@ -6,6 +6,7 @@ namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
+use Keboola\ProjectRestore\StorageApi\ConfigurationFilter;
 use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
@@ -510,7 +511,9 @@ class S3Restore
                     'Configuration %s restored from backup',
                     $componentConfiguration["id"]
                 ));
-                $configuration->setConfiguration($configurationData->configuration);
+                $configuration->setConfiguration(
+                    ConfigurationFilter::removeOauthAuthorization($configurationData->configuration)
+                );
                 if (isset($configurationData->state)) {
                     $configuration->setState($configurationData->state);
                 }
