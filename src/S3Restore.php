@@ -59,57 +59,6 @@ class S3Restore
         }
     }
 
-    /**
-     * List of KBC components without api
-     *
-     * @see https://github.com/keboola/kbc-ui/blob/master/src/scripts/modules/components/utils/hasComponentApi.coffee
-     * @return array
-     */
-    private function componentsWithoutApi(): array
-    {
-        return [
-            'wr-dropbox', 'tde-exporter', 'geneea-topic-detection',
-            'geneea-language-detection', 'geneea-lemmatization', 'geneea-sentiment-analysis',
-            'geneea-text-correction', 'geneea-entity-recognition', 'ex-adform', 'geneea-nlp-analysis',
-            'rcp-anomaly', 'rcp-basket', 'rcp-correlations', 'rcp-data-type-assistant',
-            'rcp-distribution-groups', 'rcp-linear-dependency', 'rcp-linear-regression',
-            'rcp-next-event', 'rcp-next-order-simple',
-            'rcp-segmentation', 'rcp-var-characteristics', 'ex-sklik', 'ex-dropbox', 'wr-portal-sas', 'ag-geocoding',
-            'keboola.ex-db-pgsql', 'keboola.ex-db-db2', 'keboola.ex-db-firebird',
-        ];
-    }
-
-    /**
-     * Check if component is obsolete
-     *
-     * @see https://github.com/keboola/kbc-ui/blob/master/src/scripts/modules/trash/utils.js
-     * @param array $component component data
-     * @return bool
-     */
-    private function isObsoleteComponent(array $component): bool
-    {
-        $componentId = $component['id'];
-        if ($componentId === 'gooddata-writer') {
-            return true;
-        }
-
-        if ($componentId === 'transformation') {
-            return false;
-        }
-
-        $flags = $component['flags'];
-        if (isset($component['uri']) &&
-            !in_array($componentId, $this->componentsWithoutApi()) &&
-            !in_array('genericUI', $flags) &&
-            !in_array('genericDockerUI', $flags) &&
-            !in_array('genericTemplatesUI', $flags)
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
     public function restoreTableAliases(string $sourceBucket, ?string $sourceBasePath = null): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
@@ -497,7 +446,7 @@ class S3Restore
         return $result;
     }
 
-    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null): void
+    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null, array $skipComponents = []): void
     {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading configurations');
@@ -522,15 +471,14 @@ class S3Restore
         }
 
         foreach ($configurations as $componentWithConfigurations) {
-            // skip non-existing components
-            if (!array_key_exists($componentWithConfigurations["id"], $componentList)) {
-                $this->logger->warning(sprintf('Skipping %s configurations - component does not exists', $componentWithConfigurations["id"]));
+            if (in_array($componentWithConfigurations["id"], $skipComponents)) {
+                $this->logger->warning(sprintf('Skipping %s configurations - component marked as skipped', $componentWithConfigurations["id"]));
                 continue;
             }
 
-            // skip obsolete components - orchestrator, old writers, etc.
-            if ($this->isObsoleteComponent($componentList[$componentWithConfigurations["id"]])) {
-                $this->logger->warning(sprintf('Skipping %s configurations - component has custom API', $componentWithConfigurations["id"]));
+            // skip non-existing components
+            if (!array_key_exists($componentWithConfigurations["id"], $componentList)) {
+                $this->logger->warning(sprintf('Skipping %s configurations - component does not exists', $componentWithConfigurations["id"]));
                 continue;
             }
 
