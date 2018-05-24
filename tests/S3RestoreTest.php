@@ -493,7 +493,9 @@ class S3RestoreTest extends BaseTest
 
         $config = $components->getConfiguration("keboola.ex-slack", '213957518');
         $expectedConfigData = json_decode(
-            file_get_contents(__DIR__ . '/data/backups/configurations/configurations/keboola.ex-slack/213957518.json'), true)['configuration'];
+            file_get_contents(__DIR__ . '/data/backups/configurations/configurations/keboola.ex-slack/213957518.json'),
+            true
+        )['configuration'];
         $expectedConfigData['authorization']['oauth_api'] = [];
         self::assertEquals(2, $config["version"]);
         self::assertEquals("Configuration 213957518 restored from backup", $config["changeDescription"]);
