@@ -581,7 +581,7 @@ class S3RestoreTest extends BaseTest
         $config = $components->getConfiguration("transformation", 1);
         self::assertEquals("MySQL", $config["name"]);
         self::assertEquals(6, $config["version"]);
-        self::assertEquals(["4", "4"], $config["rowsSortOrder"]);
+        self::assertEquals(["4", "3"], $config["rowsSortOrder"]);
         self::assertEquals("Restored rows sort order from backup", $config["changeDescription"]);
         self::assertCount(2, $config["rows"]);
         self::assertEquals(4, $config["rows"][0]["id"]);
