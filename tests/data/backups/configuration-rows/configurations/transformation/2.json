@@ -10,6 +10,7 @@
     "version": 8,
     "changeDescription": "Create output mapping in Ratings",
     "configuration": {},
+    "rowsSortOrder": [],
     "rows": [
         {
             "id": "5",
@@ -51,6 +52,9 @@
             },
             "changeDescription": "Accounts changed to Account",
             "state": {},
+            "name": "Account transformation",
+            "description": "Account transformation description",
+            "isDisabled": true,
             "_versions": [
                 {
                     "version": 4,
@@ -89,7 +93,10 @@
                         "phase": 1,
                         "disabled": false,
                         "description": ""
-                    }
+                    },
+                    "name": "Account transformation",
+                    "description": "Account transformation description",
+                    "isDisabled": true
                 },
                 {
                     "version": 3,
@@ -128,7 +135,10 @@
                         "phase": 1,
                         "disabled": false,
                         "description": ""
-                    }
+                    },
+                    "name": "Accounts transformation",
+                    "description": "Accounts transformation description",
+                    "isDisabled": true
                 },
                 {
                     "version": 2,
@@ -162,7 +172,10 @@
                         "phase": 1,
                         "disabled": false,
                         "description": ""
-                    }
+                    },
+                    "name": "Accounts transformation",
+                    "description": "Accounts transformation description",
+                    "isDisabled": true
                 },
                 {
                     "version": 1,
@@ -177,7 +190,10 @@
                         "description": "",
                         "backend": "snowflake",
                         "type": "simple"
-                    }
+                    },
+                    "name": "Accounts transformation",
+                    "description": "Accounts transformation description",
+                    "isDisabled": false
                 }
             ]
         },
@@ -221,6 +237,9 @@
             },
             "changeDescription": "Create output mapping in Ratings",
             "state": {},
+            "name": "Ratings transformation",
+            "description": "Ratings transformation description",
+            "isDisabled": false,
             "_versions": [
                 {
                     "version": 3,
@@ -259,7 +278,10 @@
                         "phase": 1,
                         "disabled": false,
                         "description": ""
-                    }
+                    },
+                    "name": "Ratings transformation",
+                    "description": "Ratings transformation description",
+                    "isDisabled": false
                 },
                 {
                     "version": 2,
@@ -293,7 +315,10 @@
                         "phase": 1,
                         "disabled": false,
                         "description": ""
-                    }
+                    },
+                    "name": "Ratings transformation",
+                    "description": "Ratings transformation description",
+                    "isDisabled": false
                 },
                 {
                     "version": 1,
@@ -308,7 +333,10 @@
                         "description": "",
                         "backend": "snowflake",
                         "type": "simple"
-                    }
+                    },
+                    "name": "Ratings transformation",
+                    "description": "Ratings transformation description",
+                    "isDisabled": false
                 }
             ]
         }

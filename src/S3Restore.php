@@ -530,11 +530,21 @@ class S3Restore
                         // update row configuration and state
                         $configurationRow->setConfiguration($row->configuration);
                         $configurationRow->setChangeDescription(sprintf('Row %s restored from backup', $row->id));
+                        $configurationRow->setName($row->name);
+                        $configurationRow->setDescription($row->description);
+                        $configurationRow->setIsDisabled($row->isDisabled);
                         if (isset($row->state)) {
                             $configurationRow->setState($row->state);
                         }
                         $components->updateConfigurationRow($configurationRow);
                     }
+                }
+
+                // restore row sorting
+                if (!empty($configurationData->rowsSortOrder)) {
+                    $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
+                    $configuration->setChangeDescription('Restored rows sort order from backup');
+                    $components->updateConfiguration($configuration);
                 }
             }
         }

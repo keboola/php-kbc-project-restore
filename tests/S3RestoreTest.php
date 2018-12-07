@@ -580,25 +580,39 @@ class S3RestoreTest extends BaseTest
 
         $config = $components->getConfiguration("transformation", 1);
         self::assertEquals("MySQL", $config["name"]);
-        self::assertEquals(5, $config["version"]);
-        self::assertEquals("Row 4 restored from backup", $config["changeDescription"]);
+        self::assertEquals(6, $config["version"]);
+        self::assertEquals(["4", "3"], $config["rowsSortOrder"]);
+        self::assertEquals("Restored rows sort order from backup", $config["changeDescription"]);
         self::assertCount(2, $config["rows"]);
-        self::assertEquals(3, $config["rows"][0]["id"]);
-        self::assertEquals("Account", $config["rows"][0]["configuration"]["name"]);
-        self::assertEquals(["rowKey" => "value"], $config["rows"][0]["state"]);
-        self::assertEquals(4, $config["rows"][1]["id"]);
-        self::assertEquals("Ratings", $config["rows"][1]["configuration"]["name"]);
-        self::assertEmpty($config["rows"][1]["state"]);
+        self::assertEquals(4, $config["rows"][0]["id"]);
+        self::assertEquals("Ratings", $config["rows"][0]["configuration"]["name"]);
+        self::assertEquals("Ratings transformation", $config["rows"][0]["name"]);
+        self::assertEquals("Ratings transformation description", $config["rows"][0]["description"]);
+        self::assertFalse($config["rows"][0]["isDisabled"]);
+        self::assertEmpty($config["rows"][0]["state"]);
+        self::assertEquals(3, $config["rows"][1]["id"]);
+        self::assertEquals("Account", $config["rows"][1]["configuration"]["name"]);
+        self::assertEquals("Account transformation", $config["rows"][1]["name"]);
+        self::assertEquals("Account transformation description", $config["rows"][1]["description"]);
+        self::assertTrue($config["rows"][1]["isDisabled"]);
+        self::assertEquals(["rowKey" => "value"], $config["rows"][1]["state"]);
 
         $config = $components->getConfiguration("transformation", 2);
         self::assertEquals("Snowflake", $config["name"]);
         self::assertEquals(5, $config["version"]);
+        self::assertEmpty($config["rowsSortOrder"]);
         self::assertEquals("Row 6 restored from backup", $config["changeDescription"]);
         self::assertEquals(5, $config["rows"][0]["id"]);
         self::assertEquals("Account", $config["rows"][0]["configuration"]["name"]);
+        self::assertEquals("Account transformation", $config["rows"][0]["name"]);
+        self::assertEquals("Account transformation description", $config["rows"][0]["description"]);
+        self::assertTrue($config["rows"][0]["isDisabled"]);
         self::assertEmpty($config["rows"][0]["state"]);
         self::assertEquals(6, $config["rows"][1]["id"]);
         self::assertEquals("Ratings", $config["rows"][1]["configuration"]["name"]);
+        self::assertEquals("Ratings transformation", $config["rows"][1]["name"]);
+        self::assertEquals("Ratings transformation description", $config["rows"][1]["description"]);
+        self::assertFalse($config["rows"][1]["isDisabled"]);
         self::assertEmpty($config["rows"][1]["state"]);
     }
 
