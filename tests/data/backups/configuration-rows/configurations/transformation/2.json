@@ -10,6 +10,7 @@
     "version": 8,
     "changeDescription": "Create output mapping in Ratings",
     "configuration": {},
+    "rowsSortOrder": [],
     "rows": [
         {
             "id": "5",

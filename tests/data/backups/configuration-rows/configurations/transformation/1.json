@@ -10,7 +10,154 @@
   "version": 8,
   "changeDescription": "Accounts changed to Account",
   "configuration": {},
+  "rowsSortOrder": ["4", "3"],
   "rows": [
+    {
+      "id": "4",
+      "configuration": {
+        "output": [
+          {
+            "source": "ratings",
+            "destination": "out.c-mysql.ratings"
+          }
+        ],
+        "queries": [],
+        "input": [
+          {
+            "source": "in.c-mysql.ratings",
+            "destination": "ratings",
+            "indexes": [],
+            "datatypes": {},
+            "whereColumn": "",
+            "whereValues": [],
+            "whereOperator": "eq",
+            "columns": []
+          }
+        ],
+        "name": "Ratings",
+        "packages": [],
+        "requires": [],
+        "backend": "mysql",
+        "queriesString": "",
+        "type": "simple",
+        "id": "213956392",
+        "phase": 1,
+        "disabled": false,
+        "description": ""
+      },
+      "version": 3,
+      "created": "2016-11-07T02:07:30+0100",
+      "creatorToken": {
+        "id": 63470,
+        "description": "ondrej.hlavacek@keboola.com"
+      },
+      "changeDescription": "Create output mapping in Ratings",
+      "state": {},
+      "name": "Ratings transformation",
+      "description": "Ratings transformation description",
+      "isDisabled": false,
+      "_versions": [
+        {
+          "version": 3,
+          "created": "2016-11-07T02:09:01+0100",
+          "creatorToken": {
+            "id": 63470,
+            "description": "ondrej.hlavacek@keboola.com"
+          },
+          "changeDescription": "Create output mapping in Ratings",
+          "configuration": {
+            "output": [
+              {
+                "source": "ratings",
+                "destination": "out.c-mysql.ratings"
+              }
+            ],
+            "queries": [],
+            "input": [
+              {
+                "source": "in.c-mysql.ratings",
+                "destination": "ratings",
+                "indexes": [],
+                "datatypes": {},
+                "whereColumn": "",
+                "whereValues": [],
+                "whereOperator": "eq",
+                "columns": []
+              }
+            ],
+            "name": "Ratings",
+            "packages": [],
+            "requires": [],
+            "backend": "mysql",
+            "queriesString": "",
+            "type": "simple",
+            "id": "213956392",
+            "phase": 1,
+            "disabled": false,
+            "description": ""
+          },
+          "name": "Ratings transformation",
+          "description": "Ratings transformation description",
+          "isDisabled": false
+        },
+        {
+          "version": 2,
+          "created": "2016-11-07T02:08:48+0100",
+          "creatorToken": {
+            "id": 63470,
+            "description": "ondrej.hlavacek@keboola.com"
+          },
+          "changeDescription": "Create input mapping in Ratings",
+          "configuration": {
+            "output": [],
+            "queries": [],
+            "input": [
+              {
+                "source": "in.c-mysql.ratings",
+                "destination": "ratings",
+                "indexes": [],
+                "datatypes": {},
+                "whereColumn": "",
+                "whereValues": [],
+                "whereOperator": "eq",
+                "columns": []
+              }
+            ],
+            "name": "Ratings",
+            "packages": [],
+            "requires": [],
+            "backend": "mysql",
+            "queriesString": "",
+            "type": "simple",
+            "id": "213956392",
+            "phase": 1,
+            "disabled": false,
+            "description": ""
+          },
+          "name": "Ratings transformation",
+          "description": "Ratings transformation description",
+          "isDisabled": false
+        },
+        {
+          "version": 1,
+          "created": "2016-11-07T02:07:30+0100",
+          "creatorToken": {
+            "id": 63470,
+            "description": "ondrej.hlavacek@keboola.com"
+          },
+          "changeDescription": "Create transformation Ratings",
+          "configuration": {
+            "name": "Ratings",
+            "description": "",
+            "backend": "mysql",
+            "type": "simple"
+          },
+          "name": "Ratings transformation",
+          "description": "Ratings transformation description",
+          "isDisabled": false
+        }
+      ]
+    },
     {
       "id": "3",
       "configuration": {
@@ -207,152 +354,6 @@
           },
           "name": "",
           "description": "",
-          "isDisabled": false
-        }
-      ]
-    },
-    {
-      "id": "4",
-      "configuration": {
-        "output": [
-          {
-            "source": "ratings",
-            "destination": "out.c-mysql.ratings"
-          }
-        ],
-        "queries": [],
-        "input": [
-          {
-            "source": "in.c-mysql.ratings",
-            "destination": "ratings",
-            "indexes": [],
-            "datatypes": {},
-            "whereColumn": "",
-            "whereValues": [],
-            "whereOperator": "eq",
-            "columns": []
-          }
-        ],
-        "name": "Ratings",
-        "packages": [],
-        "requires": [],
-        "backend": "mysql",
-        "queriesString": "",
-        "type": "simple",
-        "id": "213956392",
-        "phase": 1,
-        "disabled": false,
-        "description": ""
-      },
-      "version": 3,
-      "created": "2016-11-07T02:07:30+0100",
-      "creatorToken": {
-        "id": 63470,
-        "description": "ondrej.hlavacek@keboola.com"
-      },
-      "changeDescription": "Create output mapping in Ratings",
-      "state": {},
-      "name": "Ratings transformation",
-      "description": "Ratings transformation description",
-      "isDisabled": false,
-      "_versions": [
-        {
-          "version": 3,
-          "created": "2016-11-07T02:09:01+0100",
-          "creatorToken": {
-            "id": 63470,
-            "description": "ondrej.hlavacek@keboola.com"
-          },
-          "changeDescription": "Create output mapping in Ratings",
-          "configuration": {
-            "output": [
-              {
-                "source": "ratings",
-                "destination": "out.c-mysql.ratings"
-              }
-            ],
-            "queries": [],
-            "input": [
-              {
-                "source": "in.c-mysql.ratings",
-                "destination": "ratings",
-                "indexes": [],
-                "datatypes": {},
-                "whereColumn": "",
-                "whereValues": [],
-                "whereOperator": "eq",
-                "columns": []
-              }
-            ],
-            "name": "Ratings",
-            "packages": [],
-            "requires": [],
-            "backend": "mysql",
-            "queriesString": "",
-            "type": "simple",
-            "id": "213956392",
-            "phase": 1,
-            "disabled": false,
-            "description": ""
-          },
-          "name": "Ratings transformation",
-          "description": "Ratings transformation description",
-          "isDisabled": false
-        },
-        {
-          "version": 2,
-          "created": "2016-11-07T02:08:48+0100",
-          "creatorToken": {
-            "id": 63470,
-            "description": "ondrej.hlavacek@keboola.com"
-          },
-          "changeDescription": "Create input mapping in Ratings",
-          "configuration": {
-            "output": [],
-            "queries": [],
-            "input": [
-              {
-                "source": "in.c-mysql.ratings",
-                "destination": "ratings",
-                "indexes": [],
-                "datatypes": {},
-                "whereColumn": "",
-                "whereValues": [],
-                "whereOperator": "eq",
-                "columns": []
-              }
-            ],
-            "name": "Ratings",
-            "packages": [],
-            "requires": [],
-            "backend": "mysql",
-            "queriesString": "",
-            "type": "simple",
-            "id": "213956392",
-            "phase": 1,
-            "disabled": false,
-            "description": ""
-          },
-          "name": "Ratings transformation",
-          "description": "Ratings transformation description",
-          "isDisabled": false
-        },
-        {
-          "version": 1,
-          "created": "2016-11-07T02:07:30+0100",
-          "creatorToken": {
-            "id": 63470,
-            "description": "ondrej.hlavacek@keboola.com"
-          },
-          "changeDescription": "Create transformation Ratings",
-          "configuration": {
-            "name": "Ratings",
-            "description": "",
-            "backend": "mysql",
-            "type": "simple"
-          },
-          "name": "Ratings transformation",
-          "description": "Ratings transformation description",
           "isDisabled": false
         }
       ]
