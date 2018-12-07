@@ -539,6 +539,13 @@ class S3Restore
                         $components->updateConfigurationRow($configurationRow);
                     }
                 }
+
+                // restore row sorting
+                if ($configurationData->rowsSortOrder) {
+                    $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
+                    $configuration->setChangeDescription('Restored rows sort order from backup');
+                    $components->updateConfiguration($configuration);
+                }
             }
         }
     }
