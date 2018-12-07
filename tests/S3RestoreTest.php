@@ -585,9 +585,15 @@ class S3RestoreTest extends BaseTest
         self::assertCount(2, $config["rows"]);
         self::assertEquals(3, $config["rows"][0]["id"]);
         self::assertEquals("Account", $config["rows"][0]["configuration"]["name"]);
+        self::assertEquals("Account transformation", $config["rows"][0]["name"]);
+        self::assertEquals("Account transformation description", $config["rows"][0]["description"]);
+        self::assertTrue($config["rows"][0]["isDisabled"]);
         self::assertEquals(["rowKey" => "value"], $config["rows"][0]["state"]);
         self::assertEquals(4, $config["rows"][1]["id"]);
         self::assertEquals("Ratings", $config["rows"][1]["configuration"]["name"]);
+        self::assertEquals("Ratings transformation", $config["rows"][1]["name"]);
+        self::assertEquals("Ratings transformation description", $config["rows"][1]["description"]);
+        self::assertFalse($config["rows"][1]["isDisabled"]);
         self::assertEmpty($config["rows"][1]["state"]);
 
         $config = $components->getConfiguration("transformation", 2);
@@ -596,9 +602,15 @@ class S3RestoreTest extends BaseTest
         self::assertEquals("Row 6 restored from backup", $config["changeDescription"]);
         self::assertEquals(5, $config["rows"][0]["id"]);
         self::assertEquals("Account", $config["rows"][0]["configuration"]["name"]);
+        self::assertEquals("Account transformation", $config["rows"][0]["name"]);
+        self::assertEquals("Account transformation description", $config["rows"][0]["description"]);
+        self::assertTrue($config["rows"][0]["isDisabled"]);
         self::assertEmpty($config["rows"][0]["state"]);
         self::assertEquals(6, $config["rows"][1]["id"]);
         self::assertEquals("Ratings", $config["rows"][1]["configuration"]["name"]);
+        self::assertEquals("Ratings transformation", $config["rows"][1]["name"]);
+        self::assertEquals("Ratings transformation description", $config["rows"][1]["description"]);
+        self::assertFalse($config["rows"][1]["isDisabled"]);
         self::assertEmpty($config["rows"][1]["state"]);
     }
 
