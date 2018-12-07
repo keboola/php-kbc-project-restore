@@ -541,7 +541,7 @@ class S3Restore
                 }
 
                 // restore row sorting
-                if ($configurationData->rowsSortOrder) {
+                if (!empty($configurationData->rowsSortOrder)) {
                     $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
                     $configuration->setChangeDescription('Restored rows sort order from backup');
                     $components->updateConfiguration($configuration);
