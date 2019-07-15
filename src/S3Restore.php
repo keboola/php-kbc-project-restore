@@ -204,27 +204,28 @@ class S3Restore
             }
 
             // upload data
-            $slices = $this->s3Client->listObjects(
-                [
-                    'Bucket' => $sourceBucket,
-                    'Prefix' => $sourceBasePath . str_replace('.', '/', $tableId) . '.',
-                ]
-            );
+            $iterator = $this->s3Client->getIterator('ListObjects', [
+                'Bucket' => $sourceBucket,
+                'Prefix' => $sourceBasePath . str_replace('.', '/', $tableId) . '.',
+            ]);
+
+            $slices = iterator_to_array($iterator);
 
             // no files for the table found, probably an empty table
-            if (!isset($slices["Contents"])) {
+            if (count($slices) === 0) {
                 unset($headerFile);
                 continue;
             }
 
-            if (count($slices["Contents"]) === 1 && substr($slices["Contents"][0]["Key"], -14) !== '.part_0.csv.gz') {
+            $firstSlice = reset($slices);
+            if (count($slices) === 1 && substr($firstSlice["Key"], -14) !== '.part_0.csv.gz') {
                 // one file and no slices => the file has header
                 // no slices = file does not end with .part_0.csv.gz
                 $targetFile = $tmp->createFile(sprintf('%s.csv.gz', $tableId));
                 $this->s3Client->getObject(
                     [
                         'Bucket' => $sourceBucket,
-                        'Key' => $slices["Contents"][0]["Key"],
+                        'Key' => $firstSlice["Key"],
                         'SaveAs' => $targetFile->getPathname(),
                     ]
                 );
@@ -269,7 +270,7 @@ class S3Restore
                 $part = 0;
 
                 // download and upload each slice
-                foreach ($slices["Contents"] as $slice) {
+                foreach ($slices as $slice) {
                     $fileName = $tmp->getTmpFolder() . "/" . $tableId . $tableId . ".part_" . $part . ".csv.gz";
                     $this->s3Client->getObject(
                         [
