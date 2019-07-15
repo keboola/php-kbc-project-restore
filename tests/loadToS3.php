@@ -62,7 +62,7 @@ for ($i = 0; $i < S3RestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));
     $csv->writeRow([
         $part,
-        uniqid('', true)
+        uniqid('', true),
     ]);
 
     unset($csv);
