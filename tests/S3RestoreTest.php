@@ -15,6 +15,8 @@ use Keboola\Temp\Temp;
 
 class S3RestoreTest extends BaseTest
 {
+    public const TEST_ITERATOR_SLICES_COUNT = 1222;
+
     public function testBucketsInBackup(): void
     {
         $backup = new S3Restore($this->s3Client, $this->sapiClient);
@@ -332,6 +334,19 @@ class S3RestoreTest extends BaseTest
         self::assertContains('"Id","Name"', $fileContents);
         self::assertContains('"001C000000xYbhhIAC","Keboola"', $fileContents);
         self::assertContains('"001C000000xYbhhIAD","Keboola 2"', $fileContents);
+    }
+
+    public function testRestoreTableFromLargeAmountOfSlices(): void
+    {
+        $backup = new S3Restore($this->s3Client, $this->sapiClient);
+
+        $sourceBucket = sprintf('table-%s-slices', self::TEST_ITERATOR_SLICES_COUNT);
+
+        $backup->restoreBuckets(getenv('TEST_AWS_S3_BUCKET'), $sourceBucket, true);
+        $backup->restoreTables(getenv('TEST_AWS_S3_BUCKET'), $sourceBucket);
+
+        $table = $this->sapiClient->getTable("in.c-bucket.Account");
+        $this->assertEquals(self::TEST_ITERATOR_SLICES_COUNT, $table['rowsCount']);
     }
 
     public function testRestoreTableFromMultipleSlicesSharedPrefix(): void
