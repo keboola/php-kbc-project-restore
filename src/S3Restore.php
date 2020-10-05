@@ -68,14 +68,14 @@ class S3Restore
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $targetFile = $tmp->createFile("tables.json");
+        $targetFile = $tmp->createFile('tables.json');
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $tables = json_decode((string) file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -85,12 +85,12 @@ class S3Restore
         $metadataClient = new Metadata($this->sapiClient);
 
         foreach ($tables as $tableInfo) {
-            if ($tableInfo["isAlias"] !== true) {
+            if ($tableInfo['isAlias'] !== true) {
                 continue;
             }
 
-            $tableId = $tableInfo["id"];
-            $bucketId = $tableInfo["bucket"]["id"];
+            $tableId = $tableInfo['id'];
+            $bucketId = $tableInfo['bucket']['id'];
 
             if (!in_array($bucketId, $restoredBuckets)) {
                 $this->logger->warning(sprintf('Skipping alias %s', $tableId));
@@ -100,32 +100,32 @@ class S3Restore
             $this->logger->info(sprintf('Restoring alias %s', $tableId));
 
             $aliasOptions = [];
-            if (isset($tableInfo["aliasFilter"])) {
-                $aliasOptions["aliasFilter"] = $tableInfo["aliasFilter"];
+            if (isset($tableInfo['aliasFilter'])) {
+                $aliasOptions['aliasFilter'] = $tableInfo['aliasFilter'];
             }
-            if (isset($tableInfo["aliasColumnsAutoSync"]) && $tableInfo["aliasColumnsAutoSync"] === false) {
-                $aliasOptions["aliasColumns"] = $tableInfo["columns"];
+            if (isset($tableInfo['aliasColumnsAutoSync']) && $tableInfo['aliasColumnsAutoSync'] === false) {
+                $aliasOptions['aliasColumns'] = $tableInfo['columns'];
             }
             $this->sapiClient->createAliasTable(
                 $bucketId,
-                $tableInfo["sourceTable"]["id"],
-                $tableInfo["name"],
+                $tableInfo['sourceTable']['id'],
+                $tableInfo['name'],
                 $aliasOptions
             );
 
             // Alias attributes
-            if (isset($tableInfo["attributes"]) && count($tableInfo["attributes"])) {
-                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo["attributes"]);
+            if (isset($tableInfo['attributes']) && count($tableInfo['attributes'])) {
+                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo['attributes']);
             }
-            if (isset($tableInfo["metadata"]) && count($tableInfo["metadata"])) {
-                foreach ($this->prepareMetadata($tableInfo["metadata"]) as $provider => $metadata) {
+            if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
+                foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
                     $metadataClient->postTableMetadata($tableId, $provider, $metadata);
                 }
             }
-            if (isset($tableInfo["columnMetadata"]) && count($tableInfo["columnMetadata"])) {
-                foreach ($tableInfo["columnMetadata"] as $column => $columnMetadata) {
+            if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
+                foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
                     foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                        $metadataClient->postColumnMetadata($tableId . "." . $column, $provider, $metadata);
+                        $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
                     }
                 }
             }
@@ -140,14 +140,14 @@ class S3Restore
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $targetFile = $tmp->createFile("tables.json");
+        $targetFile = $tmp->createFile('tables.json');
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'tables.json',
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $tables = json_decode((string) file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -157,12 +157,12 @@ class S3Restore
         $metadataClient = new Metadata($this->sapiClient);
 
         foreach ($tables as $tableInfo) {
-            if ($tableInfo["isAlias"] === true) {
+            if ($tableInfo['isAlias'] === true) {
                 continue;
             }
 
-            $tableId = $tableInfo["id"];
-            $bucketId = $tableInfo["bucket"]["id"];
+            $tableId = $tableInfo['id'];
+            $bucketId = $tableInfo['bucket']['id'];
 
             if (!in_array($bucketId, $restoredBuckets)) {
                 $this->logger->warning(sprintf('Skipping table %s', $tableId));
@@ -175,30 +175,30 @@ class S3Restore
             // create empty table
             $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableId));
             $headerFile = new CsvFile($headerFile->getPathname());
-            $headerFile->writeRow($tableInfo["columns"]);
+            $headerFile->writeRow($tableInfo['columns']);
 
             $tableId = $this->sapiClient->createTable(
                 $bucketId,
-                $tableInfo["name"],
+                $tableInfo['name'],
                 $headerFile,
                 [
-                    "primaryKey" => join(",", $tableInfo["primaryKey"]),
+                    'primaryKey' => join(',', $tableInfo['primaryKey']),
                 ]
             );
 
             // Table attributes
-            if (isset($tableInfo["attributes"]) && count($tableInfo["attributes"])) {
-                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo["attributes"]);
+            if (isset($tableInfo['attributes']) && count($tableInfo['attributes'])) {
+                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo['attributes']);
             }
-            if (isset($tableInfo["metadata"]) && count($tableInfo["metadata"])) {
-                foreach ($this->prepareMetadata($tableInfo["metadata"]) as $provider => $metadata) {
+            if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
+                foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
                     $metadataClient->postTableMetadata($tableId, $provider, $metadata);
                 }
             }
-            if (isset($tableInfo["columnMetadata"]) && count($tableInfo["columnMetadata"])) {
-                foreach ($tableInfo["columnMetadata"] as $column => $columnMetadata) {
+            if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
+                foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
                     foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                        $metadataClient->postColumnMetadata($tableId . "." . $column, $provider, $metadata);
+                        $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
                     }
                 }
             }
@@ -218,14 +218,14 @@ class S3Restore
             }
 
             $firstSlice = reset($slices);
-            if (count($slices) === 1 && substr($firstSlice["Key"], -14) !== '.part_0.csv.gz') {
+            if (count($slices) === 1 && substr($firstSlice['Key'], -14) !== '.part_0.csv.gz') {
                 // one file and no slices => the file has header
                 // no slices = file does not end with .part_0.csv.gz
                 $targetFile = $tmp->createFile(sprintf('%s.csv.gz', $tableId));
                 $this->s3Client->getObject(
                     [
                         'Bucket' => $sourceBucket,
-                        'Key' => $firstSlice["Key"],
+                        'Key' => $firstSlice['Key'],
                         'SaveAs' => $targetFile->getPathname(),
                     ]
                 );
@@ -236,15 +236,15 @@ class S3Restore
                 $this->sapiClient->writeTableAsyncDirect(
                     $tableId,
                     [
-                        "name" => $tableInfo["name"],
-                        "dataFileId" => $fileId,
+                        'name' => $tableInfo['name'],
+                        'dataFileId' => $fileId,
                     ]
                 );
             } else {
                 // sliced file, requires some more work
                 // prepare manifest and prepare upload params
                 $manifest = [
-                    "entries" => [],
+                    'entries' => [],
                 ];
                 $fileUploadOptions = new FileUploadOptions();
                 $fileUploadOptions
@@ -253,16 +253,16 @@ class S3Restore
                     ->setIsSliced(true)
                 ;
                 $fileUploadInfo = $this->sapiClient->prepareFileUpload($fileUploadOptions);
-                $uploadParams = $fileUploadInfo["uploadParams"];
+                $uploadParams = $fileUploadInfo['uploadParams'];
                 $s3FileClient = new S3Client(
                     [
-                        "credentials" => [
-                            "key" => $uploadParams["credentials"]["AccessKeyId"],
-                            "secret" => $uploadParams["credentials"]["SecretAccessKey"],
-                            "token" => $uploadParams["credentials"]["SessionToken"],
+                        'credentials' => [
+                            'key' => $uploadParams['credentials']['AccessKeyId'],
+                            'secret' => $uploadParams['credentials']['SecretAccessKey'],
+                            'token' => $uploadParams['credentials']['SessionToken'],
                         ],
-                        "region" => $fileUploadInfo["region"],
-                        "version" => "2006-03-01",
+                        'region' => $fileUploadInfo['region'],
+                        'version' => '2006-03-01',
                     ]
                 );
                 //@FIXME better temps
@@ -271,32 +271,41 @@ class S3Restore
 
                 // download and upload each slice
                 foreach ($slices as $slice) {
-                    $fileName = $tmp->getTmpFolder() . "/" . $tableId . $tableId . ".part_" . $part . ".csv.gz";
+                    $fileName = $tmp->getTmpFolder() . '/' . $tableId . $tableId . '.part_' . $part . '.csv.gz';
                     $this->s3Client->getObject(
                         [
                             'Bucket' => $sourceBucket,
-                            'Key' => $slice["Key"],
+                            'Key' => $slice['Key'],
                             'SaveAs' => $fileName,
                         ]
                     );
 
-                    $manifest["entries"][] = [
-                        "url" => "s3://" . $uploadParams["bucket"] . "/" . $uploadParams["key"] . ".part_" . $part . ".csv.gz",
-                        "mandatory" => true,
+                    $manifest['entries'][] = [
+                        'url' => sprintf(
+                            's3://%s/%s.part_%s.csv.gz',
+                            $uploadParams['bucket'],
+                            $uploadParams['key'],
+                            $part
+                        ),
+                        'mandatory' => true,
                     ];
 
                     $handle = fopen($fileName, 'r+');
-                    $s3FileClient->putObject(
-                        [
-                            'Bucket' => $uploadParams['bucket'],
-                            'Key' => $uploadParams['key'] . ".part_" . $part . ".csv.gz",
-                            'Body' => $handle,
-                            'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
-                        ]
-                    );
+                    if ($handle) {
+                        $s3FileClient->putObject(
+                            [
+                                'Bucket' => $uploadParams['bucket'],
+                                'Key' => $uploadParams['key'] . '.part_' . $part . '.csv.gz',
+                                'Body' => $handle,
+                                'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
+                            ]
+                        );
 
-                    // remove the uploaded file
-                    fclose($handle);
+                        // remove the uploaded file
+                        fclose($handle);
+                    } else {
+                        throw new \Exception(sprintf('Cannot open file %s', $fileName));
+                    }
                     $fs->remove($fileName);
                     $part++;
                 }
@@ -338,14 +347,14 @@ class S3Restore
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $targetFile = $tmp->createFile("buckets.json");
+        $targetFile = $tmp->createFile('buckets.json');
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'buckets.json',
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $buckets = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $buckets = json_decode((string) file_get_contents($targetFile->getPathname()), true);
 
         return array_map(function (array $bucketInfo) {
             return new BucketInfo($bucketInfo);
@@ -387,24 +396,27 @@ class S3Restore
         return true;
     }
 
-    public function restoreBuckets(string $sourceBucket, ?string $sourceBasePath = null, bool $checkBackend = true): void
-    {
+    public function restoreBuckets(
+        string $sourceBucket,
+        ?string $sourceBasePath = null,
+        bool $checkBackend = true
+    ): void {
         $buckets = $this->getBucketsInBackup($sourceBucket, $sourceBasePath);
 
         if ($checkBackend) {
             foreach ($buckets as $bucketInfo) {
                 switch ($bucketInfo->getBackend()) {
-                    case "mysql":
+                    case 'mysql':
                         if (!$this->token->hasProjectMysqlBackend()) {
                             throw new StorageApiException('Missing MySQL backend');
                         }
                         break;
-                    case "redshift":
+                    case 'redshift':
                         if (!$this->token->hasProjectRedshiftBackend()) {
                             throw new StorageApiException('Missing Redshift backend');
                         }
                         break;
-                    case "snowflake":
+                    case 'snowflake':
                         if (!$this->token->hasProjectSnowflakeBackend()) {
                             throw new StorageApiException('Missing Snowflake backend');
                         }
@@ -440,30 +452,33 @@ class S3Restore
     {
         $result = [];
         foreach ($rawMetadata as $item) {
-            $result[$item["provider"]][] = [
-                "key" => $item["key"],
-                "value" => $item["value"],
+            $result[$item['provider']][] = [
+                'key' => $item['key'],
+                'value' => $item['value'],
             ];
         }
         return $result;
     }
 
-    public function restoreConfigs(string $sourceBucket, ?string $sourceBasePath = null, array $skipComponents = []): void
-    {
+    public function restoreConfigs(
+        string $sourceBucket,
+        ?string $sourceBasePath = null,
+        array $skipComponents = []
+    ): void {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading configurations');
 
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $targetFile = $tmp->createFile("configurations.json");
+        $targetFile = $tmp->createFile('configurations.json');
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'configurations.json',
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $configurations = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $configurations = json_decode((string) file_get_contents($targetFile->getPathname()), true);
 
         $components = new Components($this->sapiClient);
 
@@ -473,36 +488,57 @@ class S3Restore
         }
 
         foreach ($configurations as $componentWithConfigurations) {
-            if (in_array($componentWithConfigurations["id"], $skipComponents)) {
-                $this->logger->warning(sprintf('Skipping %s configurations - component marked as skipped', $componentWithConfigurations["id"]));
+            if (in_array($componentWithConfigurations['id'], $skipComponents)) {
+                $this->logger->warning(
+                    sprintf(
+                        'Skipping %s configurations - component marked as skipped',
+                        $componentWithConfigurations['id']
+                    )
+                );
                 continue;
             }
 
             // skip non-existing components
-            if (!array_key_exists($componentWithConfigurations["id"], $componentList)) {
-                $this->logger->warning(sprintf('Skipping %s configurations - component does not exists', $componentWithConfigurations["id"]));
+            if (!array_key_exists($componentWithConfigurations['id'], $componentList)) {
+                $this->logger->warning(
+                    sprintf(
+                        'Skipping %s configurations - component does not exists',
+                        $componentWithConfigurations['id']
+                    )
+                );
                 continue;
             }
 
-            $this->logger->info(sprintf('Restoring %s configurations', $componentWithConfigurations["id"]));
+            $this->logger->info(sprintf('Restoring %s configurations', $componentWithConfigurations['id']));
 
-            foreach ($componentWithConfigurations["configurations"] as $componentConfiguration) {
-                $targetFile = $tmp->createFile(sprintf("configurations-%s-%s.json", $componentWithConfigurations["id"], $componentConfiguration["id"]));
+            foreach ($componentWithConfigurations['configurations'] as $componentConfiguration) {
+                $targetFile = $tmp->createFile(
+                    sprintf(
+                        'configurations-%s-%s.json',
+                        $componentWithConfigurations['id'],
+                        $componentConfiguration['id']
+                    )
+                );
                 $this->s3Client->getObject(
                     [
                         'Bucket' => $sourceBucket,
-                        'Key' => sprintf("%sconfigurations/%s/%s.json", $sourceBasePath, $componentWithConfigurations["id"], $componentConfiguration["id"]),
+                        'Key' => sprintf(
+                            '%sconfigurations/%s/%s.json',
+                            $sourceBasePath,
+                            $componentWithConfigurations['id'],
+                            $componentConfiguration['id']
+                        ),
                         'SaveAs' => $targetFile->getPathname(),
                     ]
                 );
 
                 // configurations as objects to preserve empty arrays or empty objects
-                $configurationData = json_decode(file_get_contents($targetFile->getPathname()));
+                $configurationData = json_decode((string) file_get_contents($targetFile->getPathname()));
 
                 // create empty configuration
                 $configuration = new Configuration();
-                $configuration->setComponentId($componentWithConfigurations["id"]);
-                $configuration->setConfigurationId($componentConfiguration["id"]);
+                $configuration->setComponentId($componentWithConfigurations['id']);
+                $configuration->setConfigurationId($componentConfiguration['id']);
                 $configuration->setDescription($configurationData->description);
                 $configuration->setName($configurationData->name);
                 $components->addConfiguration($configuration);
@@ -510,7 +546,7 @@ class S3Restore
                 // update configuration and state
                 $configuration->setChangeDescription(sprintf(
                     'Configuration %s restored from backup',
-                    $componentConfiguration["id"]
+                    $componentConfiguration['id']
                 ));
                 $configuration->setConfiguration(
                     ConfigurationFilter::removeOauthAuthorization($configurationData->configuration)
@@ -551,22 +587,25 @@ class S3Restore
         }
     }
 
-    public function listConfigsInBackup(string $sourceBucket, ?string $sourceBasePath = null, string $componentId): array
-    {
+    public function listConfigsInBackup(
+        string $sourceBucket,
+        ?string $sourceBasePath = null,
+        string $componentId
+    ): array {
         $sourceBasePath = $this->trimSourceBasePath($sourceBasePath);
         $this->logger->info('Downloading configurations');
 
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $targetFile = $tmp->createFile("configurations.json");
+        $targetFile = $tmp->createFile('configurations.json');
         $this->s3Client->getObject([
             'Bucket' => $sourceBucket,
             'Key' => $sourceBasePath . 'configurations.json',
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $components = json_decode(file_get_contents((string) $targetFile), true);
+        $components = json_decode((string) file_get_contents((string) $targetFile), true);
         foreach ($components as $component) {
             if ($component['id'] !== $componentId) {
                 continue;

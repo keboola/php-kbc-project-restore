@@ -1,4 +1,6 @@
 parameters:
+    checkMissingIterableValueType: false
     ignoreErrors:
         - '#Parameter \#4 \$sourceBucketId of method Keboola\\StorageApi\\Client\:\:linkBucket\(\) expects int, string given.#'
         - '#Parameter \#1 \$message of class Keboola\\StorageApi\\ClientException constructor expects null, string given.#'
+        - '#Parameter \#1 \$bucket of method Keboola\\ProjectRestore\\S3Restore\:\:restoreBucket\(\) expects Keboola\\ProjectRestore\\StorageApi\\BucketInfo#'

@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore\Tests;
 
 use Keboola\ProjectRestore\StorageApi\ConfigurationFilter;
+use PHPUnit\Framework\TestCase;
 
-class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
+class ConfigurationFilterTest extends TestCase
 {
     /**
      * @dataProvider oauthFilterData
@@ -16,9 +17,9 @@ class ConfigurationFilterTest extends \PHPUnit_Framework_TestCase
     public function testOauthFilter(array $inConfigData, array $expectedOutConfigData): void
     {
         $filteredConfigData = ConfigurationFilter::removeOauthAuthorization(
-            json_decode(json_encode($inConfigData))
+            json_decode((string) json_encode($inConfigData))
         );
-        $this->assertEquals(json_decode(json_encode($expectedOutConfigData)), $filteredConfigData);
+        $this->assertEquals(json_decode((string) json_encode($expectedOutConfigData)), $filteredConfigData);
     }
 
     public function oauthFilterData(): array
