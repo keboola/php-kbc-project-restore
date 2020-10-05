@@ -1,5 +1,6 @@
 {
   "name": "keboola/kbc-project-restore",
+  "description": "Restore KBC project",
   "license": "MIT",
   "authors": [
     {
