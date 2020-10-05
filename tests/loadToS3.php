@@ -6,6 +6,7 @@ use Keboola\ProjectRestore\Tests\S3RestoreTest;
 use Symfony\Component\Finder\Finder;
 use Keboola\Temp\Temp;
 use Keboola\Csv\CsvFile;
+use Aws\S3\S3Client;
 
 date_default_timezone_set('Europe/Prague');
 ini_set('display_errors', '1');
@@ -17,7 +18,7 @@ require_once $basedir . '/bootstrap.php';
 
 echo 'Loading fixtures to S3' . PHP_EOL;
 
-$s3Client = new \Aws\S3\S3Client([
+$s3Client = new S3Client([
     'version' => 'latest',
     'region' => getenv('TEST_AWS_REGION'),
     'credentials' => [
@@ -28,7 +29,7 @@ $s3Client = new \Aws\S3\S3Client([
 
 // delete from S3
 echo 'Cleanup files in S3' . PHP_EOL;
-$s3Client->deleteMatchingObjects(getenv('TEST_AWS_S3_BUCKET'), '*');
+$s3Client->deleteMatchingObjects((string) getenv('TEST_AWS_S3_BUCKET'), '*');
 
 // copy new files
 $source = $basedir . '/data/backups';

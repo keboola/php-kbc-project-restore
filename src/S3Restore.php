@@ -75,7 +75,7 @@ class S3Restore
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $tables = json_decode((string) file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -147,7 +147,7 @@ class S3Restore
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $tables = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $tables = json_decode((string) file_get_contents($targetFile->getPathname()), true);
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
@@ -291,17 +291,21 @@ class S3Restore
                     ];
 
                     $handle = fopen($fileName, 'r+');
-                    $s3FileClient->putObject(
-                        [
-                            'Bucket' => $uploadParams['bucket'],
-                            'Key' => $uploadParams['key'] . '.part_' . $part . '.csv.gz',
-                            'Body' => $handle,
-                            'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
-                        ]
-                    );
+                    if ($handle) {
+                        $s3FileClient->putObject(
+                            [
+                                'Bucket' => $uploadParams['bucket'],
+                                'Key' => $uploadParams['key'] . '.part_' . $part . '.csv.gz',
+                                'Body' => $handle,
+                                'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
+                            ]
+                        );
 
-                    // remove the uploaded file
-                    fclose($handle);
+                        // remove the uploaded file
+                        fclose($handle);
+                    } else {
+                        throw new \Exception(sprintf('Cannot open file %s', $fileName));
+                    }
                     $fs->remove($fileName);
                     $part++;
                 }
@@ -350,7 +354,7 @@ class S3Restore
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $buckets = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $buckets = json_decode((string) file_get_contents($targetFile->getPathname()), true);
 
         return array_map(function (array $bucketInfo) {
             return new BucketInfo($bucketInfo);
@@ -474,7 +478,7 @@ class S3Restore
             'SaveAs' => $targetFile->getPathname(),
         ]);
 
-        $configurations = json_decode(file_get_contents($targetFile->getPathname()), true);
+        $configurations = json_decode((string) file_get_contents($targetFile->getPathname()), true);
 
         $components = new Components($this->sapiClient);
 
@@ -529,7 +533,7 @@ class S3Restore
                 );
 
                 // configurations as objects to preserve empty arrays or empty objects
-                $configurationData = json_decode(file_get_contents($targetFile->getPathname()));
+                $configurationData = json_decode((string) file_get_contents($targetFile->getPathname()));
 
                 // create empty configuration
                 $configuration = new Configuration();
@@ -601,7 +605,7 @@ class S3Restore
             'SaveAs' => (string) $targetFile,
         ]);
 
-        $components = json_decode(file_get_contents((string) $targetFile), true);
+        $components = json_decode((string) file_get_contents((string) $targetFile), true);
         foreach ($components as $component) {
             if ($component['id'] !== $componentId) {
                 continue;
