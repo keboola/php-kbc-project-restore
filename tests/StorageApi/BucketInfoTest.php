@@ -120,11 +120,15 @@ class BucketInfoTest extends BaseTest
         $bucketId = $this->createTestBucket();
 
         $this->sapiClient->shareBucket($bucketId, ['sharing' => 'organization']);
-        $linkedBucketId = $this->sapiClient->linkBucket(self::BUCKET_NAME, Client::STAGE_OUT, $token->getProjectId(), $bucketId);
+        $linkedBucketId = $this->sapiClient->linkBucket(
+            self::BUCKET_NAME,
+            Client::STAGE_OUT,
+            $token->getProjectId(),
+            $bucketId
+        );
 
         $buckets = $this->sapiClient->listBuckets(['include' => 'attributes,metadata']);
         $this->assertCount(2, $buckets);
-
 
         foreach ($buckets as $bucketInfo) {
             $bucket = new BucketInfo($bucketInfo);

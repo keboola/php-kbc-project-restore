@@ -51,16 +51,16 @@ class Token
 
     public function hasProjectMysqlBackend(): bool
     {
-        return isset($this->tokenData["owner"]["hasMysql"]) && $this->tokenData["owner"]["hasMysql"] === true;
+        return isset($this->tokenData['owner']['hasMysql']) && $this->tokenData['owner']['hasMysql'] === true;
     }
 
     public function hasProjectRedshiftBackend(): bool
     {
-        return isset($this->tokenData["owner"]["hasRedshift"]) && $this->tokenData["owner"]["hasRedshift"] === true;
+        return isset($this->tokenData['owner']['hasRedshift']) && $this->tokenData['owner']['hasRedshift'] === true;
     }
 
     public function hasProjectSnowflakeBackend(): bool
     {
-        return isset($this->tokenData["owner"]["hasSnowflake"]) && $this->tokenData["owner"]["hasSnowflake"] === true;
+        return isset($this->tokenData['owner']['hasSnowflake']) && $this->tokenData['owner']['hasSnowflake'] === true;
     }
 }

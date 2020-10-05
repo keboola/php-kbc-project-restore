@@ -57,7 +57,7 @@ $system->mirror($basedir . '/data/backups/table-multiple-slices', $tablesPath, n
 $system->remove((new Finder())->files()->in($slicesPath)->getIterator());
 
 for ($i = 0; $i < S3RestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
-    $part = str_pad((string) $i, 5, "0", STR_PAD_LEFT);
+    $part = str_pad((string) $i, 5, '0', STR_PAD_LEFT);
 
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));
     $csv->writeRow([
