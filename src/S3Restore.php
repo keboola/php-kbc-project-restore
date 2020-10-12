@@ -241,37 +241,11 @@ class S3Restore
                     ]
                 );
             } else {
-                // sliced file, requires some more work
-                // prepare manifest and prepare upload params
-                $manifest = [
-                    'entries' => [],
-                ];
-                $fileUploadOptions = new FileUploadOptions();
-                $fileUploadOptions
-                    ->setFederationToken(true)
-                    ->setFileName($tableId)
-                    ->setIsSliced(true)
-                ;
-                $fileUploadInfo = $this->sapiClient->prepareFileUpload($fileUploadOptions);
-                $uploadParams = $fileUploadInfo['uploadParams'];
-                $s3FileClient = new S3Client(
-                    [
-                        'credentials' => [
-                            'key' => $uploadParams['credentials']['AccessKeyId'],
-                            'secret' => $uploadParams['credentials']['SecretAccessKey'],
-                            'token' => $uploadParams['credentials']['SessionToken'],
-                        ],
-                        'region' => $fileUploadInfo['region'],
-                        'version' => '2006-03-01',
-                    ]
-                );
-                //@FIXME better temps
-                $fs = new Filesystem();
-                $part = 0;
-
-                // download and upload each slice
-                foreach ($slices as $slice) {
+                $downloadedSlices = [];
+                foreach ($slices as $part => $slice) {
                     $fileName = $tmp->getTmpFolder() . '/' . $tableId . $tableId . '.part_' . $part . '.csv.gz';
+                    $downloadedSlices[] = $fileName;
+
                     $this->s3Client->getObject(
                         [
                             'Bucket' => $sourceBucket,
@@ -279,52 +253,23 @@ class S3Restore
                             'SaveAs' => $fileName,
                         ]
                     );
-
-                    $manifest['entries'][] = [
-                        'url' => sprintf(
-                            's3://%s/%s.part_%s.csv.gz',
-                            $uploadParams['bucket'],
-                            $uploadParams['key'],
-                            $part
-                        ),
-                        'mandatory' => true,
-                    ];
-
-                    $handle = fopen($fileName, 'r+');
-                    if ($handle) {
-                        $s3FileClient->putObject(
-                            [
-                                'Bucket' => $uploadParams['bucket'],
-                                'Key' => $uploadParams['key'] . '.part_' . $part . '.csv.gz',
-                                'Body' => $handle,
-                                'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
-                            ]
-                        );
-
-                        // remove the uploaded file
-                        fclose($handle);
-                    } else {
-                        throw new \Exception(sprintf('Cannot open file %s', $fileName));
-                    }
-                    $fs->remove($fileName);
-                    $part++;
                 }
 
-                // Upload manifest
-                $s3FileClient->putObject(
-                    array(
-                        'Bucket' => $uploadParams['bucket'],
-                        'Key' => $uploadParams['key'] . 'manifest',
-                        'ServerSideEncryption' => $uploadParams['x-amz-server-side-encryption'],
-                        'Body' => json_encode($manifest),
-                    )
-                );
+                $fileUploadOptions = new FileUploadOptions();
+                $fileUploadOptions
+                    ->setFederationToken(true)
+                    ->setFileName($tableId)
+                    ->setIsSliced(true)
+                    ->setIsEncrypted(true)
+                ;
+
+                $dataFileId = $this->sapiClient->uploadSlicedFile($downloadedSlices, $fileUploadOptions);
 
                 // Upload data to table
                 $this->sapiClient->writeTableAsyncDirect(
                     $tableId,
                     array(
-                        'dataFileId' => $fileUploadInfo['id'],
+                        'dataFileId' => $dataFileId,
                         'columns' => $headerFile->getHeader()
                     )
                 );
