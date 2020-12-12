@@ -177,7 +177,7 @@ class S3Restore
             $headerFile = new CsvFile($headerFile->getPathname());
             $headerFile->writeRow($tableInfo['columns']);
 
-            $tableId = $this->sapiClient->createTable(
+            $tableId = $this->sapiClient->createTableAsync(
                 $bucketId,
                 $tableInfo['name'],
                 $headerFile,
