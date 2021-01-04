@@ -592,7 +592,7 @@ class S3RestoreTest extends BaseTest
 
         // empty array and object in config
         $file = $temp->createFile('config.json');
-        $this->sapiClient->apiGet('storage/components/keboola.csv-import/configs/1', $file->getPathname());
+        $this->sapiClient->apiGet('components/keboola.csv-import/configs/1', $file->getPathname());
         $config = json_decode((string) file_get_contents($file->getPathname()));
         self::assertEquals(new \stdClass(), $config->configuration->emptyObject);
         self::assertEquals([], $config->configuration->emptyArray);
@@ -658,7 +658,7 @@ class S3RestoreTest extends BaseTest
 
         // empty array and object in config rows
         $file = $temp->createFile('config.json');
-        $this->sapiClient->apiGet('storage/components/transformation/configs/1/rows', $file->getPathname());
+        $this->sapiClient->apiGet('components/transformation/configs/1/rows', $file->getPathname());
         $config = json_decode((string) file_get_contents($file->getPathname()));
         self::assertEquals(new \stdClass(), $config[0]->configuration->input[0]->datatypes);
         self::assertEquals([], $config[0]->configuration->queries);
