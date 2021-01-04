@@ -11,7 +11,7 @@
   "require": {
     "PHP": "^7.1",
     "keboola/php-temp": "^1.0.0",
-    "keboola/storage-api-client": "^10.20",
+    "keboola/storage-api-client": "^11.3",
     "monolog/monolog": "^1.23"
   },
   "require-dev": {
