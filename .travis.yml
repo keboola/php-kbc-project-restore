@@ -1,8 +1,13 @@
 sudo: required
+
 language: bash
+
 services:
   - docker
-install:
+
+before_script:
   - docker-compose build
-script:
   - docker-compose run --rm tests
+
+script:
+  - skip
