@@ -7,7 +7,7 @@ services:
 
 before_script:
   - docker-compose build
-  - docker-compose run --rm tests
+  - travis_wait 90 docker-compose run --rm tests
 
 script:
   - skip
