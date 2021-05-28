@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "PHP": "^7.1",
+    "PHP": "^7.4",
     "keboola/php-temp": "^1.0.0",
     "keboola/storage-api-client": "^11.3",
     "monolog/monolog": "^1.23"
@@ -33,18 +33,29 @@
   },
   "scripts": {
     "tests-phpunit": "phpunit",
-    "tests-prepare-s3": "php ./tests/loadToS3.php",
     "phplint": "parallel-lint -j 10 --exclude vendor .",
     "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
     "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
     "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
+    "tests-abs": [
+      "php ./tests/loadToAbs.php"
+    ],
+    "tests-s3": [
+      "php ./tests/loadToS3.php"
+    ],
     "tests": [
-      "@composer validate --no-check-publish --no-check-all",
+      "@tests-abs",
+      "@tests-s3"
+    ],
+    "build": [
       "@phplint",
       "@phpcs",
       "@phpstan",
-      "@tests-prepare-s3",
-      "@tests-phpunit"
+      "@tests"
+    ],
+    "ci": [
+      "@composer validate --no-check-publish --no-check-all",
+      "@build"
     ]
   }
 }
