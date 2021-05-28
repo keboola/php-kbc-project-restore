@@ -25,7 +25,7 @@ class AbsRestore extends Restore
         ?LoggerInterface $logger = null
     ) {
         $this->absClient = $absClient;
-        preg_match('/([^\/]+)\/(.+)/', $container, $match);
+        preg_match('/([^\/]+)\/?(.+)?/', $container, $match);
         $this->container = $match[1];
         if (isset($match[2])) {
             $this->blobPrefix = (string) $match[2];
