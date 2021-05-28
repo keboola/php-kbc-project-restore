@@ -38,10 +38,12 @@
     "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
     "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
     "tests-abs": [
-      "php ./tests/loadToAbs.php"
+      "php ./tests/loadToAbs.php",
+      "phpunit tests/AbsRestoreTest.php"
     ],
     "tests-s3": [
-      "php ./tests/loadToS3.php"
+      "php ./tests/loadToS3.php",
+      "phpunit ./tests/S3RestoreTest.php"
     ],
     "tests": [
       "@tests-abs",
