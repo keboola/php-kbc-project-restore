@@ -37,7 +37,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets'
         );
 
         $buckets = $backup->getBucketsInBackup();
@@ -57,7 +57,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets'
         );
 
         $buckets = $backup->getBucketsInBackup();
@@ -97,7 +97,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/metadata'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-metadata'
         );
 
         $buckets = $backup->getBucketsInBackup();
@@ -132,7 +132,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-multiple-backends'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-multiple-backends'
         );
 
         $buckets = $backup->getBucketsInBackup();
@@ -152,7 +152,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-multiple-backends'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-multiple-backends'
         );
 
         $tokenData = $this->sapiClient->verifyToken();
@@ -191,7 +191,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/bucket-without-prefix'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-bucket-without-prefix'
         );
         $buckets = $backup->getBucketsInBackup();
 
@@ -208,7 +208,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-linked-bucket'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-linked-bucket'
         );
         $buckets = $backup->getBucketsInBackup();
 
@@ -235,7 +235,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configurations'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configurations'
         );
 
         $componentId = 'keboola.csv-import';
@@ -257,7 +257,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets'
         );
         $backup->restoreBuckets(true);
 
@@ -272,7 +272,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-linked-bucket'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-linked-bucket'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -293,7 +293,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-multiple-backends'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-multiple-backends'
         );
         $backup->restoreBuckets(false);
 
@@ -309,7 +309,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets-multiple-backends'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets-multiple-backends'
         );
 
         try {
@@ -326,7 +326,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/buckets'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets'
         );
         $backup->restoreBuckets(true);
 
@@ -352,7 +352,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-with-header'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-with-header'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -376,7 +376,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-without-header'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-without-header'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -400,7 +400,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-multiple-slices'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-multiple-slices'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -424,7 +424,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/' . $sourceBucket
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-' . $sourceBucket
         );
 
         $backup->restoreBuckets(true);
@@ -439,7 +439,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-multiple-slices-shared-prefix'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-multiple-slices-shared-prefix'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -473,7 +473,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-properties'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-properties'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -500,7 +500,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-properties'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-properties'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -516,7 +516,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/alias'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -534,7 +534,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/alias-properties'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-properties'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -562,7 +562,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/alias-metadata'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-metadata'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -582,7 +582,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/alias-filtered'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-filtered'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -608,7 +608,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configurations'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configurations'
         );
         $backup->restoreConfigs();
 
@@ -654,7 +654,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configurations-no-versions'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configurations-no-versions'
         );
         $backup->restoreConfigs();
 
@@ -684,7 +684,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configuration-skip'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configuration-skip'
         );
         $backup->restoreConfigs(
             [
@@ -707,7 +707,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configuration-empty-object'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configuration-empty-object'
         );
         $backup->restoreConfigs();
 
@@ -727,7 +727,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configuration-rows'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configuration-rows'
         );
         $backup->restoreConfigs();
 
@@ -781,7 +781,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/configuration-rows'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configuration-rows'
         );
         $backup->restoreConfigs();
 
@@ -801,7 +801,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/bucket-without-prefix'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-bucket-without-prefix'
         );
         $backup->restoreBuckets(true);
 
@@ -814,7 +814,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-without-prefix'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-without-prefix'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -828,7 +828,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/table-empty'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-empty'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -841,7 +841,7 @@ class AbsRestoreTest extends BaseTest
         $backup = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '/metadata'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-metadata'
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();

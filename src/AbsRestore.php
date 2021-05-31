@@ -16,8 +16,6 @@ class AbsRestore extends Restore
 
     private string $container;
 
-    private ?string $blobPrefix = null;
-
     public function __construct(
         StorageApi $sapiClient,
         BlobRestProxy $absClient,
@@ -25,11 +23,7 @@ class AbsRestore extends Restore
         ?LoggerInterface $logger = null
     ) {
         $this->absClient = $absClient;
-        preg_match('/([^\/]+)\/?(.+)?/', $container, $match);
-        $this->container = $match[1];
-        if (isset($match[2])) {
-            $this->blobPrefix = (string) $match[2];
-        }
+        $this->container = $container;
 
         parent::__construct($logger, $sapiClient);
     }
@@ -40,9 +34,6 @@ class AbsRestore extends Restore
     protected function getDataFromStorage(string $filePath, bool $useString = true)
     {
         $container = $this->container;
-        if ($this->blobPrefix) {
-            $container = sprintf('%s/%s', $this->container, $this->blobPrefix);
-        }
         $configFileContent = $this->absClient->getBlob(
             $container,
             $filePath
@@ -62,13 +53,10 @@ class AbsRestore extends Restore
     protected function listTableFiles(string $tableId): array
     {
         $options = new ListBlobsOptions();
-        $options->setPrefix($this->blobPrefix . '/' . str_replace('.', '/', $tableId) . '.');
+        $options->setPrefix(str_replace('.', '/', $tableId) . '.');
 
         $blobs = $this->absClient->listBlobs($this->container, $options);
 
-        return array_map(
-            fn(Blob $v) => substr($v->getName(), strlen($this->blobPrefix . '/')),
-            $blobs->getBlobs()
-        );
+        return array_map(fn(Blob $v) => $v->getName(), $blobs->getBlobs());
     }
 }

@@ -30,29 +30,36 @@ echo 'Cleanup files in ABS' . PHP_EOL;
 $containers = $absClient->listContainers();
 $listContainers = array_map(fn(Container $v) => $v->getName(), $containers->getContainers());
 
-if (!in_array((string) getenv('TEST_AZURE_CONTAINER_NAME'), $listContainers)) {
-    $absClient->createContainer((string) getenv('TEST_AZURE_CONTAINER_NAME'));
-}
-
-$blobs = $absClient->listBlobs((string) getenv('TEST_AZURE_CONTAINER_NAME'));
-foreach ($blobs->getBlobs() as $blob) {
-    $absClient->deleteBlob((string) getenv('TEST_AZURE_CONTAINER_NAME'), $blob->getName());
-}
-
 echo 'Copying new files into ABS' . PHP_EOL;
 $finder = new Finder();
-$files = $finder->in($basedir . '/data/backups')->files();
-foreach ($files as $file) {
-    $fopen = fopen($file->getPathname(), 'r');
-    if (!$fopen) {
-        continue;
+$dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
+
+foreach ($dirs as $dir) {
+    $container = getenv('TEST_AZURE_CONTAINER_NAME') . '-' . $dir->getRelativePathname();
+    if (!in_array($container, $listContainers)) {
+        $absClient->createContainer($container);
     }
-    $absClient->createBlockBlob(
-        (string) getenv('TEST_AZURE_CONTAINER_NAME'),
-        $file->getRelativePathname(),
-        $fopen
-    );
+
+    $blobs = $absClient->listBlobs($container);
+    foreach ($blobs->getBlobs() as $blob) {
+        $absClient->deleteBlob($container, $blob->getName());
+    }
+
+    $finder = new Finder();
+    $files = $finder->in($dir->getPathname())->files();
+    foreach ($files as $file) {
+        $fopen = fopen($file->getPathname(), 'r');
+        if (!$fopen) {
+            continue;
+        }
+        $absClient->createBlockBlob(
+            $container,
+            $file->getRelativePathname(),
+            $fopen
+        );
+    }
 }
+
 
 // generate a lot of table slices
 $system = new Filesystem();
@@ -60,12 +67,11 @@ $system = new Filesystem();
 $temp = new Temp('loadToAbs');
 $temp->initRunFolder();
 
-$tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT);
-$slicesPath = $tablesPath . '/in/c-bucket';
+$slicesPath = $temp->getTmpFolder() . '/in/c-bucket';
 
-$system->mkdir($tablesPath);
+$system->mkdir($temp->getTmpFolder());
 
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $tablesPath, null, [
+$system->mirror($basedir . '/data/backups/table-multiple-slices', $temp->getTmpFolder(), null, [
     'override' => true,
     'delete' => true,
 ]);
@@ -93,13 +99,28 @@ echo 'Copying new slices to ABS' . PHP_EOL;
 $source = $temp->getTmpFolder();
 $finder = new Finder();
 $files = $finder->in($source)->files();
+
+$container = sprintf(
+    '%s-table-%s-slices',
+    getenv('TEST_AZURE_CONTAINER_NAME'),
+    AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT
+);
+if (!in_array($container, $listContainers)) {
+    $absClient->createContainer($container);
+}
+
+$blobs = $absClient->listBlobs($container);
+foreach ($blobs->getBlobs() as $blob) {
+    $absClient->deleteBlob($container, $blob->getName());
+}
+
 foreach ($files as $file) {
     $fopen = fopen($file->getPathname(), 'r');
     if (!$fopen) {
         continue;
     }
     $absClient->createBlockBlob(
-        (string) getenv('TEST_AZURE_CONTAINER_NAME'),
+        $container,
         $file->getRelativePathname(),
         $fopen
     );
