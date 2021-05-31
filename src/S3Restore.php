@@ -42,7 +42,7 @@ class S3Restore extends Restore
     /**
      * @return resource|string
      */
-    protected function getDataFromStorage(string $filePath, bool $streamContent = true)
+    protected function getDataFromStorage(string $filePath, bool $useString = true)
     {
         $tmp = new Temp();
         $tmp->initRunFolder();
@@ -51,7 +51,7 @@ class S3Restore extends Restore
 
         $this->copyFileFromStorage($filePath, $targetFile->getPathname());
 
-        if (!$streamContent) {
+        if (!$useString) {
             $file = fopen($targetFile->getPathname(), 'r');
             if (!$file) {
                 throw new \Exception(sprintf(

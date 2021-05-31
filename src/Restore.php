@@ -469,7 +469,7 @@ abstract class Restore
     /**
      * @return resource|string
      */
-    abstract protected function getDataFromStorage(string $filePath, bool $streamContent = true);
+    abstract protected function getDataFromStorage(string $filePath, bool $useString = true);
 
     abstract protected function copyFileFromStorage(string $sourceFilePath, string $targetFilePath): void;
 

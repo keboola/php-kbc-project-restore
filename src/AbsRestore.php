@@ -37,7 +37,7 @@ class AbsRestore extends Restore
     /**
      * @return resource|string
      */
-    protected function getDataFromStorage(string $filePath, bool $streamContent = true)
+    protected function getDataFromStorage(string $filePath, bool $useString = true)
     {
         $container = $this->container;
         if ($this->blobPrefix) {
@@ -47,7 +47,7 @@ class AbsRestore extends Restore
             $container,
             $filePath
         );
-        if (!$streamContent) {
+        if (!$useString) {
             return $configFileContent->getContentStream();
         } else {
             return (string) stream_get_contents($configFileContent->getContentStream());
