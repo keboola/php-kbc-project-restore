@@ -11,15 +11,8 @@ use PHPUnit\Framework\TestCase;
 
 abstract class BaseTest extends TestCase
 {
-    /**
-     * @var StorageApi
-     */
-    protected $sapiClient;
+    protected StorageApi $sapiClient;
 
-    /**
-     * @var S3Client
-     */
-    protected $s3Client;
 
     public function setUp(): void
     {
@@ -31,14 +24,6 @@ abstract class BaseTest extends TestCase
         ]);
 
         $this->cleanupKbcProject();
-
-        putenv('AWS_ACCESS_KEY_ID=' . getenv('TEST_AWS_ACCESS_KEY_ID'));
-        putenv('AWS_SECRET_ACCESS_KEY=' . getenv('TEST_AWS_SECRET_ACCESS_KEY'));
-
-        $this->s3Client = new S3Client([
-            'version' => 'latest',
-            'region' => getenv('TEST_AWS_REGION'),
-        ]);
     }
 
     private function cleanupKbcProject(): void

@@ -1,8 +1,13 @@
 sudo: required
+
 language: bash
+
 services:
   - docker
-install:
+
+before_script:
   - docker-compose build
+  - travis_wait 90 docker-compose run --rm tests
+
 script:
-  - docker-compose run --rm tests
+  - skip
