@@ -8,8 +8,10 @@ use Keboola\Csv\CsvFile;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\ProjectRestore\StorageApi\ConfigurationFilter;
 use Keboola\ProjectRestore\StorageApi\Token;
-use Keboola\StorageApi\Client as StorageApi;
+use Keboola\StorageApi\BranchAwareClient;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Exception as StorageApiException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -21,17 +23,31 @@ use Psr\Log\NullLogger;
 
 abstract class Restore
 {
-    protected StorageApi $sapiClient;
+    protected Client $sapiClient;
+
+    protected Client $branchAwareClient;
 
     protected LoggerInterface $logger;
 
     protected Token $token;
 
-    public function __construct(?LoggerInterface $logger = null, StorageApi $sapiClient)
+    public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
         $this->sapiClient = $sapiClient;
         $this->token = new Token($this->sapiClient);
         $this->logger = $logger?: new NullLogger();
+
+        $devBranches = new DevBranches($this->sapiClient);
+        $listBranches = $devBranches->listBranches();
+        $defaultBranch = current(array_filter($listBranches, fn($v) => $v['isDefault'] === true));
+
+        $this->branchAwareClient = new BranchAwareClient(
+            $defaultBranch['id'],
+            [
+                'url' => $sapiClient->getApiUrl(),
+                'token' => $sapiClient->getTokenString(),
+            ]
+        );
     }
 
     public function restoreConfigs(array $skipComponents = []): void
