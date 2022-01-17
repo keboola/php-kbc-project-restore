@@ -11,8 +11,10 @@ use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
+use PHPUnit\Framework\Assert;
 use stdClass;
 
 class S3RestoreTest extends BaseTest
@@ -894,5 +896,27 @@ class S3RestoreTest extends BaseTest
         $bucket = $this->sapiClient->listBuckets(['include' => 'metadata'])[0];
         self::assertEquals('bucketKey', $bucket['metadata'][0]['key']);
         self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
+    }
+
+    public function testRestoreTransformationMetadata(): void
+    {
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'transformation-with-metadata'
+        );
+        $backup->restoreConfigs();
+
+        $components = new Components($this->branchAwareClient);
+
+        $options = new ListConfigurationMetadataOptions();
+        $options->setComponentId('keboola.snowflake-transformation');
+        $options->setConfigurationId('sapi-php-test');
+
+        $metadata = $components->listConfigurationMetadata($options);
+
+        Assert::assertEquals('KBC.configuration.folderName', $metadata[0]['key']);
+        Assert::assertEquals('testFolder', $metadata[0]['value']);
     }
 }

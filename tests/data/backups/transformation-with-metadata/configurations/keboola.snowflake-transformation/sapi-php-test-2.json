@@ -1,0 +1,48 @@
+{
+  "id": "sapi-php-test-2",
+  "name": "test-configuration-2",
+  "description": "Test Configuration 2",
+  "created": "2022-01-17T09:10:02+0100",
+  "creatorToken": {
+    "id": 435750,
+    "description": "ondrej.jodas@keboola.com"
+  },
+  "version": 2,
+  "changeDescription": "Row 1",
+  "isDeleted": false,
+  "configuration": {},
+  "rowsSortOrder": [],
+  "rows": [
+    {
+      "id": "804561957",
+      "name": "",
+      "description": "",
+      "isDisabled": false,
+      "version": 1,
+      "created": "2022-01-17T09:10:02+0100",
+      "creatorToken": {
+        "id": 435750,
+        "description": "ondrej.jodas@keboola.com"
+      },
+      "changeDescription": "Row 1",
+      "state": {},
+      "configuration": {
+        "name": "test 1",
+        "backend": "docker",
+        "type": "r",
+        "queries": [
+          "foo"
+        ]
+      }
+    }
+  ],
+  "state": {},
+  "currentVersion": {
+    "created": "2022-01-17T09:10:02+0100",
+    "creatorToken": {
+      "id": 435750,
+      "description": "ondrej.jodas@keboola.com"
+    },
+    "changeDescription": "Row 1"
+  }
+}
