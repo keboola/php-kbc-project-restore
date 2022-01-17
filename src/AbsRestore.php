@@ -50,6 +50,15 @@ class AbsRestore extends Restore
         file_put_contents($targetFilePath, $this->getDataFromStorage($sourceFilePath, false));
     }
 
+    protected function listComponentConfigurationsFiles(string $filePath): array
+    {
+        $options = new ListBlobsOptions();
+        $options->setPrefix($filePath);
+
+        $blobs = $this->absClient->listBlobs($this->container, $options);
+        return array_map(fn(Blob $v) => $v->getName(), $blobs->getBlobs());
+    }
+
     protected function listTableFiles(string $tableId): array
     {
         $options = new ListBlobsOptions();
