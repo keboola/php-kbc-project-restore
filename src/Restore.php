@@ -163,7 +163,7 @@ abstract class Restore
 
                 if (in_array($metadataFilePath, $componentConfigurationsFiles)) {
                     $metadataData = json_decode((string) $this->getDataFromStorage($metadataFilePath), true);
-                    array_walk($metadataData, function (&$v) {
+                    array_walk($metadataData, function (&$v): void {
                         unset($v['id']);
                         unset($v['timestamp']);
                     });
@@ -515,7 +515,7 @@ abstract class Restore
      */
     abstract protected function getDataFromStorage(string $filePath, bool $useString = true);
 
-    abstract protected function listComponentConfigurationsFiles(string $filePath);
+    abstract protected function listComponentConfigurationsFiles(string $filePath): array;
 
     abstract protected function copyFileFromStorage(string $sourceFilePath, string $targetFilePath): void;
 
