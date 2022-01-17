@@ -6,45 +6,23 @@ namespace Keboola\ProjectRestore\StorageApi;
 
 class BucketInfo
 {
-    /**
-     * @var string
-     */
-    private $id;
+    private string $id;
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
 
-    /**
-     * @var string
-     */
-    private $stage;
+    private string $stage;
 
-    /**
-     * @var string
-     */
-    private $backend;
+    private string $backend;
 
-    /**
-     * @var string
-     */
-    private $description;
+    private string $description;
 
-    /**
-     * @var bool
-     */
-    private $isLinkedBucket;
+    private ?string $displayName;
 
-    /**
-     * @var array
-     */
-    private $attributes = [];
+    private bool $isLinkedBucket;
 
-    /**
-     * @var array
-     */
-    private $metadata = [];
+    private array $attributes = [];
+
+    private array $metadata = [];
 
     public function __construct(array $bucketInfo)
     {
@@ -53,6 +31,8 @@ class BucketInfo
         $this->stage = $bucketInfo['stage'];
 
         $this->backend = $bucketInfo['backend'];
+
+        $this->displayName = $bucketInfo['displayName'] ?? null;
 
         $this->description = $bucketInfo['description'];
         $this->isLinkedBucket = isset($bucketInfo['sourceBucket']);
@@ -107,5 +87,10 @@ class BucketInfo
     public function getMetadata(): array
     {
         return $this->metadata;
+    }
+
+    public function getDisplayName(): ?string
+    {
+        return $this->displayName;
     }
 }
