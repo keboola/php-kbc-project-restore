@@ -1,0 +1,105 @@
+[
+  {
+    "id": "keboola.snowflake-transformation",
+    "type": "transformation",
+    "name": "Snowflake SQL",
+    "description": "The cloud data warehouse offers instant elasticity of computing power for all your data processing needs.",
+    "longDescription": "Application which runs KBC transformations",
+    "version": 26,
+    "complexity": null,
+    "category": null,
+    "hasUI": false,
+    "hasRun": false,
+    "ico32": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/keboola.snowflake-transformation\/32\/1593755132929.png",
+    "ico64": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/keboola.snowflake-transformation\/64\/1593755132929.png",
+    "data": {
+      "definition": {
+        "type": "aws-ecr",
+        "uri": "147946154733.dkr.ecr.us-east-1.amazonaws.com\/developer-portal-v2\/keboola.snowflake-transformation",
+        "tag": "0.5.0",
+        "digest": "sha256:8ffb2067a4703495b99bb7c27aa7aa8080ea1abdfc633c4ffd5224a013703a98"
+      },
+      "vendor": {
+        "contact": [
+          "Keboola :(){:|:&};: s.r.o.",
+          "D\u011blnick\u00e1 191\/27\nHole\u0161ovice\n170 00 Praha 7",
+          "support@keboola.com"
+        ],
+        "licenseUrl": "https:\/\/www.keboola.com\/terms-and-conditions"
+      },
+      "configuration_format": "json",
+      "network": "bridge",
+      "process_timeout": 43200,
+      "forward_token": false,
+      "forward_token_details": false,
+      "default_bucket": false,
+      "staging_storage": {
+        "input": "workspace-snowflake",
+        "output": "workspace-snowflake"
+      }
+    },
+    "flags": [
+      "genericDockerUI",
+      "genericDockerUI-tableInput",
+      "genericDockerUI-tableOutput",
+      "genericCodeBlocksUI",
+      "genericVariablesUI"
+    ],
+    "configurationSchema": {},
+    "configurationRowSchema": {},
+    "emptyConfiguration": {},
+    "emptyConfigurationRow": {},
+    "uiOptions": {},
+    "configurationDescription": null,
+    "features": [],
+    "expiredOn": null,
+    "uri": "https:\/\/syrup.keboola.com\/docker\/keboola.snowflake-transformation",
+    "documentationUrl": "https:\/\/help.keboola.com\/transformations\/snowflake-plain",
+    "configurations": [
+      {
+        "id": "sapi-php-test",
+        "name": "test-configuration",
+        "description": "Test Configuration",
+        "created": "2022-01-17T09:10:02+0100",
+        "creatorToken": {
+          "id": 435750,
+          "description": "ondrej.jodas@keboola.com"
+        },
+        "version": 2,
+        "changeDescription": "Row 1",
+        "isDeleted": false,
+        "configuration": {},
+        "currentVersion": {
+          "created": "2022-01-17T09:10:02+0100",
+          "creatorToken": {
+            "id": 435750,
+            "description": "ondrej.jodas@keboola.com"
+          },
+          "changeDescription": "Row 1"
+        }
+      },
+      {
+        "id": "sapi-php-test-2",
+        "name": "test-configuration-2",
+        "description": "Test Configuration 2",
+        "created": "2022-01-17T09:10:02+0100",
+        "creatorToken": {
+          "id": 435750,
+          "description": "ondrej.jodas@keboola.com"
+        },
+        "version": 2,
+        "changeDescription": "Row 1",
+        "isDeleted": false,
+        "configuration": {},
+        "currentVersion": {
+          "created": "2022-01-17T09:10:02+0100",
+          "creatorToken": {
+            "id": 435750,
+            "description": "ondrej.jodas@keboola.com"
+          },
+          "changeDescription": "Row 1"
+        }
+      }
+    ]
+  }
+]

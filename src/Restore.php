@@ -8,11 +8,14 @@ use Keboola\Csv\CsvFile;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\ProjectRestore\StorageApi\ConfigurationFilter;
 use Keboola\ProjectRestore\StorageApi\Token;
-use Keboola\StorageApi\Client as StorageApi;
+use Keboola\StorageApi\BranchAwareClient;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Exception as StorageApiException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
+use Keboola\StorageApi\Options\Components\ConfigurationMetadata;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
@@ -21,17 +24,31 @@ use Psr\Log\NullLogger;
 
 abstract class Restore
 {
-    protected StorageApi $sapiClient;
+    protected Client $sapiClient;
+
+    protected Client $branchAwareClient;
 
     protected LoggerInterface $logger;
 
     protected Token $token;
 
-    public function __construct(?LoggerInterface $logger = null, StorageApi $sapiClient)
+    public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
         $this->sapiClient = $sapiClient;
         $this->token = new Token($this->sapiClient);
         $this->logger = $logger?: new NullLogger();
+
+        $devBranches = new DevBranches($this->sapiClient);
+        $listBranches = $devBranches->listBranches();
+        $defaultBranch = current(array_filter($listBranches, fn($v) => $v['isDefault'] === true));
+
+        $this->branchAwareClient = new BranchAwareClient(
+            $defaultBranch['id'],
+            [
+                'url' => $sapiClient->getApiUrl(),
+                'token' => $sapiClient->getTokenString(),
+            ]
+        );
     }
 
     public function restoreConfigs(array $skipComponents = []): void
@@ -50,7 +67,6 @@ abstract class Restore
         foreach ($this->sapiClient->indexAction()['components'] as $component) {
             $componentList[$component['id']] = $component;
         }
-
         foreach ($configurations as $componentWithConfigurations) {
             if (in_array($componentWithConfigurations['id'], $skipComponents)) {
                 $this->logger->warning(
@@ -74,6 +90,12 @@ abstract class Restore
             }
 
             $this->logger->info(sprintf('Restoring %s configurations', $componentWithConfigurations['id']));
+
+            // restore configuration metadata
+            $componentConfigurationsFiles = $this->listComponentConfigurationsFiles(sprintf(
+                'configurations/%s',
+                $componentWithConfigurations['id']
+            ));
 
             foreach ($componentWithConfigurations['configurations'] as $componentConfiguration) {
                 // configurations as objects to preserve empty arrays or empty objects
@@ -130,6 +152,28 @@ abstract class Restore
                     $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
                     $configuration->setChangeDescription('Restored rows sort order from backup');
                     $components->updateConfiguration($configuration);
+                }
+
+                // restore configuration metadata
+                $metadataFilePath = sprintf(
+                    'configurations/%s/%s.json.metadata',
+                    $componentWithConfigurations['id'],
+                    $componentConfiguration['id']
+                );
+
+                if (in_array($metadataFilePath, $componentConfigurationsFiles)) {
+                    $metadataData = json_decode((string) $this->getDataFromStorage($metadataFilePath), true);
+                    array_walk($metadataData, function (&$v): void {
+                        unset($v['id']);
+                        unset($v['timestamp']);
+                    });
+
+                    $branchAwareComponents = new Components($this->branchAwareClient);
+
+                    $configMetadata = new ConfigurationMetadata($configuration);
+                    $configMetadata->setMetadata($metadataData);
+
+                    $branchAwareComponents->addConfigurationMetadata($configMetadata);
                 }
             }
         }
@@ -470,6 +514,8 @@ abstract class Restore
      * @return resource|string
      */
     abstract protected function getDataFromStorage(string $filePath, bool $useString = true);
+
+    abstract protected function listComponentConfigurationsFiles(string $filePath): array;
 
     abstract protected function copyFileFromStorage(string $sourceFilePath, string $targetFilePath): void;
 

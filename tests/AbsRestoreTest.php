@@ -10,9 +10,11 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use PHPUnit\Framework\Assert;
 use stdClass;
 
 class AbsRestoreTest extends BaseTest
@@ -834,6 +836,28 @@ class AbsRestoreTest extends BaseTest
         $backup->restoreTables();
 
         self::assertTrue($this->sapiClient->tableExists('in.c-bucket.Account'));
+    }
+
+    public function testRestoreTransformationMetadata(): void
+    {
+        $backup = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-transformation-with-metadata'
+        );
+        $backup->restoreBuckets(true);
+        $backup->restoreConfigs();
+
+        $components = new Components($this->branchAwareClient);
+
+        $options = new ListConfigurationMetadataOptions();
+        $options->setComponentId('keboola.snowflake-transformation');
+        $options->setConfigurationId('sapi-php-test');
+
+        $metadata = $components->listConfigurationMetadata($options);
+
+        Assert::assertEquals('KBC.configuration.folderName', $metadata[0]['key']);
+        Assert::assertEquals('testFolder', $metadata[0]['value']);
     }
 
     public function testRestoreMetadata(): void

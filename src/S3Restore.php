@@ -7,6 +7,8 @@ namespace Keboola\ProjectRestore;
 use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
 use Keboola\Temp\Temp;
+use MicrosoftAzure\Storage\Blob\Models\Blob;
+use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\LoggerInterface;
 
 class S3Restore extends Restore
@@ -72,6 +74,19 @@ class S3Restore extends Restore
             'Key' => $this->path . $sourceFilePath,
             'SaveAs' => $targetFilePath,
         ]);
+    }
+
+    protected function listComponentConfigurationsFiles(string $filePath): array
+    {
+        $iterator = $this->s3Client->getIterator('ListObjects', [
+            'Bucket' => $this->bucket,
+            'Prefix' => $this->path . $filePath,
+        ]);
+
+        return array_map(
+            fn(array $v) => substr($v['Key'], strlen($this->path)),
+            iterator_to_array($iterator)
+        );
     }
 
     protected function listTableFiles(string $tableId): array
