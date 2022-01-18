@@ -84,6 +84,7 @@ class BucketInfoTest extends BaseTest
         $bucket = new BucketInfo($buckets[0]);
         $this->assertEquals($bucketId, $bucket->getId());
         $this->assertEquals('c-' . self::BUCKET_NAME, $bucket->getName());
+        $this->assertEquals(self::BUCKET_NAME, $bucket->getDisplayName());
         $this->assertEquals(self::BUCKET_STAGE, $bucket->getStage());
 
         $this->assertEquals($buckets[0]['backend'], $bucket->getBackend());

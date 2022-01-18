@@ -224,7 +224,8 @@ abstract class Restore
             substr($bucket->getName(), 2),
             $bucket->getStage(),
             $bucket->getDescription() ?: '',
-            $useDefaultBackend ? null : $bucket->getBackend()
+            $useDefaultBackend ? null : $bucket->getBackend(),
+            $bucket->getDisplayName()
         );
 
         // bucket attributes
