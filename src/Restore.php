@@ -123,6 +123,9 @@ abstract class Restore
                 $configuration->setConfiguration(
                     ConfigurationFilter::removeOauthAuthorization($configurationData->configuration)
                 );
+
+                $components->updateConfiguration($configuration);
+
                 if (isset($configurationData->state)) {
                     $configurationState = new ConfigurationState();
                     $configurationState->setComponentId($componentWithConfigurations['id']);
@@ -130,7 +133,6 @@ abstract class Restore
                     $configurationState->setState($configurationData->state);
                     $components->updateConfigurationState($configurationState);
                 }
-                $components->updateConfiguration($configuration);
 
                 // create configuration rows
                 if (count($configurationData->rows)) {
@@ -146,13 +148,15 @@ abstract class Restore
                         $configurationRow->setName($row->name);
                         $configurationRow->setDescription($row->description);
                         $configurationRow->setIsDisabled($row->isDisabled);
+
+                        $components->updateConfigurationRow($configurationRow);
+
                         if (isset($row->state)) {
                             $configurationRowState = new ConfigurationRowState($configuration);
                             $configurationRowState->setRowId($configurationRow->getRowId());
                             $configurationRowState->setState($row->state);
                             $components->updateConfigurationRowState($configurationRowState);
                         }
-                        $components->updateConfigurationRow($configurationRow);
                     }
                 }
 
