@@ -17,6 +17,8 @@ use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Options\Components\ConfigurationMetadata;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
+use Keboola\StorageApi\Options\Components\ConfigurationRowState;
+use Keboola\StorageApi\Options\Components\ConfigurationState;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
@@ -121,10 +123,16 @@ abstract class Restore
                 $configuration->setConfiguration(
                     ConfigurationFilter::removeOauthAuthorization($configurationData->configuration)
                 );
-                if (isset($configurationData->state)) {
-                    $configuration->setState($configurationData->state);
-                }
+
                 $components->updateConfiguration($configuration);
+
+                if (isset($configurationData->state)) {
+                    $configurationState = new ConfigurationState();
+                    $configurationState->setComponentId($componentWithConfigurations['id']);
+                    $configurationState->setConfigurationId($componentConfiguration['id']);
+                    $configurationState->setState($configurationData->state);
+                    $components->updateConfigurationState($configurationState);
+                }
 
                 // create configuration rows
                 if (count($configurationData->rows)) {
@@ -140,10 +148,15 @@ abstract class Restore
                         $configurationRow->setName($row->name);
                         $configurationRow->setDescription($row->description);
                         $configurationRow->setIsDisabled($row->isDisabled);
-                        if (isset($row->state)) {
-                            $configurationRow->setState($row->state);
-                        }
+
                         $components->updateConfigurationRow($configurationRow);
+
+                        if (isset($row->state)) {
+                            $configurationRowState = new ConfigurationRowState($configuration);
+                            $configurationRowState->setRowId($configurationRow->getRowId());
+                            $configurationRowState->setState($row->state);
+                            $components->updateConfigurationRowState($configurationRowState);
+                        }
                     }
                 }
 
