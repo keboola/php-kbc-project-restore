@@ -99,6 +99,28 @@
           },
           "changeDescription": "Row 1"
         }
+      },
+      {
+        "id": "sapi-php-test-3",
+        "name": "test-configuration-3",
+        "description": "Test Configuration 3",
+        "created": "2022-01-17T09:10:02+0100",
+        "creatorToken": {
+          "id": 435750,
+          "description": "ondrej.jodas@keboola.com"
+        },
+        "version": 2,
+        "changeDescription": "Row 1",
+        "isDeleted": false,
+        "configuration": {},
+        "currentVersion": {
+          "created": "2022-01-17T09:10:02+0100",
+          "creatorToken": {
+            "id": 435750,
+            "description": "ondrej.jodas@keboola.com"
+          },
+          "changeDescription": "Row 1"
+        }
       }
     ]
   }
