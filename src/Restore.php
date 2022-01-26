@@ -176,17 +176,20 @@ abstract class Restore
 
                 if (in_array($metadataFilePath, $componentConfigurationsFiles)) {
                     $metadataData = json_decode((string) $this->getDataFromStorage($metadataFilePath), true);
-                    array_walk($metadataData, function (&$v): void {
-                        unset($v['id']);
-                        unset($v['timestamp']);
-                    });
 
-                    $branchAwareComponents = new Components($this->branchAwareClient);
+                    if (!empty($metadataData)) {
+                        array_walk($metadataData, function (&$v): void {
+                            unset($v['id']);
+                            unset($v['timestamp']);
+                        });
 
-                    $configMetadata = new ConfigurationMetadata($configuration);
-                    $configMetadata->setMetadata($metadataData);
+                        $branchAwareComponents = new Components($this->branchAwareClient);
 
-                    $branchAwareComponents->addConfigurationMetadata($configMetadata);
+                        $configMetadata = new ConfigurationMetadata($configuration);
+                        $configMetadata->setMetadata($metadataData);
+
+                        $branchAwareComponents->addConfigurationMetadata($configMetadata);
+                    }
                 }
             }
         }
