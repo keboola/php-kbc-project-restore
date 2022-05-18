@@ -143,10 +143,9 @@ class AbsRestoreTest extends BaseTest
         }
 
         $buckets = $this->sapiClient->listBuckets();
-        self::assertCount(3, $buckets);
+        self::assertCount(2, $buckets);
         self::assertTrue($this->sapiClient->bucketExists('in.c-snowflake'));
         self::assertTrue($this->sapiClient->bucketExists('in.c-redshift'));
-        self::assertTrue($this->sapiClient->bucketExists('in.c-mysql'));
     }
 
     public function testBucketMissingBackend(): void
@@ -161,7 +160,7 @@ class AbsRestoreTest extends BaseTest
         $projectData = $tokenData['owner'];
 
         $buckets = $backup->getBucketsInBackup();
-        self::assertCount(3, $buckets);
+        self::assertCount(2, $buckets);
 
         $fails = 0;
         foreach ($buckets as $bucketInfo) {
@@ -300,10 +299,9 @@ class AbsRestoreTest extends BaseTest
         $backup->restoreBuckets(false);
 
         $buckets = $this->sapiClient->listBuckets();
-        self::assertCount(3, $buckets);
+        self::assertCount(2, $buckets);
         self::assertTrue($this->sapiClient->bucketExists('in.c-snowflake'));
         self::assertTrue($this->sapiClient->bucketExists('in.c-redshift'));
-        self::assertTrue($this->sapiClient->bucketExists('in.c-mysql'));
     }
 
     public function testBackendMissingError(): void

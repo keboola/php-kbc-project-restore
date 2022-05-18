@@ -10,8 +10,8 @@
     "category": null,
     "hasUI": false,
     "hasRun": false,
-    "ico32": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/keboola.snowflake-transformation\/32\/1593755132929.png",
-    "ico64": "https:\/\/assets-cdn.keboola.com\/developer-portal\/icons\/keboola.snowflake-transformation\/64\/1593755132929.png",
+    "ico32": "https:\/\/ui.keboola-assets.com\/developer-portal\/icons\/keboola.snowflake-transformation\/32\/1593755132929.png",
+    "ico64": "https:\/\/ui.keboola-assets.com\/developer-portal\/icons\/keboola.snowflake-transformation\/64\/1593755132929.png",
     "data": {
       "definition": {
         "type": "aws-ecr",
