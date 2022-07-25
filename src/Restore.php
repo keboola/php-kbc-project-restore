@@ -228,11 +228,6 @@ abstract class Restore
             $bucket->getDisplayName()
         );
 
-        // bucket attributes
-        if (count($bucket->getAttributes())) {
-            $this->sapiClient->replaceBucketAttributes($bucket->getId(), $bucket->getAttributes());
-        }
-
         // bucket metadata
         if (count($bucket->getMetadata())) {
             $metadataClient = new Metadata($this->sapiClient);
@@ -281,10 +276,6 @@ abstract class Restore
                 continue;
             }
 
-            // bucket attributes
-            if (count($bucketInfo->getAttributes())) {
-                $this->sapiClient->replaceBucketAttributes($bucketInfo->getId(), $bucketInfo->getAttributes());
-            }
             if (count($bucketInfo->getMetadata())) {
                 foreach ($this->prepareMetadata($bucketInfo->getMetadata()) as $provider => $metadata) {
                     $metadataClient->postBucketMetadata($bucketInfo->getId(), $provider, $metadata);

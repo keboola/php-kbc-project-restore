@@ -20,8 +20,6 @@ class BucketInfo
 
     private bool $isLinkedBucket;
 
-    private array $attributes = [];
-
     private array $metadata = [];
 
     public function __construct(array $bucketInfo)
@@ -37,15 +35,10 @@ class BucketInfo
         $this->description = $bucketInfo['description'];
         $this->isLinkedBucket = isset($bucketInfo['sourceBucket']);
 
-        if (!array_key_exists('attributes', $bucketInfo)) {
-            throw new \InvalidArgumentException(sprintf('Missing attributes info for bucket "%s"', $this->getId()));
-        }
-
         if (!array_key_exists('metadata', $bucketInfo)) {
             throw new \InvalidArgumentException(sprintf('Missing metadata info for bucket "%s"', $this->getId()));
         }
 
-        $this->attributes = $bucketInfo['attributes'];
         $this->metadata = $bucketInfo['metadata'];
     }
 
@@ -77,11 +70,6 @@ class BucketInfo
     public function isLinkedBucket(): bool
     {
         return $this->isLinkedBucket;
-    }
-
-    public function getAttributes(): array
-    {
-        return $this->attributes;
     }
 
     public function getMetadata(): array

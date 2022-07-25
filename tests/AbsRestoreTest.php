@@ -71,27 +71,6 @@ class AbsRestoreTest extends BaseTest
         self::assertCount(2, $buckets);
         self::assertEquals('in.c-bucket1', $buckets[0]['id']);
         self::assertEquals('in.c-bucket2', $buckets[1]['id']);
-
-        // attributes check
-        $bucket = $this->sapiClient->getBucket('in.c-bucket1');
-        self::assertArrayHasKey('attributes', $bucket);
-        self::assertCount(2, $bucket['attributes']);
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $bucket['attributes']
-        );
     }
 
     public function testBucketMetadataRestore(): void
@@ -319,32 +298,6 @@ class AbsRestoreTest extends BaseTest
             self::assertStringContainsString('Missing', $e->getMessage());
             self::assertStringContainsString('backend', $e->getMessage());
         }
-    }
-
-    public function testRestoreBucketAttributes(): void
-    {
-        $backup = new AbsRestore(
-            $this->sapiClient,
-            $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-buckets'
-        );
-        $backup->restoreBuckets(true);
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $this->sapiClient->getBucket('in.c-bucket1')['attributes']
-        );
     }
 
     public function testRestoreTableWithHeader(): void

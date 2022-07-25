@@ -90,19 +90,6 @@ class BucketInfoTest extends BaseTest
         $this->assertEquals($buckets[0]['backend'], $bucket->getBackend());
         $this->assertEquals(self::BUCKET_DESCR, $bucket->getDescription());
 
-        // attributes
-        $attributes = $bucket->getAttributes();
-        $this->assertCount(1, $attributes);
-
-        $this->assertArrayHasKey('name', $attributes[0]);
-        $this->assertEquals('foo', $attributes[0]['name']);
-
-        $this->assertArrayHasKey('value', $attributes[0]);
-        $this->assertEquals('bar', $attributes[0]['value']);
-
-        $this->assertArrayHasKey('protected', $attributes[0]);
-        $this->assertFalse($attributes[0]['protected']);
-
         // metadata
         $metadata = $bucket->getMetadata();
         $this->assertCount(1, $metadata);
