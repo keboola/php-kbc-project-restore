@@ -75,27 +75,6 @@ class S3RestoreTest extends BaseTest
         self::assertCount(2, $buckets);
         self::assertEquals('in.c-bucket1', $buckets[0]['id']);
         self::assertEquals('in.c-bucket2', $buckets[1]['id']);
-
-        // attributes check
-        $bucket = $this->sapiClient->getBucket('in.c-bucket1');
-        self::assertArrayHasKey('attributes', $bucket);
-        self::assertCount(2, $bucket['attributes']);
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $bucket['attributes']
-        );
     }
 
     public function testBucketMetadataRestore(): void
@@ -333,33 +312,6 @@ class S3RestoreTest extends BaseTest
             self::assertStringContainsString('Missing', $e->getMessage());
             self::assertStringContainsString('backend', $e->getMessage());
         }
-    }
-
-    public function testRestoreBucketAttributes(): void
-    {
-        $backup = new S3Restore(
-            $this->sapiClient,
-            $this->s3Client,
-            (string) getenv('TEST_AWS_S3_BUCKET'),
-            'buckets'
-        );
-        $backup->restoreBuckets(true);
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $this->sapiClient->getBucket('in.c-bucket1')['attributes']
-        );
     }
 
     public function testRestoreTableWithHeader(): void
