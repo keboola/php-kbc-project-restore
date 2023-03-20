@@ -331,10 +331,7 @@ abstract class Restore
                 $aliasOptions
             );
 
-            // Alias attributes
-            if (isset($tableInfo['attributes']) && count($tableInfo['attributes'])) {
-                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo['attributes']);
-            }
+            // Alias metadata
             if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
                 foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
                     $metadataClient->postTableMetadata($tableId, $provider, $metadata);
@@ -398,10 +395,7 @@ abstract class Restore
                 ]
             );
 
-            // Table attributes
-            if (isset($tableInfo['attributes']) && count($tableInfo['attributes'])) {
-                $this->sapiClient->replaceTableAttributes($tableId, $tableInfo['attributes']);
-            }
+            // Table metadata
             if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
                 foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
                     $metadataClient->postTableMetadata($tableId, $provider, $metadata);
