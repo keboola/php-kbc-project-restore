@@ -16,7 +16,6 @@
     "rowsCount": 1570,
     "dataSizeBytes": 29696,
     "isAlias": false,
-    "attributes": [],
     "bucket": {
       "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/in.c-bucket",
       "id": "in.c-bucket",
@@ -65,18 +64,6 @@
       }
     },
     "aliasColumnsAutoSync": true,
-    "attributes": [
-      {
-        "name": "myKey",
-        "value": "myValue",
-        "protected": false
-      },
-      {
-        "name": "myProtectedKey",
-        "value": "myProtectedValue",
-        "protected": true
-      }
-    ],
     "bucket": {
       "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/out.c-bucket",
       "id": "out.c-bucket",

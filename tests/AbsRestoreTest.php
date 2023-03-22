@@ -90,7 +90,7 @@ class AbsRestoreTest extends BaseTest
         self::assertCount(1, $buckets);
         self::assertEquals('in.c-bucket', $buckets[0]['id']);
 
-        // attributes check
+        // metadata check
         $this->sapiClient->getBucket('in.c-bucket');
 
         $metadata = new Metadata($this->sapiClient);
@@ -421,33 +421,6 @@ class AbsRestoreTest extends BaseTest
         self::assertCount(4, explode("\n", $fileContents));
     }
 
-    public function testRestoreTableAttributes(): void
-    {
-        $backup = new AbsRestore(
-            $this->sapiClient,
-            $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-properties'
-        );
-        $backup->restoreBuckets(true);
-        $backup->restoreTables();
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $this->sapiClient->getTable('in.c-bucket.Account')['attributes']
-        );
-    }
-
     public function testRestoreTablePrimaryKeys(): void
     {
         $backup = new AbsRestore(
@@ -480,34 +453,6 @@ class AbsRestoreTest extends BaseTest
         self::assertEquals(true, $aliasTable['aliasColumnsAutoSync']);
         self::assertEquals(['Id', 'Name'], $aliasTable['columns']);
         self::assertEquals('in.c-bucket.Account', $aliasTable['sourceTable']['id']);
-    }
-
-    public function testRestoreAliasAttributes(): void
-    {
-        $backup = new AbsRestore(
-            $this->sapiClient,
-            $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-properties'
-        );
-        $backup->restoreBuckets(true);
-        $backup->restoreTables();
-        $backup->restoreTableAliases();
-
-        self::assertEquals(
-            [
-                [
-                    'name' => 'myKey',
-                    'value' => 'myValue',
-                    'protected' => false,
-                ],
-                [
-                    'name' => 'myProtectedKey',
-                    'value' => 'myProtectedValue',
-                    'protected' => true,
-                ],
-            ],
-            $this->sapiClient->getTable('out.c-bucket.Account')['attributes']
-        );
     }
 
     public function testRestoreAliasMetadata(): void

@@ -14,18 +14,6 @@
     "isMaintenance": false,
     "backend": "snowflake",
     "sharing": "organization",
-    "attributes": [
-      {
-        "name": "myKey",
-        "value": "myValue",
-        "protected": false
-      },
-      {
-        "name": "myProtectedKey",
-        "value": "myProtectedValue",
-        "protected": true
-      }
-    ],
     "metadata": []
   },
   {
@@ -43,7 +31,6 @@
     "isMaintenance": false,
     "backend": "snowflake",
     "sharing": null,
-    "attributes": [],
     "metadata": []
   },
   {
@@ -72,7 +59,6 @@
         "name": "Data Takeout Recovery - Master"
       }
     },
-    "attributes": [],
     "metadata": []
   }
 ]

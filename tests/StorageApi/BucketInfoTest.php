@@ -51,19 +51,8 @@ class BucketInfoTest extends BaseTest
     {
         $this->createTestBucket();
 
-        // missing attributes
-        $buckets = $this->sapiClient->listBuckets(['include' => 'linkedBuckets']);
-        $this->assertCount(1, $buckets);
-
-        try {
-            new BucketInfo($buckets[0]);
-            $this->fail('Creating BucketInfo should fail on missing attributes info');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertContains('Missing attributes info for bucket', $e->getMessage());
-        }
-
         // missing metadata
-        $buckets = $this->sapiClient->listBuckets(['include' => 'attributes']);
+        $buckets = $this->sapiClient->listBuckets(['include' => 'linkedBuckets']);
         $this->assertCount(1, $buckets);
 
         try {
@@ -78,7 +67,7 @@ class BucketInfoTest extends BaseTest
     {
         $bucketId = $this->createTestBucket();
 
-        $buckets = $this->sapiClient->listBuckets(['include' => 'attributes,metadata']);
+        $buckets = $this->sapiClient->listBuckets(['include' => 'metadata']);
         $this->assertCount(1, $buckets);
 
         $bucket = new BucketInfo($buckets[0]);
@@ -115,7 +104,7 @@ class BucketInfoTest extends BaseTest
             $bucketId
         );
 
-        $buckets = $this->sapiClient->listBuckets(['include' => 'attributes,metadata']);
+        $buckets = $this->sapiClient->listBuckets(['include' => 'metadata']);
         $this->assertCount(2, $buckets);
 
         foreach ($buckets as $bucketInfo) {
