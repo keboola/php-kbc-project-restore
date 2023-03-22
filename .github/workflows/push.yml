@@ -10,10 +10,10 @@ env:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # AWS Credentials
-  TEST_AWS_ACCESS_KEY_ID: "AKIAQ4QRYXTAGOBOAKWF"
+  TEST_AWS_ACCESS_KEY_ID: "AKIATDSWT524ZFYZ7XPP"
   TEST_AWS_SECRET_ACCESS_KEY: "${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}"
-  TEST_AWS_REGION: "eu-central-1"
-  TEST_AWS_S3_BUCKET: "gh-actions-php-kbc-project-restore-s3filesbucket-5g7gktywpq6v"
+  TEST_AWS_REGION: "us-east-1"
+  TEST_AWS_S3_BUCKET: "php-kbc-project-restore-s3filesbucket-15tihij1nuchs"
 
   # Azure Credentials
   TEST_AZURE_ACCOUNT_NAME: "projectmigration"
