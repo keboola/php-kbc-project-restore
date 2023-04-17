@@ -33,7 +33,7 @@ abstract class Restore
     protected LoggerInterface $logger;
 
     protected Token $token;
-    private array $projectFeatures;
+    private array $projectFeatures = [];
 
     public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
