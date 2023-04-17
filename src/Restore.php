@@ -532,6 +532,9 @@ abstract class Restore
     private function restoreTypedTable(array $tableInfo): void
     {
         $columns = [];
+        foreach ($tableInfo['columns'] as $column) {
+            $columns[$column] = [];
+        }
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
             $columnMetadata = [];
             foreach ($column as $metadata) {
@@ -549,7 +552,7 @@ abstract class Restore
                 $definition['default'] = $columnMetadata['KBC.datatype.default'];
             }
 
-            $columns[] = [
+            $columns[$columnName] = [
                 'name' => $columnName,
                 'definition' => $definition,
                 'basetype' => $columnMetadata['KBC.datatype.basetype'],
