@@ -538,14 +538,20 @@ abstract class Restore
                 $columnMetadata[$metadata['key']] = $metadata['value'];
             }
 
+            $definition = [
+                'type' => $columnMetadata['KBC.datatype.type'],
+                'nullable' => $columnMetadata['KBC.datatype.nullable'] === '1',
+            ];
+            if (isset($columnMetadata['KBC.datatype.length'])) {
+                $definition['length'] = $columnMetadata['KBC.datatype.length'];
+            }
+            if (isset($columnMetadata['KBC.datatype.default'])) {
+                $definition['default'] = $columnMetadata['KBC.datatype.default'];
+            }
+
             $columns[] = [
                 'name' => $columnName,
-                'definition' => [
-                    'type' => $columnMetadata['KBC.datatype.type'],
-                    'length' => $columnMetadata['KBC.datatype.length'],
-                    'nullable' => $columnMetadata['KBC.datatype.nullable'] === '1',
-                    'default' => $columnMetadata['KBC.datatype.default'] ?? '',
-                ],
+                'definition' => $definition,
                 'basetype' => $columnMetadata['KBC.datatype.basetype'],
             ];
         }
