@@ -385,7 +385,8 @@ abstract class Restore
             $headerFile = new CsvFile($headerFile->getPathname());
             $headerFile->writeRow($tableInfo['columns']);
 
-            if ($this->projectHasFeature('tables-definition') && $tableInfo['isTyped']) {
+            $isTyped = $tableInfo['isTyped'] ?? false;
+            if ($this->projectHasFeature('tables-definition') && $isTyped) {
                 $this->restoreTypedTable($tableInfo);
             } else {
                 $this->restoreTable($tableInfo, $headerFile, $metadataClient);
