@@ -1,0 +1,152 @@
+[
+  {
+    "uri": "https://connection.eu-central-1.keboola.com/v2/storage/tables/in.c-native-tpes.firstTable",
+    "id": "in.c-bucket.firstTable",
+    "name": "firstTable",
+    "displayName": "firstTable",
+    "transactional": false,
+    "primaryKey": [
+      "id"
+    ],
+    "indexType": null,
+    "indexKey": [],
+    "distributionType": null,
+    "distributionKey": [],
+    "syntheticPrimaryKeyEnabled": false,
+    "lastImportDate": null,
+    "rowsCount": null,
+    "dataSizeBytes": null,
+    "isAlias": false,
+    "isAliasable": true,
+    "isTyped": true,
+    "columns": [
+      "id",
+      "name",
+      "datetime",
+      "date"
+    ],
+    "bucket": {
+      "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/in.c-bucket",
+      "id": "in.c-bucket",
+      "name": "c-bucket",
+      "stage": "in",
+      "description": "",
+      "tables": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/in.c-bucket\/tables",
+      "created": "2016-11-07T01:57:53+0100",
+      "lastChangeDate": "2016-11-07T02:12:16+0100",
+      "isReadOnly": false,
+      "dataSizeBytes": 6247936,
+      "rowsCount": 675727,
+      "isMaintenance": false,
+      "backend": "snowflake"
+    },
+    "metadata": [
+      {
+        "id": "1598834273",
+        "key": "KBC.dataTypesEnabled",
+        "value": "true",
+        "provider": "storage"
+      }
+    ],
+    "columnMetadata": {
+      "date": [
+        {
+          "id": "1598834286",
+          "key": "KBC.datatype.type",
+          "value": "DATE",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834287",
+          "key": "KBC.datatype.nullable",
+          "value": "",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834288",
+          "key": "KBC.datatype.basetype",
+          "value": "DATE",
+          "provider": "storage"
+        }
+      ],
+      "datetime": [
+        {
+          "id": "1598834282",
+          "key": "KBC.datatype.type",
+          "value": "TIMESTAMP_NTZ",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834283",
+          "key": "KBC.datatype.nullable",
+          "value": "1",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834284",
+          "key": "KBC.datatype.basetype",
+          "value": "TIMESTAMP",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834285",
+          "key": "KBC.datatype.length",
+          "value": "9",
+          "provider": "storage"
+        }
+      ],
+      "id": [
+        {
+          "id": "1598834274",
+          "key": "KBC.datatype.type",
+          "value": "NUMBER",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834275",
+          "key": "KBC.datatype.nullable",
+          "value": "",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834276",
+          "key": "KBC.datatype.basetype",
+          "value": "NUMERIC",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834277",
+          "key": "KBC.datatype.length",
+          "value": "38,0",
+          "provider": "storage"
+        }
+      ],
+      "name": [
+        {
+          "id": "1598834278",
+          "key": "KBC.datatype.type",
+          "value": "VARCHAR",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834279",
+          "key": "KBC.datatype.nullable",
+          "value": "1",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834280",
+          "key": "KBC.datatype.basetype",
+          "value": "STRING",
+          "provider": "storage"
+        },
+        {
+          "id": "1598834281",
+          "key": "KBC.datatype.length",
+          "value": "255",
+          "provider": "storage"
+        }
+      ]
+    }
+  }
+]

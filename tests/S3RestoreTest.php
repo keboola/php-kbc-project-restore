@@ -457,6 +457,22 @@ class S3RestoreTest extends BaseTest
         self::assertEquals(['Id'], $account2Table['primaryKey']);
     }
 
+    public function testRestoreNativeDataTypesTable(): void
+    {
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'native-data-types-table'
+        );
+        $backup->restoreBuckets(true);
+        $backup->restoreTables();
+
+        $accountTable = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertEquals(['id'], $accountTable['primaryKey']);
+        self::assertTrue($accountTable['isTyped']);
+    }
+
     public function testRestoreAlias(): void
     {
         $backup = new S3Restore(

@@ -437,6 +437,22 @@ class AbsRestoreTest extends BaseTest
         self::assertEquals(['Id'], $account2Table['primaryKey']);
     }
 
+    public function testRestoreNativeDataTypesTable(): void
+    {
+        $backup = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-native-data-types-table'
+        );
+
+        $backup->restoreBuckets(true);
+        $backup->restoreTables();
+
+        $accountTable = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertEquals(['id'], $accountTable['primaryKey']);
+        self::assertTrue($accountTable['isTyped']);
+    }
+
     public function testRestoreAlias(): void
     {
         $backup = new AbsRestore(
