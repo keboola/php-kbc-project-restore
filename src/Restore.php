@@ -562,7 +562,7 @@ abstract class Restore
         $data = [
             'name' => $tableInfo['name'],
             'primaryKeysNames' => $tableInfo['primaryKey'],
-            'columns' => $columns,
+            'columns' => array_values($columns),
         ];
 
         if ($tableInfo['bucket']['backend'] === 'synapse') {
