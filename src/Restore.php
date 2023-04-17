@@ -529,7 +529,7 @@ abstract class Restore
         }
     }
 
-    private function restoreTypedTable($tableInfo): void
+    private function restoreTypedTable(array $tableInfo): void
     {
         $columns = [];
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
