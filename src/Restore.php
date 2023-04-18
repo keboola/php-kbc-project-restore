@@ -33,6 +33,7 @@ abstract class Restore
     protected LoggerInterface $logger;
 
     protected Token $token;
+    private array $projectFeatures = [];
 
     public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
@@ -380,33 +381,15 @@ abstract class Restore
 
             $this->logger->info(sprintf('Restoring table %s', $tableId));
 
-            //@FIXME
-            // create empty table
-            $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableId));
+            $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableInfo['id']));
             $headerFile = new CsvFile($headerFile->getPathname());
             $headerFile->writeRow($tableInfo['columns']);
 
-            $tableId = $this->sapiClient->createTableAsync(
-                $bucketId,
-                $tableInfo['name'],
-                $headerFile,
-                [
-                    'primaryKey' => join(',', $tableInfo['primaryKey']),
-                ]
-            );
-
-            // Table metadata
-            if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
-                foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
-                    $metadataClient->postTableMetadata($tableId, $provider, $metadata);
-                }
-            }
-            if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
-                foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
-                    foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                        $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
-                    }
-                }
+            $isTyped = $tableInfo['isTyped'] ?? false;
+            if ($this->projectHasFeature('tables-definition') && $isTyped) {
+                $this->restoreTypedTable($tableInfo);
+            } else {
+                $this->restoreTable($tableInfo, $headerFile, $metadataClient);
             }
 
             // upload data
@@ -519,4 +502,93 @@ abstract class Restore
     abstract protected function copyFileFromStorage(string $sourceFilePath, string $targetFilePath): void;
 
     abstract protected function listTableFiles(string $tableId): array;
+
+    private function restoreTable(array $tableInfo, CsvFile $headerFile, Metadata $metadataClient): void
+    {
+        // create empty table
+        $tableId = $this->sapiClient->createTableAsync(
+            $tableInfo['bucket']['id'],
+            $tableInfo['name'],
+            $headerFile,
+            [
+                'primaryKey' => join(',', $tableInfo['primaryKey']),
+            ]
+        );
+
+        // Table metadata
+        if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
+            foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
+                $metadataClient->postTableMetadata($tableId, $provider, $metadata);
+            }
+        }
+        if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
+            foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
+                foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
+                    $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
+                }
+            }
+        }
+    }
+
+    private function restoreTypedTable(array $tableInfo): void
+    {
+        $columns = [];
+        foreach ($tableInfo['columns'] as $column) {
+            $columns[$column] = [];
+        }
+        foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
+            $columnMetadata = [];
+            foreach ($column as $metadata) {
+                $columnMetadata[$metadata['key']] = $metadata['value'];
+            }
+
+            $definition = [
+                'type' => $columnMetadata['KBC.datatype.type'],
+                'nullable' => $columnMetadata['KBC.datatype.nullable'] === '1',
+            ];
+            if (isset($columnMetadata['KBC.datatype.length'])) {
+                $definition['length'] = $columnMetadata['KBC.datatype.length'];
+            }
+            if (isset($columnMetadata['KBC.datatype.default'])) {
+                $definition['default'] = $columnMetadata['KBC.datatype.default'];
+            }
+
+            $columns[$columnName] = [
+                'name' => $columnName,
+                'definition' => $definition,
+                'basetype' => $columnMetadata['KBC.datatype.basetype'],
+            ];
+        }
+
+        $data = [
+            'name' => $tableInfo['name'],
+            'primaryKeysNames' => $tableInfo['primaryKey'],
+            'columns' => array_values($columns),
+        ];
+
+        if ($tableInfo['bucket']['backend'] === 'synapse') {
+            $data['distribution'] = [
+                'type' => $tableInfo['distributionType'],
+                'distributionColumnsNames' => $tableInfo['distributionKey'],
+            ];
+            $data['index'] = [
+                'type' => $tableInfo['indexType'],
+                'indexColumnsNames' => $tableInfo['indexKey'],
+            ];
+        }
+
+        $this->sapiClient->createTableDefinition(
+            $tableInfo['bucket']['id'],
+            $data
+        );
+    }
+
+    private function projectHasFeature(string $feature): bool
+    {
+        if (!$this->projectFeatures) {
+            $this->projectFeatures = $this->sapiClient->verifyToken()['owner']['features'];
+        }
+
+        return in_array($feature, $this->projectFeatures, true);
+    }
 }
