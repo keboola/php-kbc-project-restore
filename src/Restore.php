@@ -386,7 +386,7 @@ abstract class Restore
             $headerFile->writeRow($tableInfo['columns']);
 
             $isTyped = $tableInfo['isTyped'] ?? false;
-            if ($this->projectHasFeature('tables-definition') && $isTyped) {
+            if ($isTyped) {
                 $this->restoreTypedTable($tableInfo);
             } else {
                 $this->restoreTable($tableInfo, $headerFile, $metadataClient);
