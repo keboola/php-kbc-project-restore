@@ -33,7 +33,6 @@ abstract class Restore
     protected LoggerInterface $logger;
 
     protected Token $token;
-    private array $projectFeatures = [];
 
     public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
@@ -581,14 +580,5 @@ abstract class Restore
             $tableInfo['bucket']['id'],
             $data
         );
-    }
-
-    private function projectHasFeature(string $feature): bool
-    {
-        if (!$this->projectFeatures) {
-            $this->projectFeatures = $this->sapiClient->verifyToken()['owner']['features'];
-        }
-
-        return in_array($feature, $this->projectFeatures, true);
     }
 }
