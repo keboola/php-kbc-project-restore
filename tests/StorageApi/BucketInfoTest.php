@@ -21,7 +21,6 @@ class BucketInfoTest extends BaseTest
     private function createTestBucket(): string
     {
         $bucketId = $this->sapiClient->createBucket(self::BUCKET_NAME, self::BUCKET_STAGE, self::BUCKET_DESCR);
-        $this->sapiClient->setBucketAttribute($bucketId, 'foo', 'bar');
 
         $metadata = new Metadata($this->sapiClient);
         $metadata->postBucketMetadata($bucketId, 'tester', [
