@@ -538,6 +538,9 @@ abstract class Restore
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
             $columnMetadata = [];
             foreach ($column as $metadata) {
+                if ($metadata['provider'] !== 'storage') {
+                    continue;
+                }
                 $columnMetadata[$metadata['key']] = $metadata['value'];
             }
 
