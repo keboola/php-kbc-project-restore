@@ -20,6 +20,7 @@ use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\Components\ConfigurationRowState;
 use Keboola\StorageApi\Options\Components\ConfigurationState;
 use Keboola\StorageApi\Options\FileUploadOptions;
+use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -232,7 +233,7 @@ abstract class Restore
         if (count($bucket->getMetadata())) {
             $metadataClient = new Metadata($this->sapiClient);
             foreach ($this->prepareMetadata($bucket->getMetadata()) as $provider => $metadata) {
-                $metadataClient->postBucketMetadata($bucket->getId(), $provider, $metadata);
+                $metadataClient->postBucketMetadata($bucket->getId(), (string) $provider, $metadata);
             }
         }
 
@@ -278,7 +279,7 @@ abstract class Restore
 
             if (count($bucketInfo->getMetadata())) {
                 foreach ($this->prepareMetadata($bucketInfo->getMetadata()) as $provider => $metadata) {
-                    $metadataClient->postBucketMetadata($bucketInfo->getId(), $provider, $metadata);
+                    $metadataClient->postBucketMetadata($bucketInfo->getId(), (string) $provider, $metadata);
                 }
             }
         }
@@ -331,19 +332,7 @@ abstract class Restore
                 $aliasOptions
             );
 
-            // Alias metadata
-            if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
-                foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
-                    $metadataClient->postTableMetadata($tableId, $provider, $metadata);
-                }
-            }
-            if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
-                foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
-                    foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                        $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
-                    }
-                }
-            }
+            $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
         }
     }
 
@@ -386,10 +375,12 @@ abstract class Restore
 
             $isTyped = $tableInfo['isTyped'] ?? false;
             if ($isTyped) {
-                $this->restoreTypedTable($tableInfo);
+                $tableId = $this->restoreTypedTable($tableInfo);
             } else {
-                $this->restoreTable($tableInfo, $headerFile, $metadataClient);
+                $tableId = $this->restoreTable($tableInfo, $headerFile);
             }
+
+            $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
 
             // upload data
             $slices = $this->listTableFiles($tableId);
@@ -453,6 +444,9 @@ abstract class Restore
         }
     }
 
+    /**
+     * @return array<string|int, array<int, array{key: string, value: string, columnName?: string}>>
+     */
     private function prepareMetadata(array $rawMetadata): array
     {
         $result = [];
@@ -502,10 +496,10 @@ abstract class Restore
 
     abstract protected function listTableFiles(string $tableId): array;
 
-    private function restoreTable(array $tableInfo, CsvFile $headerFile, Metadata $metadataClient): void
+    private function restoreTable(array $tableInfo, CsvFile $headerFile): string
     {
         // create empty table
-        $tableId = $this->sapiClient->createTableAsync(
+        return $this->sapiClient->createTableAsync(
             $tableInfo['bucket']['id'],
             $tableInfo['name'],
             $headerFile,
@@ -513,23 +507,9 @@ abstract class Restore
                 'primaryKey' => join(',', $tableInfo['primaryKey']),
             ]
         );
-
-        // Table metadata
-        if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
-            foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
-                $metadataClient->postTableMetadata($tableId, $provider, $metadata);
-            }
-        }
-        if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
-            foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
-                foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                    $metadataClient->postColumnMetadata($tableId . '.' . $column, $provider, $metadata);
-                }
-            }
-        }
     }
 
-    private function restoreTypedTable(array $tableInfo): void
+    private function restoreTypedTable(array $tableInfo): string
     {
         $columns = [];
         foreach ($tableInfo['columns'] as $column) {
@@ -579,9 +559,42 @@ abstract class Restore
             ];
         }
 
-        $this->sapiClient->createTableDefinition(
+        return $this->sapiClient->createTableDefinition(
             $tableInfo['bucket']['id'],
             $data
         );
+    }
+
+    private function restoreTableColumnsMetadata(array $tableInfo, string $tableId, Metadata $metadataClient): void
+    {
+        $metadatas = [];
+        if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
+            foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
+                $metadatas[$provider]['table'] = $metadata;
+            }
+        }
+        if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
+            foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
+                foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
+                    if ($metadata !== []) {
+                        $metadatas[$provider]['columns'][$column] = $metadata;
+                    }
+                }
+            }
+        }
+
+        foreach ($metadatas as $provider => $metadata) {
+            if ($provider === 'storage') {
+                continue;
+            }
+            $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                $tableId,
+                (string) $provider,
+                $metadata['table'] ?? null,
+                $metadata['columns'] ?? null
+            );
+
+            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+        }
     }
 }
