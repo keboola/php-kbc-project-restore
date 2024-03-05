@@ -57,6 +57,12 @@
           "provider": "storage"
         },
         {
+          "id": "1598834286",
+          "key": "KBC.datatype.type",
+          "value": "VARCHAR",
+          "provider": "redshift"
+        },
+        {
           "id": "1598834287",
           "key": "KBC.datatype.nullable",
           "value": "",
@@ -103,6 +109,12 @@
           "provider": "storage"
         },
         {
+          "id": "1598834274",
+          "key": "KBC.datatype.type",
+          "value": "INT",
+          "provider": "snowflake"
+        },
+        {
           "id": "1598834275",
           "key": "KBC.datatype.nullable",
           "value": "",
@@ -127,6 +139,12 @@
           "key": "KBC.datatype.type",
           "value": "VARCHAR",
           "provider": "storage"
+        },
+        {
+          "id": "1598834278",
+          "key": "KBC.datatype.type",
+          "value": "TEXT",
+          "provider": "mysql"
         },
         {
           "id": "1598834279",
