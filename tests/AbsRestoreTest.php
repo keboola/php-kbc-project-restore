@@ -451,6 +451,68 @@ class AbsRestoreTest extends BaseTest
         $accountTable = $this->sapiClient->getTable('in.c-bucket.firstTable');
         self::assertEquals(['id'], $accountTable['primaryKey']);
         self::assertTrue($accountTable['isTyped']);
+
+        $columnsMetadatas = $accountTable['columnMetadata'];
+        self::assertCount(4, $columnsMetadatas);
+
+        $expectedMetadata = [];
+        $expectedMetadata['storage'] = [
+            'date' => [
+                'KBC.datatype.type' => 'DATE',
+                'KBC.datatype.nullable' => '',
+                'KBC.datatype.basetype' => 'DATE',
+            ],
+            'datetime' => [
+                'KBC.datatype.type' => 'TIMESTAMP_NTZ',
+                'KBC.datatype.nullable' => '1',
+                'KBC.datatype.basetype' => 'TIMESTAMP',
+                'KBC.datatype.length' => '9',
+            ],
+            'id' => [
+                'KBC.datatype.type' => 'NUMBER',
+                'KBC.datatype.nullable' => '',
+                'KBC.datatype.basetype' => 'NUMERIC',
+                'KBC.datatype.length' => '38,0',
+            ],
+            'name' => [
+                'KBC.datatype.type' => 'VARCHAR',
+                'KBC.datatype.nullable' => '1',
+                'KBC.datatype.basetype' => 'STRING',
+                'KBC.datatype.length' => '255',
+            ],
+        ];
+        $expectedMetadata['redshift'] = [
+            'date' => [
+                'KBC.datatype.type' => 'VARCHAR',
+            ],
+        ];
+        $expectedMetadata['snowflake'] = [
+            'id' => [
+                'KBC.datatype.type' => 'INT',
+            ],
+        ];
+        $expectedMetadata['mysql'] = [
+            'name' => [
+                'KBC.datatype.type' => 'TEXT',
+            ],
+        ];
+
+        $countSavedMetadata = 0;
+        foreach ($columnsMetadatas as $column => $columnMetadatas) {
+            foreach ($columnMetadatas as $columnMetadata) {
+                $provider = $columnMetadata['provider'];
+                $key = $columnMetadata['key'];
+
+                Assert::assertArrayHasKey($provider, $expectedMetadata, $column);
+                Assert::assertArrayHasKey($column, $expectedMetadata[$provider], $column);
+                /** @phpstan-ignore-next-line */
+                Assert::assertArrayHasKey($key, $expectedMetadata[$provider][$column], $column);
+                /** @phpstan-ignore-next-line */
+                Assert::assertEquals($expectedMetadata[$provider][$column][$key], $columnMetadata['value'], $column);
+                $countSavedMetadata++;
+            }
+        }
+        Assert::assertEquals(18, $countSavedMetadata);
     }
 
     public function testRestoreAlias(): void
