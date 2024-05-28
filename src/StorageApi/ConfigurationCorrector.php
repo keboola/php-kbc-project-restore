@@ -54,6 +54,7 @@ class ConfigurationCorrector
 
     private static function getStackFromUrl(string $url): string
     {
-        return parse_url($url)['host'] ?? '';
+        $parsedUrl = parse_url($url);
+        return is_array($parsedUrl) && isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
     }
 }
