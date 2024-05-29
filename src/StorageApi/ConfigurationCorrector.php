@@ -37,8 +37,7 @@ class ConfigurationCorrector
     private function correctOrchestratorConfiguration(stdClass $configuration): stdClass
     {
         foreach ($configuration->tasks ?? [] as $task) {
-            $componentId = &$task->task->componentId;
-            $componentId = $this->componentIdTranslator->translate($componentId);
+            $task->task->componentId = $this->componentIdTranslator->translate($task->task->componentId);
         }
 
         return $configuration;
