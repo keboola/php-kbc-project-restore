@@ -6,7 +6,7 @@ namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
-use Keboola\ProjectRestore\StorageApi\ConfigurationFilter;
+use Keboola\ProjectRestore\StorageApi\ConfigurationCorrector;
 use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
@@ -71,46 +71,48 @@ abstract class Restore
             $componentList[$component['id']] = $component;
         }
         foreach ($configurations as $componentWithConfigurations) {
-            if (in_array($componentWithConfigurations['id'], $skipComponents)) {
+            $componentId = $componentWithConfigurations['id'];
+
+            if (in_array($componentId, $skipComponents, true)) {
                 $this->logger->warning(
                     sprintf(
                         'Skipping %s configurations - component marked as skipped',
-                        $componentWithConfigurations['id']
+                        $componentId
                     )
                 );
                 continue;
             }
 
             // skip non-existing components
-            if (!array_key_exists($componentWithConfigurations['id'], $componentList)) {
+            if (!array_key_exists($componentId, $componentList)) {
                 $this->logger->warning(
                     sprintf(
                         'Skipping %s configurations - component does not exists',
-                        $componentWithConfigurations['id']
+                        $componentId
                     )
                 );
                 continue;
             }
 
-            $this->logger->info(sprintf('Restoring %s configurations', $componentWithConfigurations['id']));
+            $this->logger->info(sprintf('Restoring %s configurations', $componentId));
 
             // restore configuration metadata
             $componentConfigurationsFiles = $this->listComponentConfigurationsFiles(sprintf(
                 'configurations/%s',
-                $componentWithConfigurations['id']
+                $componentId
             ));
 
             foreach ($componentWithConfigurations['configurations'] as $componentConfiguration) {
                 // configurations as objects to preserve empty arrays or empty objects
                 $configurationData = json_decode((string) $this->getDataFromStorage(sprintf(
                     'configurations/%s/%s.json',
-                    $componentWithConfigurations['id'],
+                    $componentId,
                     $componentConfiguration['id']
                 )));
 
                 // create empty configuration
                 $configuration = new Configuration();
-                $configuration->setComponentId($componentWithConfigurations['id']);
+                $configuration->setComponentId($componentId);
                 $configuration->setConfigurationId($componentConfiguration['id']);
                 $configuration->setDescription($configurationData->description);
                 $configuration->setName($configurationData->name);
@@ -121,15 +123,17 @@ abstract class Restore
                     'Configuration %s restored from backup',
                     $componentConfiguration['id']
                 ));
+
+                $configCorrector = new ConfigurationCorrector($this->sapiClient->getApiUrl(), $this->logger);
                 $configuration->setConfiguration(
-                    ConfigurationFilter::removeOauthAuthorization($configurationData->configuration)
+                    $configCorrector->correct($componentId, $configurationData->configuration)
                 );
 
                 $components->updateConfiguration($configuration);
 
                 if (isset($configurationData->state)) {
                     $configurationState = new ConfigurationState();
-                    $configurationState->setComponentId($componentWithConfigurations['id']);
+                    $configurationState->setComponentId($componentId);
                     $configurationState->setConfigurationId($componentConfiguration['id']);
                     $configurationState->setState($configurationData->state);
                     $components->updateConfigurationState($configurationState);
@@ -171,11 +175,11 @@ abstract class Restore
                 // restore configuration metadata
                 $metadataFilePath = sprintf(
                     'configurations/%s/%s.json.metadata',
-                    $componentWithConfigurations['id'],
+                    $componentId,
                     $componentConfiguration['id']
                 );
 
-                if (in_array($metadataFilePath, $componentConfigurationsFiles)) {
+                if (in_array($metadataFilePath, $componentConfigurationsFiles, true)) {
                     $metadataData = json_decode((string) $this->getDataFromStorage($metadataFilePath), true);
                     array_walk($metadataData, function (&$v): void {
                         unset($v['id']);
