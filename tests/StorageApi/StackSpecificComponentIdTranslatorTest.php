@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ProjectRestore\Tests;
+namespace Keboola\ProjectRestore\Tests\StorageApi;
 
 use Keboola\ProjectRestore\StorageApi\StackSpecificComponentIdTranslator;
 use Monolog\Handler\TestHandler;

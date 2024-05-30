@@ -10,6 +10,7 @@ use Keboola\ProjectRestore\StorageApi\ConfigurationCorrector;
 use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Exception as StorageApiException;
@@ -563,10 +564,21 @@ abstract class Restore
             ];
         }
 
-        return $this->sapiClient->createTableDefinition(
-            $tableInfo['bucket']['id'],
-            $data
-        );
+        try {
+            return $this->sapiClient->createTableDefinition(
+                $tableInfo['bucket']['id'],
+                $data
+            );
+        } catch (ClientException $e) {
+            if ($e->getCode() === 400
+                && preg_match('/Primary keys columns must be set nullable false/', $e->getMessage())) {
+                throw new StorageApiException(sprintf(
+                    'Table "%s" cannot be restored because the primary key cannot be set on a nullable column.',
+                    $tableInfo['name'],
+                ));
+            }
+            throw $e;
+        }
     }
 
     private function restoreTableColumnsMetadata(array $tableInfo, string $tableId, Metadata $metadataClient): void
