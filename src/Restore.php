@@ -573,7 +573,7 @@ abstract class Restore
             if ($e->getCode() === 400
                 && preg_match('/Primary keys columns must be set nullable false/', $e->getMessage())) {
                 throw new StorageApiException(sprintf(
-                    'Table "%s" cannot be restored due to nullable primary keys.',
+                    'Table "%s" cannot be restored because the primary key cannot be set on a nullable column.',
                     $tableInfo['name'],
                 ));
             }

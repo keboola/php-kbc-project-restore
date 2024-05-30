@@ -103,7 +103,7 @@ class CommonRestoreTest extends TestCase
                 400,
             ),
             StorageApiException::class,
-            'Table "Account" cannot be restored due to nullable primary keys.',
+            'Table "Account" cannot be restored because the primary key cannot be set on a nullable column.',
         ];
 
         yield 'other-issue' => [
