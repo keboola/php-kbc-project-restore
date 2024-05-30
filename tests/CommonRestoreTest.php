@@ -78,6 +78,10 @@ class CommonRestoreTest extends TestCase
             ->method('createTableDefinition')
             ->willThrowException($clientException);
 
+        /**
+         * @var Client $storageClientMock
+         * @var BlobRestProxy $absClientMock
+         */
         $restore = new AbsRestore(
             $storageClientMock,
             $absClientMock,
@@ -117,6 +121,7 @@ class CommonRestoreTest extends TestCase
 
     private function createBlobResultMock(string $content): GetBlobResult
     {
+        /** @var resource $resource */
         $resource = fopen('php://memory', 'rb+');
         fwrite($resource, $content);
         rewind($resource);
@@ -126,6 +131,7 @@ class CommonRestoreTest extends TestCase
             ->method('getContentStream')
             ->willReturn($resource);
 
+        /** @var GetBlobResult $blobResultMock */
         return $blobResultMock;
     }
 }
