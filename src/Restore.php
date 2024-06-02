@@ -13,6 +13,7 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\DevBranches;
+use Keboola\StorageApi\DevBranchesMetadata;
 use Keboola\StorageApi\Exception as StorageApiException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\Configuration;
@@ -30,7 +31,7 @@ abstract class Restore
 {
     protected Client $sapiClient;
 
-    protected Client $branchAwareClient;
+    protected BranchAwareClient $branchAwareClient;
 
     protected LoggerInterface $logger;
 
@@ -53,6 +54,16 @@ abstract class Restore
                 'token' => $sapiClient->getTokenString(),
             ]
         );
+    }
+
+    public function restoreProjectMetadata(): void
+    {
+        $devBranchMetadata = new DevBranchesMetadata($this->branchAwareClient);
+
+        $fileContent = $this->getDataFromStorage('defaultBranchMetadata.json');
+        $projectMetadata = json_decode((string) $fileContent, true);
+
+        $devBranchMetadata->addBranchMetadata($projectMetadata);
     }
 
     public function restoreConfigs(array $skipComponents = []): void

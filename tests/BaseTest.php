@@ -14,7 +14,7 @@ abstract class BaseTest extends TestCase
 {
     protected StorageApi $sapiClient;
 
-    protected StorageApi $branchAwareClient;
+    protected BranchAwareClient $branchAwareClient;
 
     public function setUp(): void
     {
