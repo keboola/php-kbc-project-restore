@@ -8,6 +8,7 @@ use Aws\S3\S3Client;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\DevBranchesMetadata;
 use Keboola\StorageApi\Exception;
 use Keboola\ProjectRestore\S3Restore;
 use Keboola\StorageApi\Metadata;
@@ -34,6 +35,30 @@ class S3RestoreTest extends BaseTest
             'version' => 'latest',
             'region' => getenv('TEST_AWS_REGION'),
         ]);
+    }
+
+    public function testProjectMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'branches-metadata'
+        );
+
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+
+        self::assertEquals(1, count($metadataList));
+        self::assertEquals('KBC.projectDescription', $metadataList[0]['key']);
+        self::assertEquals('project description', $metadataList[0]['value']);
     }
 
     public function testBucketsInBackup(): void

@@ -8,6 +8,7 @@ use Keboola\ProjectRestore\AbsRestore;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\DevBranchesMetadata;
 use Keboola\StorageApi\Exception;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
@@ -71,6 +72,29 @@ class AbsRestoreTest extends BaseTest
         self::assertCount(2, $buckets);
         self::assertEquals('in.c-bucket1', $buckets[0]['id']);
         self::assertEquals('in.c-bucket2', $buckets[1]['id']);
+    }
+
+    public function testProjectMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-branches-metadata'
+        );
+
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+
+        self::assertEquals(1, count($metadataList));
+        self::assertEquals('KBC.projectDescription', $metadataList[0]['key']);
+        self::assertEquals('project description', $metadataList[0]['value']);
     }
 
     public function testBucketMetadataRestore(): void
