@@ -37,6 +37,8 @@ abstract class Restore
 
     protected Token $token;
 
+    protected bool $dryRun = false;
+
     public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
     {
         $this->sapiClient = $sapiClient;
@@ -56,6 +58,11 @@ abstract class Restore
         );
     }
 
+    public function setDryRunMode(bool $dryRun = true): void
+    {
+        $this->dryRun = $dryRun;
+    }
+
     public function restoreProjectMetadata(): void
     {
         $devBranchMetadata = new DevBranchesMetadata($this->branchAwareClient);
@@ -64,7 +71,11 @@ abstract class Restore
         $projectMetadata = json_decode((string) $fileContent, true);
 
         if ($projectMetadata) {
-            $devBranchMetadata->addBranchMetadata($projectMetadata);
+            if ($this->dryRun === false) {
+                $devBranchMetadata->addBranchMetadata($projectMetadata);
+            } else {
+                $this->logger->info('[dry-run] Restore project metadata');
+            }
         }
     }
 
@@ -143,14 +154,31 @@ abstract class Restore
                     $configCorrector->correct($componentId, $configurationData->configuration)
                 );
 
-                $components->updateConfiguration($configuration);
+                if ($this->dryRun === false) {
+                    $components->updateConfiguration($configuration);
+                } else {
+                    $this->logger->info(sprintf(
+                        '[dry-run] Restore configuration %s (component "%s")',
+                        $componentConfiguration['id'],
+                        $componentId,
+                    ));
+                }
 
                 if (isset($configurationData->state)) {
                     $configurationState = new ConfigurationState();
                     $configurationState->setComponentId($componentId);
                     $configurationState->setConfigurationId($componentConfiguration['id']);
                     $configurationState->setState($configurationData->state);
-                    $components->updateConfigurationState($configurationState);
+
+                    if ($this->dryRun === false) {
+                        $components->updateConfigurationState($configurationState);
+                    } else {
+                        $this->logger->info(sprintf(
+                            '[dry-run] Restore state of configuration %s (component "%s")',
+                            $componentConfiguration['id'],
+                            $componentId,
+                        ));
+                    }
                 }
 
                 // create configuration rows
@@ -168,13 +196,33 @@ abstract class Restore
                         $configurationRow->setDescription($row->description);
                         $configurationRow->setIsDisabled($row->isDisabled);
 
-                        $components->updateConfigurationRow($configurationRow);
+                        if ($this->dryRun === false) {
+                            $components->updateConfigurationRow($configurationRow);
+                        } else {
+                            $this->logger->info(sprintf(
+                                '[dry-run] Restore row %s of configuration %s (component "%s")',
+                                $row->id,
+                                $componentConfiguration['id'],
+                                $componentId,
+                            ));
+                        }
 
                         if (isset($row->state)) {
                             $configurationRowState = new ConfigurationRowState($configuration);
                             $configurationRowState->setRowId($configurationRow->getRowId());
                             $configurationRowState->setState($row->state);
-                            $components->updateConfigurationRowState($configurationRowState);
+
+                            if ($this->dryRun === false) {
+                                $components->updateConfigurationRowState($configurationRowState);
+                            } else {
+                                $this->logger->info(sprintf(
+                                    '[dry-run] Restore state of configuration row %s'
+                                    . ' (configuration %s, component "%s")',
+                                    $row->id,
+                                    $componentConfiguration['id'],
+                                    $componentId,
+                                ));
+                            }
                         }
                     }
                 }
@@ -183,7 +231,16 @@ abstract class Restore
                 if (!empty($configurationData->rowsSortOrder)) {
                     $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
                     $configuration->setChangeDescription('Restored rows sort order from backup');
-                    $components->updateConfiguration($configuration);
+
+                    if ($this->dryRun === false) {
+                        $components->updateConfiguration($configuration);
+                    } else {
+                        $this->logger->info(sprintf(
+                            '[dry-run] Restore rows sort order (configuration %s, component "%s")',
+                            $componentConfiguration['id'],
+                            $componentId,
+                        ));
+                    }
                 }
 
                 // restore configuration metadata
@@ -205,7 +262,15 @@ abstract class Restore
                     $configMetadata = new ConfigurationMetadata($configuration);
                     $configMetadata->setMetadata($metadataData);
 
-                    $branchAwareComponents->addConfigurationMetadata($configMetadata);
+                    if ($this->dryRun === false) {
+                        $branchAwareComponents->addConfigurationMetadata($configMetadata);
+                    } else {
+                        $this->logger->info(sprintf(
+                            '[dry-run] Restore metadata of configuration %s (component "%s")',
+                            $componentConfiguration['id'],
+                            $componentId,
+                        ));
+                    }
                 }
             }
         }
@@ -239,19 +304,36 @@ abstract class Restore
 
         $this->logger->info(sprintf('Restoring bucket %s', $bucket->getId()));
 
-        $this->sapiClient->createBucket(
-            substr($bucket->getName(), 2),
-            $bucket->getStage(),
-            $bucket->getDescription() ?: '',
-            $useDefaultBackend ? null : $bucket->getBackend(),
-            $bucket->getDisplayName()
-        );
+        if ($this->dryRun === false) {
+            $this->sapiClient->createBucket(
+                substr($bucket->getName(), 2),
+                $bucket->getStage(),
+                $bucket->getDescription() ?: '',
+                $useDefaultBackend ? null : $bucket->getBackend(),
+                $bucket->getDisplayName()
+            );
+        } else {
+            $this->logger->info(sprintf(
+                '[dry-run] Restore bucket "%s/%s"',
+                $bucket->getStage(),
+                $bucket->getName(),
+            ));
+        }
 
         // bucket metadata
         if (count($bucket->getMetadata())) {
             $metadataClient = new Metadata($this->sapiClient);
             foreach ($this->prepareMetadata($bucket->getMetadata()) as $provider => $metadata) {
-                $metadataClient->postBucketMetadata($bucket->getId(), (string) $provider, $metadata);
+                if ($this->dryRun === false) {
+                    $metadataClient->postBucketMetadata($bucket->getId(), (string) $provider, $metadata);
+                } else {
+                    $this->logger->info(sprintf(
+                        '[dry-run] Restore metadata of bucket "%s/%s" (provider "%s")',
+                        $bucket->getStage(),
+                        $bucket->getName(),
+                        $provider,
+                    ));
+                }
             }
         }
 
@@ -297,7 +379,16 @@ abstract class Restore
 
             if (count($bucketInfo->getMetadata())) {
                 foreach ($this->prepareMetadata($bucketInfo->getMetadata()) as $provider => $metadata) {
-                    $metadataClient->postBucketMetadata($bucketInfo->getId(), (string) $provider, $metadata);
+                    if ($this->dryRun === false) {
+                        $metadataClient->postBucketMetadata($bucketInfo->getId(), (string) $provider, $metadata);
+                    } else {
+                        $this->logger->info(sprintf(
+                            '[dry-run] Restore metadata of bucket "%s/%s" (provider "%s")',
+                            $bucketInfo->getStage(),
+                            $bucketInfo->getName(),
+                            $provider,
+                        ));
+                    }
                 }
             }
         }
@@ -343,12 +434,17 @@ abstract class Restore
             if (isset($tableInfo['aliasColumnsAutoSync']) && $tableInfo['aliasColumnsAutoSync'] === false) {
                 $aliasOptions['aliasColumns'] = $tableInfo['columns'];
             }
-            $this->sapiClient->createAliasTable(
-                $bucketId,
-                $tableInfo['sourceTable']['id'],
-                $tableInfo['name'],
-                $aliasOptions
-            );
+
+            if ($this->dryRun === false) {
+                $this->sapiClient->createAliasTable(
+                    $bucketId,
+                    $tableInfo['sourceTable']['id'],
+                    $tableInfo['name'],
+                    $aliasOptions
+                );
+            } else {
+                $this->logger->info(sprintf('[dry-run] Restore alias %s', $tableId));
+            }
 
             $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
         }
@@ -623,7 +719,11 @@ abstract class Restore
                 $metadata['columns'] ?? null
             );
 
-            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            if ($this->dryRun === false) {
+                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            } else {
+                $this->logger->info(sprintf('[dry-run] Restore metadata of table %s', $tableId));
+            }
         }
     }
 }
