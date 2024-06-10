@@ -63,7 +63,9 @@ abstract class Restore
         $fileContent = $this->getDataFromStorage('defaultBranchMetadata.json');
         $projectMetadata = json_decode((string) $fileContent, true);
 
-        $devBranchMetadata->addBranchMetadata($projectMetadata);
+        if ($projectMetadata) {
+            $devBranchMetadata->addBranchMetadata($projectMetadata);
+        }
     }
 
     public function restoreConfigs(array $skipComponents = []): void

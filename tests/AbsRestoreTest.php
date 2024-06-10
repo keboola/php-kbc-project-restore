@@ -97,6 +97,26 @@ class AbsRestoreTest extends BaseTest
         self::assertEquals('project description', $metadataList[0]['value']);
     }
 
+    public function testProjectEmptyMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-branches-empty-metadata'
+        );
+
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+        self::assertEquals(0, count($metadataList));
+    }
+
     public function testBucketMetadataRestore(): void
     {
         $backup = new AbsRestore(
