@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore\Tests;
 
 use Aws\S3\S3Client;
+use Keboola\ProjectRestore\AbsRestore;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
@@ -59,6 +60,27 @@ class S3RestoreTest extends BaseTest
         self::assertEquals(1, count($metadataList));
         self::assertEquals('KBC.projectDescription', $metadataList[0]['key']);
         self::assertEquals('project description', $metadataList[0]['value']);
+    }
+
+    public function testProjectEmptyMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'branches-empty-metadata'
+        );
+
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+        self::assertEquals(0, count($metadataList));
     }
 
     public function testBucketsInBackup(): void
