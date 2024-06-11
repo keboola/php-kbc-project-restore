@@ -54,7 +54,7 @@ abstract class Restore
             [
                 'url' => $sapiClient->getApiUrl(),
                 'token' => $sapiClient->getTokenString(),
-            ]
+            ],
         );
     }
 
@@ -218,6 +218,7 @@ abstract class Restore
                                 $this->logger->info(sprintf(
                                     '[dry-run] Restore state of configuration row %s'
                                     . ' (configuration %s, component "%s")',
+                                    // @phpstan-ignore-next-line
                                     $row->id,
                                     $componentConfiguration['id'],
                                     $componentId,
@@ -442,11 +443,11 @@ abstract class Restore
                     $tableInfo['name'],
                     $aliasOptions
                 );
+
+                $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
             } else {
                 $this->logger->info(sprintf('[dry-run] Restore alias %s', $tableId));
             }
-
-            $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
         }
     }
 
@@ -482,6 +483,11 @@ abstract class Restore
             }
 
             $this->logger->info(sprintf('Restoring table %s', $tableId));
+
+            if ($this->dryRun === true) {
+                $this->logger->info(sprintf('[dry-run] Restore table %s', $tableId));
+                continue;
+            }
 
             $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableInfo['id']));
             $headerFile = new CsvFile($headerFile->getPathname());
@@ -719,11 +725,7 @@ abstract class Restore
                 $metadata['columns'] ?? null
             );
 
-            if ($this->dryRun === false) {
-                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
-            } else {
-                $this->logger->info(sprintf('[dry-run] Restore metadata of table %s', $tableId));
-            }
+            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
         }
     }
 }
