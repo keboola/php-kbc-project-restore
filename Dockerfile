@@ -11,8 +11,6 @@ RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 
 #RUN docker-php-ext-install pdo_pgsql pdo_mysql
 
-#RUN pecl install xdebug-2.9.8 && docker-php-ext-enable xdebug
-
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
 
 
