@@ -486,6 +486,7 @@ abstract class Restore
 
             if ($this->dryRun === true) {
                 $this->logger->info(sprintf('[dry-run] Restore table %s', $tableId));
+                // skip all code bellow in dry-run mode
                 continue;
             }
 

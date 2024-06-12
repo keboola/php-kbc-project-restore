@@ -134,13 +134,13 @@ class CommonRestoreTest extends TestCase
 
         $absClientMock
             ->method('getBlob')
-            ->willReturnCallback(function (string $container, string $filePath): ?GetBlobResult {
+            ->willReturnCallback(function (string $container, string $filePath): GetBlobResult {
                 return $this->createBlobResultMockFromFile('dry-run', $filePath);
             });
 
         $absClientMock
             ->method('listBlobs')
-            ->willReturnCallback(function (string $container, ListBlobsOptions $options): ?ListBlobsResult {
+            ->willReturnCallback(function (string $container, ListBlobsOptions $options): ListBlobsResult {
                 return $this->createListBlobsResultMockFromFile('dry-run', $options->getPrefix());
             });
 
@@ -259,7 +259,7 @@ class CommonRestoreTest extends TestCase
     private function createBlobResultMockFromFile(string $backupName, string $filePath): GetBlobResult
     {
         $content = file_get_contents(sprintf('%s/data/backups/%s/%s', __DIR__, $backupName, $filePath));
-        return $this->createBlobResultMock($content);
+        return $this->createBlobResultMock($content ?: '');
     }
 
     private function createListBlobsResultMockFromFile(string $backupName, string $pathPrefix): ListBlobsResult
@@ -274,10 +274,11 @@ class CommonRestoreTest extends TestCase
             $blobs[] = $blob;
         }
 
-        $list = $this->createMock(ListBlobsResult::class);
-        $list->method('getBlobs')
+        $listMock = $this->createMock(ListBlobsResult::class);
+        $listMock->method('getBlobs')
             ->willReturn($blobs);
 
-        return $list;
+        /** @var ListBlobsResult $listMock */
+        return $listMock;
     }
 }
