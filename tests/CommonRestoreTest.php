@@ -170,6 +170,9 @@ class CommonRestoreTest extends TestCase
                 [
                     'id' => 'in.c-bucket',
                 ],
+                [
+                    'id' => 'out.c-bucket',
+                ],
             ]);
 
         $storageClientMock
@@ -204,6 +207,8 @@ class CommonRestoreTest extends TestCase
         $restore->restoreProjectMetadata();
         $restore->restoreBuckets(false);
         $restore->restoreConfigs();
+        $restore->restoreTables();
+        $restore->restoreTableAliases();
 
         $records = $logsHandler->getRecords();
         $logMessages = array_map(fn($log) => $log['message'], $records);
@@ -234,6 +239,8 @@ class CommonRestoreTest extends TestCase
                 '[dry-run] Restore row 804561958 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561958 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore rows sort order (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
+                '[dry-run] Restore table in.c-bucket.Account',
+                '[dry-run] Restore alias out.c-bucket.Account',
             ],
             $dryRunLogs,
         );

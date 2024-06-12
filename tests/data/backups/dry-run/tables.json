@@ -55,5 +55,53 @@
         }
       ]
     }
+  },
+  {
+    "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/tables\/out.c-bucket.Account",
+    "id": "out.c-bucket.Account",
+    "name": "Account",
+    "transactional": false,
+    "primaryKey": [
+      "Id",
+      "Name"
+    ],
+    "indexedColumns": [
+      "Id",
+      "Name"
+    ],
+    "created": "2016-11-07T03:02:11+0100",
+    "lastImportDate": "2016-11-07T01:58:30+0100",
+    "lastChangeDate": "2016-11-07T01:58:30+0100",
+    "rowsCount": 1570,
+    "dataSizeBytes": 29696,
+    "isAlias": true,
+    "sourceTable": {
+      "id": "in.c-bucket.Account",
+      "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/tables\/in.c-bucket.Account",
+      "project": {
+        "id": 1818,
+        "name": "Data Takeout Recovery - Master"
+      }
+    },
+    "aliasColumnsAutoSync": true,
+    "bucket": {
+      "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/out.c-bucket",
+      "id": "out.c-bucket",
+      "name": "c-bucket",
+      "stage": "out",
+      "description": "",
+      "tables": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/out.c-bucket\/tables",
+      "created": "2016-11-07T03:01:00+0100",
+      "lastChangeDate": "2016-11-07T03:02:11+0100",
+      "isReadOnly": false,
+      "dataSizeBytes": 0,
+      "rowsCount": 0,
+      "isMaintenance": false,
+      "backend": "snowflake"
+    },
+    "columns": [
+      "Id",
+      "Name"
+    ]
   }
 ]
