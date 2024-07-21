@@ -266,6 +266,24 @@ class S3RestoreTest extends BaseTest
         self::assertGreaterThan(0, $fails);
     }
 
+    public function testPermanentFilesRestore(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'permanent-files'
+        );
+        $restore->restorePermanentFiles();
+
+        $files = $this->sapiClient->listFiles();
+        $permanentFiles = array_filter($files, function ($file) {
+            return is_null($file['maxAgeDays']);
+        });
+
+        self::assertCount(1, $permanentFiles);
+    }
+
     public function testListConfigsInBackup(): void
     {
         $backup = new S3Restore(
