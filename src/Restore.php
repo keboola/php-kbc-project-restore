@@ -741,18 +741,20 @@ abstract class Restore
         $tmp->initRunFolder();
 
         foreach ($permanentFiles as $permanentFile) {
+            $permanentFileName = $permanentFile['name'];
             if ($this->dryRun === true) {
-                $this->logger->info(sprintf('[dry-run] Restore file %s', $permanentFile));
+                $this->logger->info(sprintf('[dry-run] Restore file %s', $permanentFileName));
                 // skip all code bellow in dry-run mode
                 continue;
             }
-            $this->logger->info(sprintf('Restoring file %s', $permanentFile));
+            $this->logger->info(sprintf('Restoring file %s', $permanentFileName));
 
-            $fileName = $tmp->createFile($permanentFile)->getPathname();
-            $this->copyFileFromStorage('files/' . $permanentFile, $fileName);
+            $fileName = $tmp->createFile($permanentFileName)->getPathname();
+            $this->copyFileFromStorage('files/' . $permanentFileName, $fileName);
 
             $fileOption = new FileUploadOptions();
             $fileOption->setIsPermanent(true);
+            $fileOption->setTags($permanentFile['tags'] ?? []);
             $this->sapiClient->uploadFile($fileName, $fileOption);
         }
     }

@@ -268,6 +268,10 @@ class S3RestoreTest extends BaseTest
 
     public function testPermanentFilesRestore(): void
     {
+        $files = $this->sapiClient->listFiles();
+        foreach ($files as $file) {
+            $this->sapiClient->deleteFile($file['id']);
+        }
         $restore = new S3Restore(
             $this->sapiClient,
             $this->s3Client,
@@ -282,6 +286,7 @@ class S3RestoreTest extends BaseTest
         });
 
         self::assertCount(1, $permanentFiles);
+        self::assertEquals(['tag1', 'tag2'], $permanentFiles[0]['tags']);
     }
 
     public function testListConfigsInBackup(): void

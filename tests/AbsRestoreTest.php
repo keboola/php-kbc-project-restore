@@ -256,6 +256,10 @@ class AbsRestoreTest extends BaseTest
 
     public function testPermanentFilesRestore(): void
     {
+        $files = $this->sapiClient->listFiles();
+        foreach ($files as $file) {
+            $this->sapiClient->deleteFile($file['id']);
+        }
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
@@ -269,6 +273,7 @@ class AbsRestoreTest extends BaseTest
         });
 
         self::assertCount(1, $permanentFiles);
+        self::assertEquals(['tag1', 'tag2'], $permanentFiles[0]['tags']);
     }
 
     public function testListConfigsInBackup(): void
