@@ -740,8 +740,8 @@ abstract class Restore
         $tmp = new Temp();
         $tmp->initRunFolder();
 
-        $this->logger->info(sprintf('Downloading %s permanent files', count($permanentFiles)));
         if ($this->dryRun === true) {
+            $this->logger->info(sprintf('[dry-run] Restoring %s permanent files', count($permanentFiles)));
             // skip all code bellow in dry-run mode
             return;
         }
