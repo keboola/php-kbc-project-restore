@@ -254,6 +254,28 @@ class AbsRestoreTest extends BaseTest
         self::assertGreaterThan(0, $fails);
     }
 
+    public function testPermanentFilesRestore(): void
+    {
+        $files = $this->sapiClient->listFiles();
+        foreach ($files as $file) {
+            $this->sapiClient->deleteFile($file['id']);
+        }
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-permanent-files'
+        );
+        $restore->restorePermanentFiles();
+
+        $files = $this->sapiClient->listFiles();
+        $permanentFiles = array_filter($files, function ($file) {
+            return is_null($file['maxAgeDays']);
+        });
+
+        self::assertCount(1, $permanentFiles);
+        self::assertEquals(['tag1', 'tag2'], $permanentFiles[0]['tags']);
+    }
+
     public function testListConfigsInBackup(): void
     {
         $backup = new AbsRestore(

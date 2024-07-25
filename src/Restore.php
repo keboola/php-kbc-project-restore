@@ -729,4 +729,33 @@ abstract class Restore
             $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
         }
     }
+
+    public function restorePermanentFiles(): void
+    {
+        $this->logger->info('Downloading permanent files');
+        $fileContent = $this->getDataFromStorage('permanentFiles.json');
+
+        $permanentFiles = json_decode((string) $fileContent, true);
+
+        $tmp = new Temp();
+        $tmp->initRunFolder();
+
+        if ($this->dryRun === true) {
+            $this->logger->info(sprintf('[dry-run] Restoring %s permanent files', count($permanentFiles)));
+            // skip all code bellow in dry-run mode
+            return;
+        }
+        foreach ($permanentFiles as $permanentFile) {
+            $permanentFileName = $permanentFile['name'];
+            $this->logger->info(sprintf('Restoring file %s', $permanentFileName));
+
+            $fileName = $tmp->createFile($permanentFileName)->getPathname();
+            $this->copyFileFromStorage('files/' . $permanentFileName, $fileName);
+
+            $fileOption = new FileUploadOptions();
+            $fileOption->setIsPermanent(true);
+            $fileOption->setTags($permanentFile['tags'] ?? []);
+            $this->sapiClient->uploadFile($fileName, $fileOption);
+        }
+    }
 }
