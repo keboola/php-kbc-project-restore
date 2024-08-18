@@ -23,10 +23,10 @@ class ConfigurationCorrector
         );
     }
 
-    public function correct(string $componentId, stdClass $configuration): stdClass
+    public function correct(string $componentId, stdClass $configuration, string $backendType): stdClass
     {
         if ($componentId === 'keboola.orchestrator') {
-            $configuration = $this->correctOrchestratorConfiguration($configuration);
+            $configuration = $this->correctOrchestratorConfiguration($configuration, $backendType);
         }
 
         $configuration = $this->removeOauthAuthorization($configuration);
@@ -34,10 +34,10 @@ class ConfigurationCorrector
         return $configuration;
     }
 
-    private function correctOrchestratorConfiguration(stdClass $configuration): stdClass
+    private function correctOrchestratorConfiguration(stdClass $configuration, string $backendType): stdClass
     {
         foreach ($configuration->tasks ?? [] as $task) {
-            $task->task->componentId = $this->componentIdTranslator->translate($task->task->componentId);
+            $task->task->componentId = $this->componentIdTranslator->translate($task->task->componentId, $backendType);
         }
 
         return $configuration;

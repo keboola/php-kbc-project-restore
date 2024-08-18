@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\StorageApi;
 
+use Google\Api\Backend;
+use Keboola\Datatype\Definition\Snowflake;
+use Keboola\StorageApi\Client;
 use Psr\Log\LoggerInterface;
 
 class StackSpecificComponentIdTranslator
@@ -34,7 +37,12 @@ class StackSpecificComponentIdTranslator
         ],
     ];
 
-    public function translate(string $componentId): string
+    private const STACK_ALLOW_GCS_S3_WRITER = [
+        'connection.europe-west3.gcp.keboola.com',
+        'connection.us-east4.gcp.keboola.com',
+    ];
+
+    public function translate(string $componentId, string $backendType): string
     {
         if (!array_key_exists($componentId, self::STACK_SPECIFIC_COMPONENTS)) {
             return $componentId;
@@ -50,6 +58,13 @@ class StackSpecificComponentIdTranslator
         }
 
         $translatedComponentId = self::STACK_SPECIFIC_COMPONENTS[$componentId][$this->destinationStack];
+        if ($translatedComponentId === 'keboola.wr-db-snowflake-gcs' &&
+            $backendType === 'snowflake' &&
+            in_array($this->destinationStack, self::STACK_ALLOW_GCS_S3_WRITER)
+        ) {
+            $translatedComponentId .= '-s3';
+        }
+
         $this->logger->info(sprintf(
             'Translated component ID from "%s" to "%s" for stack "%s".',
             $componentId,
