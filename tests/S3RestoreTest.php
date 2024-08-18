@@ -35,6 +35,7 @@ class S3RestoreTest extends BaseTest
         $this->s3Client = new S3Client([
             'version' => 'latest',
             'region' => getenv('TEST_AWS_REGION'),
+            'suppress_php_deprecation_warning' => true,
         ]);
     }
 
