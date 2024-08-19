@@ -15,12 +15,14 @@ class ConfigurationCorrectorTest extends TestCase
         string $componentId,
         string $apiUrl,
         array $inConfigData,
-        array $expectedOutConfigData
+        array $expectedOutConfigData,
+        string $backendType
     ): void {
         $corrector = new ConfigurationCorrector($apiUrl, new NullLogger());
         $correctedConfigData = $corrector->correct(
             $componentId,
-            json_decode((string) json_encode($inConfigData))
+            json_decode((string) json_encode($inConfigData)),
+            $backendType
         );
         $this->assertEquals(json_decode((string) json_encode($expectedOutConfigData)), $correctedConfigData);
     }
@@ -54,6 +56,7 @@ class ConfigurationCorrectorTest extends TestCase
                     'oauth_api' => (object) [],
                 ],
             ],
+            'snowflake',
         ];
 
         yield 'without-oauth' => [
@@ -75,6 +78,7 @@ class ConfigurationCorrectorTest extends TestCase
                     'something' => 'value',
                 ],
             ],
+            'snowflake',
         ];
 
         yield 'with-weird-oauth' => [
@@ -106,6 +110,7 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'snowflake',
         ];
 
         yield 'with-injection-oauth' => [
@@ -141,9 +146,40 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'snowflake',
         ];
 
-        yield 'orchestrator-with-stack-specific-component' => [
+        yield 'orchestrator-with-stack-specific-component-snflk-backend' => [
+            'keboola.orchestrator',
+            'https://connection.us-east4.gcp.keboola.com',
+            [
+                'phases' => [],
+                'tasks' => [
+                    [
+                        'id' => 123,
+                        'task' => [
+                            'componentId' => 'keboola.wr-db-snowflake',
+                            'configId' => '123',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'phases' => [],
+                'tasks' => [
+                    [
+                        'id' => 123,
+                        'task' => [
+                            'componentId' => 'keboola.wr-db-snowflake-gcs-s3',
+                            'configId' => '123',
+                        ],
+                    ],
+                ],
+            ],
+            'snowflake',
+        ];
+
+        yield 'orchestrator-with-stack-specific-component-bq-backend' => [
             'keboola.orchestrator',
             'https://connection.us-east4.gcp.keboola.com',
             [
@@ -170,6 +206,7 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'bigquery',
         ];
 
         yield 'orchestrator-with-stack-specific-component-2' => [
@@ -199,6 +236,7 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'snowflake',
         ];
 
         yield 'orchestrator-with-generic-component' => [
@@ -228,6 +266,7 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'snowflake',
         ];
 
         yield 'fake-orchestrator-with-stack-specific-component' => [
@@ -257,6 +296,7 @@ class ConfigurationCorrectorTest extends TestCase
                     ],
                 ],
             ],
+            'snowflake',
         ];
     }
 }

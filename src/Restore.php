@@ -90,6 +90,7 @@ abstract class Restore
         $configurations = json_decode((string) $fileContent, true);
 
         $components = new Components($this->sapiClient);
+        $verifyToken = $this->sapiClient->verifyToken();
 
         $componentList = [];
         foreach ($this->sapiClient->indexAction()['components'] as $component) {
@@ -151,7 +152,11 @@ abstract class Restore
 
                 $configCorrector = new ConfigurationCorrector($this->sapiClient->getApiUrl(), $this->logger);
                 $configuration->setConfiguration(
-                    $configCorrector->correct($componentId, $configurationData->configuration)
+                    $configCorrector->correct(
+                        $componentId,
+                        $configurationData->configuration,
+                        $verifyToken['owner']['defaultBackend']
+                    )
                 );
 
                 if ($this->dryRun === false) {

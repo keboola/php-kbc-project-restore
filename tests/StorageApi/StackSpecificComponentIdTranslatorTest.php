@@ -23,7 +23,11 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
 
         self::assertSame(
             'keboola.wr-db-snowflake-gcs',
-            $translator->translate('keboola.wr-db-snowflake')
+            $translator->translate('keboola.wr-db-snowflake', 'bigquery')
+        );
+        self::assertSame(
+            'keboola.wr-db-snowflake-gcs-s3',
+            $translator->translate('keboola.wr-db-snowflake', 'snowflake')
         );
 
         $translator = new StackSpecificComponentIdTranslator(
@@ -33,20 +37,30 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
 
         self::assertSame(
             'keboola.wr-db-snowflake-gcs',
-            $translator->translate('keboola.wr-snowflake-blob-storage')
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'bigquery')
+        );
+        self::assertSame(
+            'keboola.wr-db-snowflake-gcs',
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake')
         );
 
         self::assertSame(
             'some-generic-component',
-            $translator->translate('some-generic-component')
+            $translator->translate('some-generic-component', 'bigquery')
         );
 
         $logRecords = $testHandler->getRecords();
 
-        self::assertCount(2, $logRecords);
+        self::assertCount(4, $logRecords);
 
         self::assertSame(
             'Translated component ID from "keboola.wr-db-snowflake" to "keboola.wr-db-snowflake-gcs" '
+            . 'for stack "connection.europe-west3.gcp.keboola.com".',
+            array_shift($logRecords)['message']
+        );
+
+        self::assertSame(
+            'Translated component ID from "keboola.wr-db-snowflake" to "keboola.wr-db-snowflake-gcs-s3" '
             . 'for stack "connection.europe-west3.gcp.keboola.com".',
             array_shift($logRecords)['message']
         );
@@ -70,7 +84,7 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
 
         self::assertSame(
             'keboola.wr-snowflake-blob-storage',
-            $translator->translate('keboola.wr-snowflake-blob-storage')
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake')
         );
 
         self::assertTrue($testHandler->hasWarningThatContains(
