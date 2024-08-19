@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore;
 
-use Keboola\StorageApi\Client as StorageApi;
 use Aws\S3\S3Client;
+use Exception;
+use Keboola\StorageApi\Client as StorageApi;
 use Keboola\Temp\Temp;
-use MicrosoftAzure\Storage\Blob\Models\Blob;
-use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use Psr\Log\LoggerInterface;
 
 class S3Restore extends Restore
@@ -24,12 +23,12 @@ class S3Restore extends Restore
         S3Client $s3Client,
         string $bucket,
         string $path,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ) {
         $this->s3Client = $s3Client;
         $this->bucket = $bucket;
         $this->path = $this->trimSourceBasePath($path);
-        parent::__construct($logger, $sapiClient);
+        parent::__construct($sapiClient, $logger);
     }
 
     private function trimSourceBasePath(?string $targetBasePath = null): string
@@ -47,7 +46,6 @@ class S3Restore extends Restore
     protected function getDataFromStorage(string $filePath, bool $useString = true)
     {
         $tmp = new Temp();
-        $tmp->initRunFolder();
 
         $targetFile = $tmp->createFile(uniqid());
 
@@ -56,9 +54,9 @@ class S3Restore extends Restore
         if (!$useString) {
             $file = fopen($targetFile->getPathname(), 'r');
             if (!$file) {
-                throw new \Exception(sprintf(
+                throw new Exception(sprintf(
                     'File "%s" does not exists.',
-                    $filePath
+                    $filePath,
                 ));
             }
             return $file;
@@ -83,9 +81,14 @@ class S3Restore extends Restore
             'Prefix' => $this->path . $filePath,
         ]);
 
+        /** @var array{
+         *     Key: string,
+         * }[] $objects
+         */
+        $objects = iterator_to_array($iterator);
         return array_map(
-            fn(array $v) => substr($v['Key'], strlen($this->path)),
-            iterator_to_array($iterator)
+            fn($v) => substr($v['Key'], strlen($this->path)),
+            $objects,
         );
     }
 
@@ -96,9 +99,14 @@ class S3Restore extends Restore
             'Prefix' => $this->path . str_replace('.', '/', $tableId) . '.',
         ]);
 
+        /** @var array{
+         *     Key: string,
+         * }[] $objects
+         */
+        $objects = iterator_to_array($iterator);
         return array_map(
             fn(array $v) => substr($v['Key'], strlen($this->path)),
-            iterator_to_array($iterator)
+            $objects,
         );
     }
 }

@@ -15,18 +15,21 @@ use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsResult;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
-use Psr\Log\NullLogger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
 use Throwable;
 
 class CommonRestoreTest extends TestCase
 {
-    /** @dataProvider createTableDefinitionExceptionsProvider */
+    /**
+     * @dataProvider createTableDefinitionExceptionsProvider
+     * @param class-string<Throwable> $expectedExceptionClass
+     */
     public function testHandleNullablePrimaryKeysIssue(
         Throwable $clientException,
         string $expectedExceptionClass,
-        string $expectedExceptionMessage
+        string $expectedExceptionMessage,
     ): void {
         $absClientMock = $this->createMock(BlobRestProxy::class);
         $absClientMock
@@ -92,7 +95,7 @@ class CommonRestoreTest extends TestCase
             $storageClientMock,
             $absClientMock,
             'test-container',
-            new NullLogger()
+            new NullLogger(),
         );
 
         $this->expectException($expectedExceptionClass);
@@ -199,7 +202,7 @@ class CommonRestoreTest extends TestCase
             $storageClientMock,
             $absClientMock,
             'test-container',
-            $logger
+            $logger,
         );
 
         $restore->setDryRunMode();
@@ -211,9 +214,10 @@ class CommonRestoreTest extends TestCase
         $restore->restoreTableAliases();
 
         $records = $logsHandler->getRecords();
+        /** @var string[] $logMessages */
         $logMessages = array_map(fn($log) => $log['message'], $records);
         $dryRunLogs = array_values(
-            array_filter($logMessages, fn($message) => strpos($message, '[dry-run]') === 0)
+            array_filter($logMessages, fn(string $message) => str_contains($message, '[dry-run]')),
         );
 
         // phpcs:disable Generic.Files.LineLength.MaxExceeded

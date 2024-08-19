@@ -16,7 +16,7 @@ class StackSpecificComponentIdTranslator
 
     public function __construct(
         string $destinationStack,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ) {
         $this->destinationStack = $destinationStack;
         $this->logger = $logger;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\Tests\StorageApi;
 
+use InvalidArgumentException;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\ProjectRestore\StorageApi\Token;
 use Keboola\ProjectRestore\Tests\BaseTest;
@@ -41,8 +42,8 @@ class BucketInfoTest extends BaseTest
         try {
             new BucketInfo($bucket);
             $this->fail('Creating BucketInfo should fail on missing metadata info');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertContains('Missing metadata info for bucket', $e->getMessage());
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Missing metadata info for bucket', $e->getMessage());
         }
     }
 
@@ -57,8 +58,8 @@ class BucketInfoTest extends BaseTest
         try {
             new BucketInfo($buckets[0]);
             $this->fail('Creating BucketInfo should fail on missing metadata info');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertContains('Missing metadata info for bucket', $e->getMessage());
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Missing metadata info for bucket', $e->getMessage());
         }
     }
 
@@ -100,7 +101,7 @@ class BucketInfoTest extends BaseTest
             self::BUCKET_NAME,
             Client::STAGE_OUT,
             $token->getProjectId(),
-            $bucketId
+            $bucketId,
         );
 
         $buckets = $this->sapiClient->listBuckets(['include' => 'metadata']);

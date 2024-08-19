@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-use Keboola\ProjectRestore\Tests\S3RestoreTest;
-use Symfony\Component\Finder\Finder;
-use Keboola\Temp\Temp;
-use Keboola\Csv\CsvFile;
 use Aws\S3\S3Client;
+use Aws\S3\Transfer;
+use Keboola\Csv\CsvFile;
+use Keboola\ProjectRestore\Tests\S3RestoreTest;
+use Keboola\Temp\Temp;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 
 date_default_timezone_set('Europe/Prague');
 ini_set('display_errors', '1');
@@ -36,14 +38,13 @@ $source = $basedir . '/data/backups';
 $dest = 's3://' . getenv('TEST_AWS_S3_BUCKET') . '/';
 
 echo 'Copying new files into S3' . PHP_EOL;
-$manager = new \Aws\S3\Transfer($s3Client, $source, $dest, []);
+$manager = new Transfer($s3Client, $source, $dest, []);
 $manager->transfer();
 
 // generate a lot of table slices
-$system = new \Symfony\Component\Filesystem\Filesystem();
+$system = new Filesystem();
 
 $temp = new Temp('loadToS3');
-$temp->initRunFolder();
 
 $tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), S3RestoreTest::TEST_ITERATOR_SLICES_COUNT);
 $slicesPath = $tablesPath . '/in/c-bucket';
@@ -78,7 +79,7 @@ echo 'Copying new slices to S3' . PHP_EOL;
 $source = $temp->getTmpFolder();
 $dest = 's3://' . getenv('TEST_AWS_S3_BUCKET') . '/';
 
-$manager = new \Aws\S3\Transfer($s3Client, $source, $dest, []);
+$manager = new Transfer($s3Client, $source, $dest, []);
 $manager->transfer();
 
 

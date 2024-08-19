@@ -1,64 +1,74 @@
 {
-  "name": "keboola/kbc-project-restore",
-  "description": "Restore KBC project",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Erik Zigo",
-      "email": "erik.zigo@keboola.com"
+    "name": "keboola/kbc-project-restore",
+    "description": "Restore KBC project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "keboola/php-temp": "^2.0",
+        "keboola/storage-api-client": "^15.2",
+        "monolog/monolog": "^3.7",
+        "keboola/notification-api-php-client": "^3.0"
+    },
+    "require-dev": {
+        "cweagans/composer-patches": "^1.7",
+        "keboola/coding-standard": "^15.0",
+        "php-parallel-lint/php-parallel-lint": "^1.4",
+        "phpstan/phpstan": "^1.11",
+        "phpunit/phpunit": "^11.3",
+        "symfony/finder": "^7.1",
+        "symplify/vendor-patches": "^11.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Keboola\\ProjectRestore\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\ProjectRestore\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "tests-phpunit": "phpunit",
+        "phplint": "parallel-lint -j 10 --exclude vendor .",
+        "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+        "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
+        "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
+        "tests-abs": [
+            "php ./tests/loadToAbs.php",
+            "phpunit tests/AbsRestoreTest.php"
+        ],
+        "tests-s3": [
+            "php ./tests/loadToS3.php",
+            "phpunit ./tests/S3RestoreTest.php"
+        ],
+        "tests": [
+            "@tests-abs",
+            "@tests-s3"
+        ],
+        "build": [
+            "@phplint",
+            "@phpcs",
+            "@phpstan",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@build"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "cweagans/composer-patches": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "patches": {
+            "microsoft/azure-storage-common": [
+                "patches/microsoft-azure-storage-common-src-common-internal-servicerestproxy-php.patch"
+            ]
+        }
     }
-  ],
-  "require": {
-    "PHP": "^7.4",
-    "keboola/php-temp": "^1.0.0",
-    "keboola/storage-api-client": "^14.0",
-    "monolog/monolog": "^1.23",
-    "keboola/notification-api-php-client": "^3.0"
-  },
-  "require-dev": {
-    "phpstan/phpstan": "^0.12.48",
-    "php-parallel-lint/php-parallel-lint": "^1.2",
-    "keboola/coding-standard": "^9.0",
-    "phpunit/phpunit": "^7.5",
-    "symfony/finder": "^4.4"
-  },
-  "autoload": {
-    "psr-4": {
-      "Keboola\\ProjectRestore\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Keboola\\ProjectRestore\\Tests\\": "tests/"
-    }
-  },
-  "scripts": {
-    "tests-phpunit": "phpunit",
-    "phplint": "parallel-lint -j 10 --exclude vendor .",
-    "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
-    "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
-    "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
-    "tests-abs": [
-      "php ./tests/loadToAbs.php",
-      "phpunit tests/AbsRestoreTest.php"
-    ],
-    "tests-s3": [
-      "php ./tests/loadToS3.php",
-      "phpunit ./tests/S3RestoreTest.php"
-    ],
-    "tests": [
-      "@tests-abs",
-      "@tests-s3"
-    ],
-    "build": [
-      "@phplint",
-      "@phpcs",
-      "@phpstan",
-      "@tests"
-    ],
-    "ci": [
-      "@composer validate --no-check-publish --no-check-all",
-      "@build"
-    ]
-  }
 }

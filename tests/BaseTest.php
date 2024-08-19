@@ -35,7 +35,7 @@ abstract class BaseTest extends TestCase
             [
                 'url' => getenv('TEST_STORAGE_API_URL'),
                 'token' => getenv('TEST_STORAGE_API_TOKEN'),
-            ]
+            ],
         );
 
         $this->cleanupKbcProject();

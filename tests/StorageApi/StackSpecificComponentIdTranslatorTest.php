@@ -18,37 +18,38 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
 
         $translator = new StackSpecificComponentIdTranslator(
             'connection.europe-west3.gcp.keboola.com',
-            $logger
+            $logger,
         );
 
         self::assertSame(
             'keboola.wr-db-snowflake-gcs',
-            $translator->translate('keboola.wr-db-snowflake', 'bigquery')
+            $translator->translate('keboola.wr-db-snowflake', 'bigquery'),
         );
         self::assertSame(
             'keboola.wr-db-snowflake-gcs-s3',
-            $translator->translate('keboola.wr-db-snowflake', 'snowflake')
+            $translator->translate('keboola.wr-db-snowflake', 'snowflake'),
         );
 
         $translator = new StackSpecificComponentIdTranslator(
             'connection.us-central1.gcp.keboola.dev',
-            $logger
+            $logger,
         );
 
         self::assertSame(
             'keboola.wr-db-snowflake-gcs',
-            $translator->translate('keboola.wr-snowflake-blob-storage', 'bigquery')
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'bigquery'),
         );
         self::assertSame(
             'keboola.wr-db-snowflake-gcs',
-            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake')
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake'),
         );
 
         self::assertSame(
             'some-generic-component',
-            $translator->translate('some-generic-component', 'bigquery')
+            $translator->translate('some-generic-component', 'bigquery'),
         );
 
+        /** @var array{array} $logRecords */
         $logRecords = $testHandler->getRecords();
 
         self::assertCount(4, $logRecords);
@@ -56,19 +57,19 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
         self::assertSame(
             'Translated component ID from "keboola.wr-db-snowflake" to "keboola.wr-db-snowflake-gcs" '
             . 'for stack "connection.europe-west3.gcp.keboola.com".',
-            array_shift($logRecords)['message']
+            array_shift($logRecords)['message'],
         );
 
         self::assertSame(
             'Translated component ID from "keboola.wr-db-snowflake" to "keboola.wr-db-snowflake-gcs-s3" '
             . 'for stack "connection.europe-west3.gcp.keboola.com".',
-            array_shift($logRecords)['message']
+            array_shift($logRecords)['message'],
         );
 
         self::assertSame(
             'Translated component ID from "keboola.wr-snowflake-blob-storage" to "keboola.wr-db-snowflake-gcs" '
             . 'for stack "connection.us-central1.gcp.keboola.dev".',
-            array_shift($logRecords)['message']
+            array_shift($logRecords)['message'],
         );
     }
 
@@ -79,17 +80,17 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
 
         $translator = new StackSpecificComponentIdTranslator(
             'connection.north-europe.azure.keboola.com',
-            $logger
+            $logger,
         );
 
         self::assertSame(
             'keboola.wr-snowflake-blob-storage',
-            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake')
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake'),
         );
 
         self::assertTrue($testHandler->hasWarningThatContains(
             'Component "keboola.wr-snowflake-blob-storage" is stack specific, but is not mapped '
-            . 'for the destination stack "connection.north-europe.azure.keboola.com".'
+            . 'for the destination stack "connection.north-europe.azure.keboola.com".',
         ));
     }
 }
