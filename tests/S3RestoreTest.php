@@ -279,6 +279,7 @@ class S3RestoreTest extends BaseTest
             'permanent-files',
         );
         $restore->restorePermanentFiles();
+        sleep(1);
 
         sleep(3);
 
@@ -404,11 +405,10 @@ class S3RestoreTest extends BaseTest
         $tableExporter = new TableExporter($this->sapiClient);
         $file = $temp->createFile('account.csv');
         $tableExporter->exportTable('in.c-bucket.Account', $file->getPathname(), []);
-        /** @var array $fileContents */
-        $fileContents = file_get_contents($file->getPathname());
-        self::assertContains('"Id","Name"', $fileContents);
-        self::assertContains('"001C000000xYbhhIAC","Keboola"', $fileContents);
-        self::assertContains('"001C000000xYbhhIAD","Keboola 2"', $fileContents);
+        $fileContents = (string) file_get_contents($file->getPathname());
+        self::assertStringContainsString('"Id","Name"', $fileContents);
+        self::assertStringContainsString('"001C000000xYbhhIAC","Keboola"', $fileContents);
+        self::assertStringContainsString('"001C000000xYbhhIAD","Keboola 2"', $fileContents);
     }
 
     public function testRestoreTableWithoutHeader(): void
@@ -429,11 +429,10 @@ class S3RestoreTest extends BaseTest
         $tableExporter = new TableExporter($this->sapiClient);
         $file = $temp->createFile('account.csv');
         $tableExporter->exportTable('in.c-bucket.Account', $file->getPathname(), []);
-        /** @var array $fileContents */
-        $fileContents = file_get_contents($file->getPathname());
-        self::assertContains('"Id","Name"', $fileContents);
-        self::assertContains('"001C000000xYbhhIAC","Keboola"', $fileContents);
-        self::assertContains('"001C000000xYbhhIAD","Keboola 2"', $fileContents);
+        $fileContents = (string) file_get_contents($file->getPathname());
+        self::assertStringContainsString('"Id","Name"', $fileContents);
+        self::assertStringContainsString('"001C000000xYbhhIAC","Keboola"', $fileContents);
+        self::assertStringContainsString('"001C000000xYbhhIAD","Keboola 2"', $fileContents);
     }
 
     public function testRestoreTableFromMultipleSlices(): void
