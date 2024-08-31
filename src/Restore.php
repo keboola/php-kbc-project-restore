@@ -642,6 +642,7 @@ abstract class Restore
             $columns[$column] = [];
         }
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
+            $columnName = strval($columnName);
             $columnMetadata = [];
             foreach ($column as $metadata) {
                 if ($metadata['provider'] !== 'storage') {
@@ -661,8 +662,8 @@ abstract class Restore
                 $definition['default'] = $columnMetadata['KBC.datatype.default'];
             }
 
-            $columns[(string) $columnName] = [
-                'name' => (string) $columnName,
+            $columns[$columnName] = [
+                'name' => $columnName,
                 'definition' => $definition,
                 'basetype' => $columnMetadata['KBC.datatype.basetype'],
             ];
