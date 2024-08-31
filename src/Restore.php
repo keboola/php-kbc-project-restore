@@ -661,8 +661,8 @@ abstract class Restore
                 $definition['default'] = $columnMetadata['KBC.datatype.default'];
             }
 
-            $columns[$columnName] = [
-                'name' => $columnName,
+            $columns[(string) $columnName] = [
+                'name' => (string) $columnName,
                 'definition' => $definition,
                 'basetype' => $columnMetadata['KBC.datatype.basetype'],
             ];
