@@ -945,4 +945,30 @@ class AbsRestoreTest extends BaseTest
             'source table with id "in.c-bucket-doesnt-exists.tables-doesnt-exists" does not exist',
         ));
     }
+
+    public function testRestoreTypedTableWithIntColumns(): void
+    {
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-typed-table-with-int-columns'
+        );
+
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.firstTable'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertTrue($table['isTyped']);
+        self::assertEquals(['1'], $table['definition']['primaryKeysNames']);
+
+        $columnNames = array_map(
+            function ($column) {
+                return $column['name'];
+            },
+            $table['definition']['columns']
+        );
+        self::assertEquals(['1', '2', '3', '4'], $columnNames);
+    }
 }
