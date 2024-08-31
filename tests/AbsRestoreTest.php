@@ -267,6 +267,8 @@ class AbsRestoreTest extends BaseTest
         );
         $restore->restorePermanentFiles();
 
+        sleep(3);
+
         $files = $this->sapiClient->listFiles();
         $permanentFiles = array_filter($files, function ($file) {
             return is_null($file['maxAgeDays']);
