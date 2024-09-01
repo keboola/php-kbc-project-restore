@@ -34,6 +34,11 @@ class Token
         return $this->token;
     }
 
+    public function getId(): string
+    {
+        return $this->tokenData['id'];
+    }
+
     public function getDescription(): string
     {
         return $this->tokenData['description'];
