@@ -17,6 +17,7 @@ use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\Assert;
+use Psr\Log\Test\TestLogger;
 use stdClass;
 
 class S3RestoreTest extends BaseTest
@@ -961,5 +962,23 @@ class S3RestoreTest extends BaseTest
 
         Assert::assertEquals('KBC.configuration.folderName', $metadata[0]['key']);
         Assert::assertEquals('testFolder', $metadata[0]['value']);
+    }
+
+    public function testRestoreAliasWithSourceTableDoesntExists(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'alias-source-table-doesnt-exists',
+            $testLogger
+        );
+        $restore->restoreTableAliases();
+
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping alias out.c-bucket.Account - ' .
+            'source table with id "in.c-bucket-doesnt-exists.tables-doesnt-exists" does not exist',
+        ));
     }
 }

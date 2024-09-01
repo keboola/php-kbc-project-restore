@@ -423,8 +423,18 @@ abstract class Restore
                 continue;
             }
 
-            $tableId = $tableInfo['id'];
             $bucketId = $tableInfo['bucket']['id'];
+            $tableId = $tableInfo['id'];
+            $sourceTableId = $tableInfo['sourceTable']['id'];
+
+            if (!$this->sapiClient->tableExists($sourceTableId)) {
+                $this->logger->warning(sprintf(
+                    'Skipping alias %s - source table with id "%s" does not exist',
+                    $tableId,
+                    $sourceTableId,
+                ));
+                continue;
+            }
 
             if (!in_array($bucketId, $restoredBuckets)) {
                 $this->logger->warning(sprintf('Skipping alias %s', $tableId));

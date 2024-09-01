@@ -16,6 +16,7 @@ use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use PHPUnit\Framework\Assert;
+use Psr\Log\Test\TestLogger;
 use stdClass;
 
 class AbsRestoreTest extends BaseTest
@@ -924,5 +925,24 @@ class AbsRestoreTest extends BaseTest
         $bucket = $this->sapiClient->listBuckets(['include' => 'metadata'])[0];
         self::assertEquals('bucketKey', $bucket['metadata'][0]['key']);
         self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
+    }
+
+    public function testRestoreAliasWithSourceTableDoesntExists(): void
+    {
+        $testLogger = new TestLogger();
+
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-source-table-doesnt-exists',
+            $testLogger
+        );
+
+        $restore->restoreTableAliases();
+
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping alias out.c-bucket.Account - ' .
+            'source table with id "in.c-bucket-doesnt-exists.tables-doesnt-exists" does not exist',
+        ));
     }
 }
