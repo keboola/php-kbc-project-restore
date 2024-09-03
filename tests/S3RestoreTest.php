@@ -1049,4 +1049,42 @@ JSON;
 
         self::assertStringMatchesFormat($expectedResult, (string) json_encode($triggers, JSON_PRETTY_PRINT));
     }
+
+    public function testRestoreNotifications(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'notifications',
+        );
+        $restore->restoreNotifications();
+
+        $notificationClient = new NotificationClient(
+            $this->sapiClient->getServiceUrl('notification'),
+            $this->sapiClient->getTokenString(),
+            [
+                'backoffMaxTries' => 3,
+                'userAgent' => 'Keboola Project Restore',
+            ],
+        );
+
+        $expectedNotifications = (array) json_decode(
+            (string) file_get_contents(__DIR__ . '/data/backups/notifications/notifications.json'),
+            true
+        );
+
+        $expectedNotifications[0]['id'] = '%s';
+        $expectedNotifications[0]['filters'][0]['value'] = '%s';
+        $expectedNotifications[1]['id'] = '%s';
+        $expectedNotifications[1]['filters'][0]['value'] = '%s';
+
+        $restoreNotifications = $notificationClient->listSubscriptions();
+
+        self::assertEquals(2, count($restoreNotifications));
+        self::assertStringMatchesFormat(
+            (string) json_encode($expectedNotifications, JSON_PRETTY_PRINT),
+            (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT)
+        );
+    }
 }

@@ -9,6 +9,7 @@ use Keboola\StorageApi\Client as StorageApi;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\DevBranches;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 abstract class BaseTest extends TestCase
 {
@@ -77,6 +78,23 @@ abstract class BaseTest extends TestCase
 
         foreach ($this->sapiClient->listTriggers() as $trigger) {
             $this->sapiClient->deleteTrigger($trigger['id']);
+        }
+
+        $notificationClient = new NotificationClient(
+            $this->sapiClient->getServiceUrl('notification'),
+            $this->sapiClient->getTokenString(),
+            [
+                'backoffMaxTries' => 3,
+                'userAgent' => 'Keboola Project Restore',
+            ],
+        );
+
+        foreach ($notificationClient->listSubscriptions() as $subscription) {
+            try {
+                $notificationClient->deleteSubscription($subscription['id']);
+            } catch (Throwable $e) {
+                // ignore
+            }
         }
     }
 }
