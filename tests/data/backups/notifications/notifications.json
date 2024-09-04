@@ -1,0 +1,52 @@
+[
+  {
+    "id": "616",
+    "event": "job-failed",
+    "filters": [
+      {
+        "field": "branch.id",
+        "value": "416",
+        "operator": "=="
+      },
+      {
+        "field": "job.component.id",
+        "value": "keboola.orchestrator",
+        "operator": "=="
+      },
+      {
+        "field": "job.configuration.id",
+        "value": "857104647",
+        "operator": "=="
+      }
+    ],
+    "recipient": {
+      "channel": "email",
+      "address": "ondrej.jodas@keboola.com"
+    }
+  },
+  {
+    "id": "9334",
+    "event": "job-succeeded",
+    "filters": [
+      {
+        "field": "branch.id",
+        "value": "416",
+        "operator": "=="
+      },
+      {
+        "field": "job.component.id",
+        "value": "keboola.orchestrator",
+        "operator": "=="
+      },
+      {
+        "field": "job.configuration.id",
+        "value": "1173980516",
+        "operator": "=="
+      }
+    ],
+    "recipient": {
+      "channel": "email",
+      "address": "ondrej.jodas@keboola.com"
+    }
+  }
+]

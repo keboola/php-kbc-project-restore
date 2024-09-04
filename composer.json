@@ -12,7 +12,8 @@
     "PHP": "^7.4",
     "keboola/php-temp": "^1.0.0",
     "keboola/storage-api-client": "^14.0",
-    "monolog/monolog": "^1.23"
+    "monolog/monolog": "^1.23",
+    "keboola/notification-api-php-client": "^3.0"
   },
   "require-dev": {
     "phpstan/phpstan": "^0.12.48",

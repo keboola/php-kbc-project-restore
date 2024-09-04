@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
+use Keboola\NotificationClient\Requests\PostSubscription\EmailRecipient;
+use Keboola\NotificationClient\Requests\PostSubscription\Filter;
+use Keboola\NotificationClient\Requests\PostSubscription\FilterOperator;
+use Keboola\NotificationClient\Requests\Subscription;
+use Keboola\NotificationClient\SubscriptionClient;
 use Keboola\ProjectRestore\StorageApi\BucketInfo;
 use Keboola\ProjectRestore\StorageApi\ConfigurationCorrector;
 use Keboola\ProjectRestore\StorageApi\Token;
@@ -814,6 +819,51 @@ abstract class Restore
             unset($trigger['tables']);
 
             $this->sapiClient->createTrigger($trigger);
+        }
+    }
+
+    public function restoreNotifications(): void
+    {
+        $this->logger->info('Downloading notifications');
+        $fileContent = $this->getDataFromStorage('notifications.json');
+
+        $notifications = json_decode((string) $fileContent, true);
+
+        if ($this->dryRun === true) {
+            $this->logger->info(sprintf('[dry-run] Restoring %s notifications', count($notifications)));
+            // skip all code bellow in dry-run mode
+            return;
+        }
+
+        $subscriptionClient = new SubscriptionClient(
+            $this->sapiClient->getServiceUrl('notification'),
+            $this->sapiClient->getTokenString(),
+            [
+                'backoffMaxTries' => 3,
+                'userAgent' => 'Keboola Project Restore',
+            ],
+        );
+
+        foreach ($notifications as $notification) {
+            $this->logger->info(sprintf('Restoring notification %s', $notification['id']));
+
+            $filters = [];
+            foreach ($notification['filters'] as $filter) {
+                if ($filter['field'] === 'branch.id') {
+                    $filter['value'] = $this->branchAwareClient->getCurrentBranchId();
+                }
+                $filters[] = new Filter(
+                    (string) $filter['field'],
+                    (string) $filter['value'],
+                    new FilterOperator($filter['operator']),
+                );
+            }
+
+            $subscriptionClient->createSubscription(new Subscription(
+                $notification['event'],
+                new EmailRecipient($notification['recipient']['address']),
+                $filters,
+            ));
         }
     }
 }
