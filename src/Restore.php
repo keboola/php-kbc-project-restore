@@ -853,8 +853,8 @@ abstract class Restore
                     $filter['value'] = $this->branchAwareClient->getCurrentBranchId();
                 }
                 $filters[] = new Filter(
-                    strval($filter['field']),
-                    strval($filter['value']),
+                    (string) $filter['field'],
+                    (string) $filter['value'],
                     new FilterOperator($filter['operator']),
                 );
             }
