@@ -970,7 +970,7 @@ class S3RestoreTest extends BaseTest
             $this->s3Client,
             (string) getenv('TEST_AWS_S3_BUCKET'),
             'alias-source-table-doesnt-exists',
-            $testLogger
+            $testLogger,
         );
         $restore->restoreTableAliases();
 
@@ -1002,7 +1002,7 @@ class S3RestoreTest extends BaseTest
             function ($column) {
                 return $column['name'];
             },
-            $table['definition']['columns']
+            $table['definition']['columns'],
         );
         self::assertEquals(['1', '2', '3', '4'], $columnNames);
     }
@@ -1067,9 +1067,10 @@ JSON;
             ],
         );
 
+        /** @var array[][] $expectedNotifications */
         $expectedNotifications = (array) json_decode(
             (string) file_get_contents(__DIR__ . '/data/backups/notifications/notifications.json'),
-            true
+            true,
         );
 
         $expectedNotifications[0]['id'] = '%s';
@@ -1082,7 +1083,7 @@ JSON;
         self::assertEquals(2, count($restoreNotifications));
         self::assertStringMatchesFormat(
             (string) json_encode($expectedNotifications, JSON_PRETTY_PRINT),
-            (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT)
+            (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT),
         );
     }
 }

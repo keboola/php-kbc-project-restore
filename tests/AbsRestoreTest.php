@@ -933,7 +933,7 @@ class AbsRestoreTest extends BaseTest
             $this->sapiClient,
             $this->absClient,
             getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-source-table-doesnt-exists',
-            $testLogger
+            $testLogger,
         );
 
         $restore->restoreTableAliases();
@@ -949,7 +949,7 @@ class AbsRestoreTest extends BaseTest
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-typed-table-with-int-columns'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-typed-table-with-int-columns',
         );
 
         $restore->restoreBuckets();
@@ -965,7 +965,7 @@ class AbsRestoreTest extends BaseTest
             function ($column) {
                 return $column['name'];
             },
-            $table['definition']['columns']
+            $table['definition']['columns'],
         );
         self::assertEquals(['1', '2', '3', '4'], $columnNames);
     }
@@ -975,7 +975,7 @@ class AbsRestoreTest extends BaseTest
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-triggers'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-triggers',
         );
 
         $restore->restoreBuckets();
@@ -1015,7 +1015,7 @@ JSON;
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-notifications'
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-notifications',
         );
         $restore->restoreNotifications();
 
@@ -1028,9 +1028,10 @@ JSON;
             ],
         );
 
+        /** @var array[][] $expectedNotifications */
         $expectedNotifications = (array) json_decode(
             (string) file_get_contents(__DIR__ . '/data/backups/notifications/notifications.json'),
-            true
+            true,
         );
 
         $expectedNotifications[0]['id'] = '%s';
@@ -1043,7 +1044,7 @@ JSON;
         self::assertEquals(2, count($restoreNotifications));
         self::assertStringMatchesFormat(
             (string) json_encode($expectedNotifications, JSON_PRETTY_PRINT),
-            (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT)
+            (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT),
         );
     }
 }

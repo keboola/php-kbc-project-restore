@@ -791,7 +791,7 @@ abstract class Restore
         $this->logger->info('Downloading triggers');
         $fileContent = $this->getDataFromStorage('triggers.json');
 
-        $triggers = json_decode((string) $fileContent, true);
+        $triggers = (array) json_decode((string) $fileContent, true);
 
         if ($this->dryRun === true) {
             $this->logger->info(sprintf('[dry-run] Restoring %s triggers', count($triggers)));
@@ -802,6 +802,14 @@ abstract class Restore
 
         $tokensEndpoint = new Tokens($this->sapiClient);
 
+        /**
+         * @var array{
+         *     id: string,
+         *     configurationId: string,
+         *     name: string,
+         *     tables: string[],
+         * } $trigger
+         */
         foreach ($triggers as $trigger) {
             $this->logger->info(sprintf('Restoring trigger %s', $trigger['id']));
             $tokenOptions = new TokenCreateOptions();
@@ -831,7 +839,7 @@ abstract class Restore
         $this->logger->info('Downloading notifications');
         $fileContent = $this->getDataFromStorage('notifications.json');
 
-        $notifications = json_decode((string) $fileContent, true);
+        $notifications = (array) json_decode((string) $fileContent, true);
 
         if ($this->dryRun === true) {
             $this->logger->info(sprintf('[dry-run] Restoring %s notifications', count($notifications)));
@@ -848,6 +856,14 @@ abstract class Restore
             ],
         );
 
+        /**
+         * @var array{
+         *     id: string,
+         *     event: string,
+         *     recipient: array{address: string},
+         *     filters: array{field: string, operator: string, value: string}[],
+         * } $notification
+         */
         foreach ($notifications as $notification) {
             $this->logger->info(sprintf('Restoring notification %s', $notification['id']));
 
