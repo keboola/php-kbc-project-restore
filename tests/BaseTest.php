@@ -74,5 +74,9 @@ abstract class BaseTest extends TestCase
                 ],
             );
         }
+
+        foreach ($this->sapiClient->listTriggers() as $trigger) {
+            $this->sapiClient->deleteTrigger($trigger['id']);
+        }
     }
 }

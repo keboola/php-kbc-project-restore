@@ -1008,4 +1008,45 @@ class S3RestoreTest extends BaseTest
         );
         self::assertEquals(['1', '2', '3', '4'], $columnNames);
     }
+
+    public function testRestoreTriggers(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'triggers',
+        );
+
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+        $restore->restoreTriggers();
+
+        $triggers = $this->sapiClient->listTriggers();
+        self::assertCount(1, $triggers);
+
+        $expectedResult = <<<JSON
+[
+    {
+        "id": "%s",
+        "runWithTokenId": %d,
+        "component": "keboola.orchestrator",
+        "configurationId": "%s",
+        "lastRun": "%s",
+        "creatorToken": {
+            "id": %d,
+            "description": "%s"
+        },
+        "coolDownPeriodMinutes": 5,
+        "tables": [
+            {
+                "tableId": "in.c-bucket.firstTable"
+            }
+        ]
+    }
+]
+JSON;
+
+        self::assertStringMatchesFormat($expectedResult, (string) json_encode($triggers, JSON_PRETTY_PRINT));
+    }
 }

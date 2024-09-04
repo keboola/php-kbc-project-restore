@@ -23,6 +23,8 @@ use Keboola\StorageApi\Options\Components\ConfigurationRowState;
 use Keboola\StorageApi\Options\Components\ConfigurationState;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
+use Keboola\StorageApi\Options\TokenCreateOptions;
+use Keboola\StorageApi\Tokens;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -772,6 +774,46 @@ abstract class Restore
             $fileOption->setIsPermanent(true);
             $fileOption->setTags($permanentFile['tags'] ?? []);
             $this->sapiClient->uploadFile($fileName, $fileOption);
+        }
+    }
+
+    public function restoreTriggers(): void
+    {
+        $this->logger->info('Downloading triggers');
+        $fileContent = $this->getDataFromStorage('triggers.json');
+
+        $triggers = json_decode((string) $fileContent, true);
+
+        if ($this->dryRun === true) {
+            $this->logger->info(sprintf('[dry-run] Restoring %s triggers', count($triggers)));
+            // skip all code bellow in dry-run mode
+            return;
+        }
+        $actualToken = new Token($this->sapiClient);
+
+        $tokensEndpoint = new Tokens($this->sapiClient);
+
+        foreach ($triggers as $trigger) {
+            $this->logger->info(sprintf('Restoring trigger %s', $trigger['id']));
+            $tokenOptions = new TokenCreateOptions();
+            $tokenOptions->setDescription(sprintf(
+                '[_internal] Token for triggering %s',
+                $trigger['configurationId'],
+            ));
+            $tokenOptions->setCanManageBuckets(true);
+            $tokenOptions->setCanReadAllFileUploads(true);
+
+            $token = $tokensEndpoint->createToken($tokenOptions);
+            $trigger['runWithTokenId'] = $token['id'];
+            $trigger['creatorToken'] = [
+                'id' => $actualToken->getId(),
+                'description' => $actualToken->getDescription(),
+            ];
+            $trigger['tableIds'] = $trigger['tables'];
+
+            unset($trigger['tables']);
+
+            $this->sapiClient->createTrigger($trigger);
         }
     }
 }

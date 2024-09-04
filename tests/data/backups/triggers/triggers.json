@@ -1,0 +1,15 @@
+[{
+  "id": "2367",
+  "runWithTokenId": 982885,
+  "component": "keboola.orchestrator",
+  "configurationId": "1077426543",
+  "lastRun": "2024-09-01T05:53:50+0100",
+  "creatorToken": {
+    "id": 157401,
+    "description": "ondrej.jodas@keboola.com"
+  },
+  "coolDownPeriodMinutes": 5,
+  "tables": [
+    "in.c-bucket.firstTable"
+  ]
+}]
