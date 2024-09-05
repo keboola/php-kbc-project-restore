@@ -9,7 +9,7 @@
     "description": "ondrej.jodas@keboola.com"
   },
   "coolDownPeriodMinutes": 5,
-  "tables": [
-    "in.c-bucket.firstTable"
-  ]
+  "tables": [{
+    "tableId": "in.c-bucket.firstTable"
+  }]
 }]

@@ -826,7 +826,7 @@ abstract class Restore
                 'id' => $actualToken->getId(),
                 'description' => $actualToken->getDescription(),
             ];
-            $trigger['tableIds'] = $trigger['tables'];
+            $trigger['tableIds'] = array_map(fn($v) => $v['tableId'], $trigger['tables']);
 
             unset($trigger['tables']);
 
