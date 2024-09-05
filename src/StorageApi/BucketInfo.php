@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\StorageApi;
 
+use InvalidArgumentException;
+
 class BucketInfo
 {
     private string $id;
@@ -36,7 +38,7 @@ class BucketInfo
         $this->isLinkedBucket = isset($bucketInfo['sourceBucket']);
 
         if (!array_key_exists('metadata', $bucketInfo)) {
-            throw new \InvalidArgumentException(sprintf('Missing metadata info for bucket "%s"', $this->getId()));
+            throw new InvalidArgumentException(sprintf('Missing metadata info for bucket "%s"', $this->getId()));
         }
 
         $this->metadata = $bucketInfo['metadata'];

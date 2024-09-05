@@ -20,12 +20,12 @@ class AbsRestore extends Restore
         StorageApi $sapiClient,
         BlobRestProxy $absClient,
         string $container,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ) {
         $this->absClient = $absClient;
         $this->container = $container;
 
-        parent::__construct($logger, $sapiClient);
+        parent::__construct($sapiClient, $logger);
     }
 
     /**
@@ -36,7 +36,7 @@ class AbsRestore extends Restore
         $container = $this->container;
         $configFileContent = $this->absClient->getBlob(
             $container,
-            $filePath
+            $filePath,
         );
         if (!$useString) {
             return $configFileContent->getContentStream();

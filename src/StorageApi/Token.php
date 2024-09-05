@@ -8,15 +8,9 @@ use Keboola\StorageApi\Client;
 
 class Token
 {
-    /**
-     * @var array
-     */
-    private $tokenData;
+    private array $tokenData;
 
-    /**
-     * @var string
-     */
-    private $token;
+    private string $token;
 
     public function __construct(Client $sapiClient)
     {
@@ -26,8 +20,6 @@ class Token
 
     /**
      * Convert to SAPI Token
-     *
-     * @return string
      */
     public function __toString(): string
     {

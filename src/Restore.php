@@ -33,6 +33,7 @@ use Keboola\StorageApi\Tokens;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use stdClass;
 
 abstract class Restore
 {
@@ -46,11 +47,11 @@ abstract class Restore
 
     protected bool $dryRun = false;
 
-    public function __construct(?LoggerInterface $logger = null, Client $sapiClient)
+    public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
     {
         $this->sapiClient = $sapiClient;
         $this->token = new Token($this->sapiClient);
-        $this->logger = $logger?: new NullLogger();
+        $this->logger = $logger ?: new NullLogger();
 
         $devBranches = new DevBranches($this->sapiClient);
         $listBranches = $devBranches->listBranches();
@@ -75,6 +76,7 @@ abstract class Restore
         $devBranchMetadata = new DevBranchesMetadata($this->branchAwareClient);
 
         $fileContent = $this->getDataFromStorage('defaultBranchMetadata.json');
+        /** @var array $projectMetadata */
         $projectMetadata = json_decode((string) $fileContent, true);
 
         if ($projectMetadata) {
@@ -90,10 +92,8 @@ abstract class Restore
     {
         $this->logger->info('Downloading configurations');
 
-        $tmp = new Temp();
-        $tmp->initRunFolder();
-
         $fileContent = $this->getDataFromStorage('configurations.json');
+        /** @var array $configurations */
         $configurations = json_decode((string) $fileContent, true);
 
         $components = new Components($this->sapiClient);
@@ -103,6 +103,8 @@ abstract class Restore
         foreach ($this->sapiClient->indexAction()['components'] as $component) {
             $componentList[$component['id']] = $component;
         }
+
+        /** @var array $componentWithConfigurations */
         foreach ($configurations as $componentWithConfigurations) {
             $componentId = $componentWithConfigurations['id'];
 
@@ -110,8 +112,8 @@ abstract class Restore
                 $this->logger->warning(
                     sprintf(
                         'Skipping %s configurations - component marked as skipped',
-                        $componentId
-                    )
+                        $componentId,
+                    ),
                 );
                 continue;
             }
@@ -121,8 +123,8 @@ abstract class Restore
                 $this->logger->warning(
                     sprintf(
                         'Skipping %s configurations - component does not exists',
-                        $componentId
-                    )
+                        $componentId,
+                    ),
                 );
                 continue;
             }
@@ -132,15 +134,17 @@ abstract class Restore
             // restore configuration metadata
             $componentConfigurationsFiles = $this->listComponentConfigurationsFiles(sprintf(
                 'configurations/%s',
-                $componentId
+                $componentId,
             ));
 
+            /** @var array $componentConfiguration */
             foreach ($componentWithConfigurations['configurations'] as $componentConfiguration) {
                 // configurations as objects to preserve empty arrays or empty objects
+                /** @var stdClass $configurationData */
                 $configurationData = json_decode((string) $this->getDataFromStorage(sprintf(
                     'configurations/%s/%s.json',
                     $componentId,
-                    $componentConfiguration['id']
+                    $componentConfiguration['id'],
                 )));
 
                 // create empty configuration
@@ -154,7 +158,7 @@ abstract class Restore
                 // update configuration and state
                 $configuration->setChangeDescription(sprintf(
                     'Configuration %s restored from backup',
-                    $componentConfiguration['id']
+                    $componentConfiguration['id'],
                 ));
 
                 $configCorrector = new ConfigurationCorrector($this->sapiClient->getApiUrl(), $this->logger);
@@ -162,8 +166,8 @@ abstract class Restore
                     $configCorrector->correct(
                         $componentId,
                         $configurationData->configuration,
-                        $verifyToken['owner']['defaultBackend']
-                    )
+                        $verifyToken['owner']['defaultBackend'],
+                    ),
                 );
 
                 if ($this->dryRun === false) {
@@ -260,10 +264,11 @@ abstract class Restore
                 $metadataFilePath = sprintf(
                     'configurations/%s/%s.json.metadata',
                     $componentId,
-                    $componentConfiguration['id']
+                    $componentConfiguration['id'],
                 );
 
                 if (in_array($metadataFilePath, $componentConfigurationsFiles, true)) {
+                    /** @var array $metadataData */
                     $metadataData = json_decode((string) $this->getDataFromStorage($metadataFilePath), true);
                     array_walk($metadataData, function (&$v): void {
                         unset($v['id']);
@@ -293,11 +298,9 @@ abstract class Restore
     {
         $this->logger->info('Downloading buckets');
 
-        $tmp = new Temp();
-        $tmp->initRunFolder();
-
         $fileContent = $this->getDataFromStorage('buckets.json');
 
+        /** @var array $buckets */
         $buckets = json_decode((string) $fileContent, true);
 
         return array_map(function (array $bucketInfo) {
@@ -323,7 +326,7 @@ abstract class Restore
                 $bucket->getStage(),
                 $bucket->getDescription() ?: '',
                 $useDefaultBackend ? null : $bucket->getBackend(),
-                $bucket->getDisplayName()
+                $bucket->getDisplayName(),
             );
         } else {
             $this->logger->info(sprintf(
@@ -411,26 +414,26 @@ abstract class Restore
     {
         $this->logger->info('Downloading tables');
 
-        $tmp = new Temp();
-        $tmp->initRunFolder();
-
         $fileContent = $this->getDataFromStorage('tables.json');
+        /** @var array $tables */
         $tables = json_decode((string) $fileContent, true);
 
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
             },
-            $this->sapiClient->listBuckets()
+            $this->sapiClient->listBuckets(),
         );
         $metadataClient = new Metadata($this->sapiClient);
 
+        /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] !== true) {
                 continue;
             }
 
             $bucketId = $tableInfo['bucket']['id'];
+            /** @var string $tableId */
             $tableId = $tableInfo['id'];
             $sourceTableId = $tableInfo['sourceTable']['id'];
 
@@ -463,7 +466,7 @@ abstract class Restore
                     $bucketId,
                     $tableInfo['sourceTable']['id'],
                     $tableInfo['name'],
-                    $aliasOptions
+                    $aliasOptions,
                 );
 
                 $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
@@ -478,19 +481,20 @@ abstract class Restore
         $this->logger->info('Downloading tables');
 
         $tmp = new Temp();
-        $tmp->initRunFolder();
 
         $fileContent = $this->getDataFromStorage('tables.json');
+        /** @var array $tables */
         $tables = json_decode((string) $fileContent, true);
 
         $restoredBuckets = array_map(
             function ($bucket) {
                 return $bucket['id'];
             },
-            $this->sapiClient->listBuckets()
+            $this->sapiClient->listBuckets(),
         );
         $metadataClient = new Metadata($this->sapiClient);
 
+        /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] === true) {
                 continue;
@@ -553,7 +557,7 @@ abstract class Restore
                     [
                         'name' => $tableInfo['name'],
                         'dataFileId' => $fileId,
-                    ]
+                    ],
                 );
             } else {
                 $downloadedSlices = [];
@@ -569,18 +573,17 @@ abstract class Restore
                     ->setFederationToken(true)
                     ->setFileName($tableId)
                     ->setIsSliced(true)
-                    ->setIsEncrypted(true)
-                ;
+                    ->setIsEncrypted(true);
 
                 $dataFileId = $this->sapiClient->uploadSlicedFile($downloadedSlices, $fileUploadOptions);
 
                 // Upload data to table
                 $this->sapiClient->writeTableAsyncDirect(
                     $tableId,
-                    array(
+                    [
                         'dataFileId' => $dataFileId,
-                        'columns' => $headerFile->getHeader()
-                    )
+                        'columns' => $headerFile->getHeader(),
+                    ],
                 );
             }
             unset($headerFile);
@@ -606,12 +609,11 @@ abstract class Restore
     {
         $this->logger->info('Downloading configurations');
 
-        $tmp = new Temp();
-        $tmp->initRunFolder();
-
         $fileContent = $this->getDataFromStorage('configurations.json');
 
+        /** @var array $components */
         $components = json_decode((string) $fileContent, true);
+        /** @var array $component */
         foreach ($components as $component) {
             if ($component['id'] !== $componentId) {
                 continue;
@@ -621,7 +623,7 @@ abstract class Restore
                 function (array $configuration) {
                     return $configuration['id'];
                 },
-                $component['configurations']
+                $component['configurations'],
             );
         }
 
@@ -648,7 +650,7 @@ abstract class Restore
             $headerFile,
             [
                 'primaryKey' => join(',', $tableInfo['primaryKey']),
-            ]
+            ],
         );
     }
 
@@ -706,7 +708,7 @@ abstract class Restore
         try {
             return $this->sapiClient->createTableDefinition(
                 $tableInfo['bucket']['id'],
-                $data
+                $data,
             );
         } catch (ClientException $e) {
             if ($e->getCode() === 400
@@ -738,6 +740,7 @@ abstract class Restore
             }
         }
 
+        /** @var array $metadata */
         foreach ($metadatas as $provider => $metadata) {
             if ($provider === 'storage') {
                 continue;
@@ -746,7 +749,7 @@ abstract class Restore
                 $tableId,
                 (string) $provider,
                 $metadata['table'] ?? null,
-                $metadata['columns'] ?? null
+                $metadata['columns'] ?? null,
             );
 
             $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
@@ -758,16 +761,17 @@ abstract class Restore
         $this->logger->info('Downloading permanent files');
         $fileContent = $this->getDataFromStorage('permanentFiles.json');
 
+        /** @var array $permanentFiles */
         $permanentFiles = json_decode((string) $fileContent, true);
 
         $tmp = new Temp();
-        $tmp->initRunFolder();
 
         if ($this->dryRun === true) {
             $this->logger->info(sprintf('[dry-run] Restoring %s permanent files', count($permanentFiles)));
             // skip all code bellow in dry-run mode
             return;
         }
+        /** @var array $permanentFile */
         foreach ($permanentFiles as $permanentFile) {
             $permanentFileName = $permanentFile['name'];
             $this->logger->info(sprintf('Restoring file %s', $permanentFileName));
@@ -787,7 +791,7 @@ abstract class Restore
         $this->logger->info('Downloading triggers');
         $fileContent = $this->getDataFromStorage('triggers.json');
 
-        $triggers = json_decode((string) $fileContent, true);
+        $triggers = (array) json_decode((string) $fileContent, true);
 
         if ($this->dryRun === true) {
             $this->logger->info(sprintf('[dry-run] Restoring %s triggers', count($triggers)));
@@ -798,6 +802,14 @@ abstract class Restore
 
         $tokensEndpoint = new Tokens($this->sapiClient);
 
+        /**
+         * @var array{
+         *     id: string,
+         *     configurationId: string,
+         *     name: string,
+         *     tables: string[],
+         * } $trigger
+         */
         foreach ($triggers as $trigger) {
             $this->logger->info(sprintf('Restoring trigger %s', $trigger['id']));
             $tokenOptions = new TokenCreateOptions();
@@ -827,7 +839,7 @@ abstract class Restore
         $this->logger->info('Downloading notifications');
         $fileContent = $this->getDataFromStorage('notifications.json');
 
-        $notifications = json_decode((string) $fileContent, true);
+        $notifications = (array) json_decode((string) $fileContent, true);
 
         if ($this->dryRun === true) {
             $this->logger->info(sprintf('[dry-run] Restoring %s notifications', count($notifications)));
@@ -844,6 +856,14 @@ abstract class Restore
             ],
         );
 
+        /**
+         * @var array{
+         *     id: string,
+         *     event: string,
+         *     recipient: array{address: string},
+         *     filters: array{field: string, operator: string, value: string}[],
+         * } $notification
+         */
         foreach ($notifications as $notification) {
             $this->logger->info(sprintf('Restoring notification %s', $notification['id']));
 

@@ -7,6 +7,7 @@ namespace Keboola\ProjectRestore\Tests\StorageApi;
 use Keboola\ProjectRestore\StorageApi\ConfigurationCorrector;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use stdClass;
 
 class ConfigurationCorrectorTest extends TestCase
 {
@@ -16,13 +17,15 @@ class ConfigurationCorrectorTest extends TestCase
         string $apiUrl,
         array $inConfigData,
         array $expectedOutConfigData,
-        string $backendType
+        string $backendType,
     ): void {
         $corrector = new ConfigurationCorrector($apiUrl, new NullLogger());
+        /** @var stdClass $configuration */
+        $configuration = json_decode((string) json_encode($inConfigData));
         $correctedConfigData = $corrector->correct(
             $componentId,
-            json_decode((string) json_encode($inConfigData)),
-            $backendType
+            $configuration,
+            $backendType,
         );
         $this->assertEquals(json_decode((string) json_encode($expectedOutConfigData)), $correctedConfigData);
     }

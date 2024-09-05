@@ -13,13 +13,13 @@ class ConfigurationCorrector
 
     public function __construct(
         string $destinationApiUrl,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ) {
         $destinationStack = self::getStackFromUrl($destinationApiUrl);
 
         $this->componentIdTranslator = new StackSpecificComponentIdTranslator(
             $destinationStack,
-            $logger
+            $logger,
         );
     }
 
