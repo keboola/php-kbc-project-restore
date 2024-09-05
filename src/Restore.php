@@ -807,7 +807,7 @@ abstract class Restore
          *     id: string,
          *     configurationId: string,
          *     name: string,
-         *     tables: string[],
+         *     tables: array{tableId: string}[],
          * } $trigger
          */
         foreach ($triggers as $trigger) {
