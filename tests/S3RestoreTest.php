@@ -1009,11 +1009,13 @@ class S3RestoreTest extends BaseTest
 
     public function testRestoreTriggers(): void
     {
+        $logger = new TestLogger();
         $restore = new S3Restore(
             $this->sapiClient,
             $this->s3Client,
             (string) getenv('TEST_AWS_S3_BUCKET'),
             'triggers',
+            $logger,
         );
 
         $restore->restoreBuckets();
@@ -1045,6 +1047,8 @@ class S3RestoreTest extends BaseTest
 ]
 JSON;
 
+        self::assertTrue($logger->hasInfo('Skipping trigger "1111" - no tables'));
+        self::assertTrue($logger->hasInfo('Restoring trigger "2222"'));
         self::assertStringMatchesFormat($expectedResult, (string) json_encode($triggers, JSON_PRETTY_PRINT));
     }
 

@@ -972,10 +972,12 @@ class AbsRestoreTest extends BaseTest
 
     public function testRestoreTriggers(): void
     {
+        $logger = new TestLogger();
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
             getenv('TEST_AZURE_CONTAINER_NAME') . '-triggers',
+            $logger,
         );
 
         $restore->restoreBuckets();
@@ -1007,6 +1009,8 @@ class AbsRestoreTest extends BaseTest
 ]
 JSON;
 
+        self::assertTrue($logger->hasInfo('Skipping trigger "1111" - no tables'));
+        self::assertTrue($logger->hasInfo('Restoring trigger "2222"'));
         self::assertStringMatchesFormat($expectedResult, (string) json_encode($triggers, JSON_PRETTY_PRINT));
     }
 

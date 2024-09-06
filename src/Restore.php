@@ -811,7 +811,11 @@ abstract class Restore
          * } $trigger
          */
         foreach ($triggers as $trigger) {
-            $this->logger->info(sprintf('Restoring trigger %s', $trigger['id']));
+            if (!$trigger['tables']) {
+                $this->logger->info(sprintf('Skipping trigger "%s" - no tables', $trigger['id']));
+                continue;
+            }
+            $this->logger->info(sprintf('Restoring trigger "%s"', $trigger['id']));
             $tokenOptions = new TokenCreateOptions();
             $tokenOptions->setDescription(sprintf(
                 '[_internal] Token for triggering %s',
