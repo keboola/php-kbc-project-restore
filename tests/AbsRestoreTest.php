@@ -1070,4 +1070,21 @@ JSON;
             'Table "firstTable" cannot be restored because the primary key column "Id" is nullable.',
         ));
     }
+
+    public function testRestoreTableWithDisplayName(): void
+    {
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-with-display-name',
+        );
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        $firstTable = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertEquals('DisplayNameFirstTable', $firstTable['displayName']);
+
+        $secondTable = $this->sapiClient->getTable('in.c-bucket.secondTable');
+        self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
+    }
 }

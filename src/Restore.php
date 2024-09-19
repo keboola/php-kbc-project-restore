@@ -645,7 +645,7 @@ abstract class Restore
     private function restoreTable(array $tableInfo, CsvFile $headerFile): string
     {
         // create empty table
-        return $this->sapiClient->createTableAsync(
+        $tableId = $this->sapiClient->createTableAsync(
             $tableInfo['bucket']['id'],
             $tableInfo['name'],
             $headerFile,
@@ -653,6 +653,13 @@ abstract class Restore
                 'primaryKey' => join(',', $tableInfo['primaryKey']),
             ],
         );
+
+        if (isset($tableInfo['displayName'])) {
+            $this->sapiClient->updateTable($tableId, [
+                'displayName' => $tableInfo['displayName'],
+            ]);
+        }
+        return $tableId;
     }
 
     private function restoreTypedTable(array $tableInfo): string
@@ -707,10 +714,17 @@ abstract class Restore
         }
 
         try {
-            return $this->sapiClient->createTableDefinition(
+            $tableId = $this->sapiClient->createTableDefinition(
                 $tableInfo['bucket']['id'],
                 $data,
             );
+
+            if (isset($tableInfo['displayName'])) {
+                $this->sapiClient->updateTable($tableId, [
+                    'displayName' => $tableInfo['displayName'],
+                ]);
+            }
+            return $tableId;
         } catch (ClientException $e) {
             if ($e->getCode() === 400
                 && preg_match('/Primary keys columns must be set nullable false/', $e->getMessage())) {
