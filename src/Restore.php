@@ -905,12 +905,12 @@ abstract class Restore
                     fn($v) => $v['provider'] === 'storage',
                 );
 
-                $columnMetadatum = array_combine(
+                $columnMetadataList = array_combine(
                     array_map(fn($v) => $v['key'], $columnMetadata),
                     array_map(fn($v) => $v['value'], $columnMetadata),
                 );
-                if (isset($columnMetadatum['KBC.datatype.nullable']) &&
-                    $columnMetadatum['KBC.datatype.nullable'] === '1') {
+                if (isset($columnMetadataList['KBC.datatype.nullable']) &&
+                    $columnMetadataList['KBC.datatype.nullable'] === '1') {
                     $this->logger->warning(sprintf(
                         'Table "%s" cannot be restored because the primary key column "%s" is nullable.',
                         $tableInfo['name'],
