@@ -1090,4 +1090,24 @@ JSON;
             (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT),
         );
     }
+
+    public function testRestoreTableWithNullablePKs(): void
+    {
+        $logger = new TestLogger();
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-nullable-pk',
+            $logger,
+        );
+        $restore->setDryRunMode();
+
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($logger->hasWarning(
+            'Table "firstTable" cannot be restored because the primary key column "Id" is nullable.',
+        ));
+    }
 }

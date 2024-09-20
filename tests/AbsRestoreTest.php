@@ -1051,4 +1051,23 @@ JSON;
             (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT),
         );
     }
+
+    public function testRestoreTableWithNullablePKs(): void
+    {
+        $logger = new TestLogger();
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-with-nullable-pk',
+            $logger,
+        );
+        $restore->setDryRunMode();
+
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($logger->hasWarning(
+            'Table "firstTable" cannot be restored because the primary key column "Id" is nullable.',
+        ));
+    }
 }

@@ -499,6 +499,7 @@ abstract class Restore
             if ($tableInfo['isAlias'] === true) {
                 continue;
             }
+            $this->checkTableRestorable($tableInfo);
 
             $tableId = $tableInfo['id'];
             $bucketId = $tableInfo['bucket']['id'];
@@ -888,6 +889,35 @@ abstract class Restore
                 new EmailRecipient($notification['recipient']['address']),
                 $filters,
             ));
+        }
+    }
+
+    private function checkTableRestorable(array $tableInfo): void
+    {
+        // check if primage key has nullable column
+        if (($tableInfo['isTyped'] ?? false) === true) {
+            foreach ($tableInfo['columnMetadata'] as $columnName => $columnMetadata) {
+                if (!in_array($columnName, $tableInfo['primaryKey'], true)) {
+                    continue;
+                }
+                $columnMetadata = array_filter(
+                    $columnMetadata,
+                    fn($v) => $v['provider'] === 'storage',
+                );
+
+                $columnMetadataList = array_combine(
+                    array_map(fn($v) => $v['key'], $columnMetadata),
+                    array_map(fn($v) => $v['value'], $columnMetadata),
+                );
+                if (isset($columnMetadataList['KBC.datatype.nullable']) &&
+                    $columnMetadataList['KBC.datatype.nullable'] === '1') {
+                    $this->logger->warning(sprintf(
+                        'Table "%s" cannot be restored because the primary key column "%s" is nullable.',
+                        $tableInfo['name'],
+                        $columnName,
+                    ));
+                }
+            }
         }
     }
 }
