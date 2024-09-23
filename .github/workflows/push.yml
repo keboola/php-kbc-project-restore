@@ -55,11 +55,11 @@ jobs:
       matrix:
         include:
           - run: composer ci-except-tests
-            token: ${{env.TEST_STORAGE_API_TOKEN_S3}}
+            token: TEST_STORAGE_API_TOKEN_S3
           - run: composer tests-s3
-            token: ${{env.TEST_STORAGE_API_TOKEN_S3}}
+            token: TEST_STORAGE_API_TOKEN_S3
           - run: composer tests-abs
-            token: ${{env.TEST_STORAGE_API_TOKEN_ABS}}
+            token: TEST_STORAGE_API_TOKEN_ABS
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
       - name: Run tests
         run: docker run
           -e TEST_STORAGE_API_URL
-          -e TEST_STORAGE_API_TOKEN=${{matrix.token}}
+          -e TEST_STORAGE_API_TOKEN=${{ secrets[matrix.token] }}
           -e TEST_AWS_ACCESS_KEY_ID
           -e TEST_AWS_SECRET_ACCESS_KEY
           -e TEST_AWS_REGION
