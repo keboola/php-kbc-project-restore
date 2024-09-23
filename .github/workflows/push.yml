@@ -52,8 +52,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - run: composer phpcs
-          - run: composer phpstan
+          - run: composer ci-except-tests
+          - run: composer tests-s3
+          - run: composer tests-abs
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
