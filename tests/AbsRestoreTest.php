@@ -537,7 +537,7 @@ class AbsRestoreTest extends BaseTest
             'id' => [
                 'KBC.datatype.type' => 'NUMBER',
                 'KBC.datatype.nullable' => '',
-                'KBC.datatype.basetype' => 'NUMERIC',
+                'KBC.datatype.basetype' => 'INTEGER',
                 'KBC.datatype.length' => '38,0',
             ],
             'name' => [
