@@ -849,7 +849,14 @@ abstract class Restore
 
             unset($trigger['tables']);
 
-            $this->sapiClient->createTrigger($trigger);
+            try {
+                $this->sapiClient->createTrigger($trigger);
+            } catch (ClientException $e) {
+                $this->logger->warning(sprintf(
+                    'Trigger cannot be restored: %s',
+                    $e->getMessage(),
+                ));
+            }
         }
     }
 
