@@ -13,7 +13,13 @@
     "rowsCount": 0,
     "isMaintenance": false,
     "backend": "snowflake",
-    "metadata": []
+    "metadata": [
+      {
+        "provider": "test-component",
+        "key": "some-key",
+        "value": "Some value"
+      }
+    ]
   },
   {
     "uri": "https:\/\/connection.keboola.com\/\/v2\/storage\/buckets\/in.c-bucket2",
