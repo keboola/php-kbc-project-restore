@@ -392,21 +392,6 @@ abstract class Restore
                 $this->logger->warning(sprintf('Skipping bucket %s - %s', $bucketInfo->getId(), $e->getMessage()));
                 continue;
             }
-
-            if (count($bucketInfo->getMetadata())) {
-                foreach ($this->prepareMetadata($bucketInfo->getMetadata()) as $provider => $metadata) {
-                    if ($this->dryRun === false) {
-                        $metadataClient->postBucketMetadata($bucketInfo->getId(), (string) $provider, $metadata);
-                    } else {
-                        $this->logger->info(sprintf(
-                            '[dry-run] Restore metadata of bucket "%s/%s" (provider "%s")',
-                            $bucketInfo->getStage(),
-                            $bucketInfo->getName(),
-                            $provider,
-                        ));
-                    }
-                }
-            }
         }
     }
 

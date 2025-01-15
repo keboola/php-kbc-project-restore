@@ -326,9 +326,16 @@ class S3RestoreTest extends BaseTest
         $backup->restoreBuckets(true);
 
         $buckets = $this->sapiClient->listBuckets();
+        $metadata = new Metadata($this->sapiClient);
+        $bucketMetadata = $metadata->listBucketMetadata('in.c-bucket1');
+
         self::assertCount(2, $buckets);
+        self::assertCount(1, $bucketMetadata);
         self::assertEquals('in.c-bucket1', $buckets[0]['id']);
         self::assertEquals('in.c-bucket2', $buckets[1]['id']);
+        self::assertEquals('some-key', $bucketMetadata[0]['key']);
+        self::assertEquals('Some value', $bucketMetadata[0]['value']);
+        self::assertEquals('test-component', $bucketMetadata[0]['provider']);
     }
 
     public function testRestoreLinkedBuckets(): void
