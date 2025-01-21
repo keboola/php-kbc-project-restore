@@ -22,7 +22,7 @@ env:
 
   # GCP Credentials
   TEST_GCP_SERVICE_ACCOUNT: ${{ secrets.TEST_GCP_SERVICE_ACCOUNT }}
-  TEST_GCP_BUCKET: "php-kbc-project-restore"
+  TEST_GCP_BUCKET: "ci-php-kbc-project-restore"
 
   # KBC Credentials
   TEST_STORAGE_API_URL: "https://connection.keboola.com/"
