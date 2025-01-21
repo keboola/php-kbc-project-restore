@@ -57,7 +57,9 @@ class GcsRestore extends Restore
         array_shift($explodedPath);
 
         $actualList = $this->listFiles['configurations'];
-        return $this->findPartOfTree($actualList, $explodedPath);
+
+        $list = $this->findPartOfTree($actualList, $explodedPath);
+        return array_map(fn($key) => $filePath . '/' . $key, array_keys($list));
     }
 
     protected function listTableFiles(string $tableId): array
