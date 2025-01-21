@@ -20,12 +20,19 @@ env:
   TEST_AZURE_ACCOUNT_KEY: ${{ secrets.TEST_AZURE_ACCOUNT_KEY }}
   TEST_AZURE_CONTAINER_NAME: "test-restore-project"
 
+  # GCP Credentials
+  TEST_GCP_SERVICE_ACCOUNT: ${{ secrets.TEST_GCP_SERVICE_ACCOUNT }}
+  TEST_GCP_BUCKET: "php-kbc-project-restore"
+
   # KBC Credentials
   TEST_STORAGE_API_URL: "https://connection.keboola.com/"
   # https://connection.keboola.com/admin/projects/9017/dashboard
   TEST_STORAGE_API_TOKEN_S3: "${{ secrets.TEST_STORAGE_API_TOKEN_S3 }}"
   # https://connection.keboola.com/admin/projects/10143/dashboard
   TEST_STORAGE_API_TOKEN_ABS: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS }}"
+  # https://connection.keboola.com/admin/projects/10333/dashboard
+  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS }}"
+
 
 jobs:
   build:
@@ -60,6 +67,8 @@ jobs:
             token: TEST_STORAGE_API_TOKEN_S3
           - run: composer tests-abs
             token: TEST_STORAGE_API_TOKEN_ABS
+          - run: composer tests-gcs
+            token: TEST_STORAGE_API_TOKEN_GCS
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -81,5 +90,7 @@ jobs:
           -e TEST_AZURE_ACCOUNT_NAME
           -e TEST_AZURE_ACCOUNT_KEY
           -e TEST_AZURE_CONTAINER_NAME
+          -e TEST_GCP_SERVICE_ACCOUNT
+          -e TEST_GCP_BUCKET
           ${{env.APP_IMAGE}}
           ${{matrix.run}}
