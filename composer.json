@@ -42,6 +42,10 @@
             "php ./tests/loadToS3.php",
             "phpunit ./tests/S3RestoreTest.php"
         ],
+        "tests-gcs": [
+            "php ./tests/loadToGcs.php",
+            "phpunit ./tests/GcsRestoreTest.php"
+        ],
         "tests": [
             "@tests-abs",
             "@tests-s3"
