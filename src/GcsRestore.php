@@ -100,6 +100,24 @@ class GcsRestore extends Restore
         ));
     }
 
+    /**
+     * The findInArray method navigates a multi-dimensional array using the $findPath keys.
+     * Returns the corresponding value or sub-array.
+     * If a key is not found, it returns the last accessible part of the array.
+     * Example usage:
+     * $data = [
+     *    'config' => [
+     *        'keboola.snowflake-transformation' => [
+     *            '1.json' => 'http://URL_TO_FIRST_FILE',
+     *            '2.json' => 'http://URL_TO_SECOND_FILE'
+     *        ]
+     *    ]
+     * ];
+     * $findPath = ['config', 'keboola.snowflake-transformation', '1.json'];
+     *
+     * $result = $this->findInArray($data, $findPath);
+     * echo $result; // Output: "http://URL_TO_FIRST_FILE"
+     */
     private function findInArray(array $list, array $findPath): string|array
     {
         while (count($findPath) > 0) {
