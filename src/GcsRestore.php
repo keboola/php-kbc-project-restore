@@ -118,16 +118,14 @@ class GcsRestore extends Restore
      * $result = $this->findInArray($data, $findPath);
      * echo $result; // Output: "http://URL_TO_FIRST_FILE"
      */
-    private function findInArray(array $list, array $findPath): string|array
+    private function findInArray(array $array, array $path): mixed
     {
-        while (count($findPath) > 0) {
-            $current = current($findPath);
-            if (!isset($list[$current])) {
+        foreach ($path as $key) {
+            if (!isset($array[$key])) {
                 break;
             }
-            $list = $list[$current];
-            array_shift($findPath);
+            $array = $array[$key];
         }
-        return $list;
+        return $array;
     }
 }
