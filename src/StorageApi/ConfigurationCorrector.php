@@ -28,6 +28,9 @@ class ConfigurationCorrector
         if ($componentId === 'keboola.orchestrator') {
             $configuration = $this->correctOrchestratorConfiguration($configuration, $backendType);
         }
+        if ($componentId === 'keboola.data-apps') {
+            $configuration = $this->removeDataAppId($configuration);
+        }
 
         $configuration = $this->removeOauthAuthorization($configuration);
 
@@ -47,6 +50,14 @@ class ConfigurationCorrector
     {
         if (isset($configuration->authorization->oauth_api->id)) {
             unset($configuration->authorization->oauth_api->id);
+        }
+        return $configuration;
+    }
+
+    private function removeDataAppId(stdClass $configuration): stdClass
+    {
+        if (isset($configuration->parameters->id)) {
+            unset($configuration->parameters->id);
         }
         return $configuration;
     }
