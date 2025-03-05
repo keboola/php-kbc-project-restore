@@ -47,8 +47,6 @@ abstract class Restore
 
     protected bool $dryRun = false;
 
-    protected bool $disableOrchestrations = false;
-
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
     {
         $this->sapiClient = $sapiClient;
@@ -71,11 +69,6 @@ abstract class Restore
     public function setDryRunMode(bool $dryRun = true): void
     {
         $this->dryRun = $dryRun;
-    }
-
-    public function setDisableOrchestrations(bool $disableOrchestrations = true): void
-    {
-        $this->disableOrchestrations = $disableOrchestrations;
     }
 
     public function restoreProjectMetadata(): void
@@ -168,11 +161,7 @@ abstract class Restore
                     $componentConfiguration['id'],
                 ));
 
-                $configCorrector = new ConfigurationCorrector(
-                    $this->sapiClient->getApiUrl(),
-                    $this->logger,
-                    $this->disableOrchestrations
-                );
+                $configCorrector = new ConfigurationCorrector($this->sapiClient->getApiUrl(), $this->logger);
                 $configuration->setConfiguration(
                     $configCorrector->correct(
                         $componentId,
