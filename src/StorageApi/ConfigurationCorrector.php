@@ -11,9 +11,12 @@ class ConfigurationCorrector
 {
     private StackSpecificComponentIdTranslator $componentIdTranslator;
 
+    private bool $disableOrchestrations;
+
     public function __construct(
         string $destinationApiUrl,
         LoggerInterface $logger,
+        bool $disableOrchestrations
     ) {
         $destinationStack = self::getStackFromUrl($destinationApiUrl);
 
@@ -21,6 +24,8 @@ class ConfigurationCorrector
             $destinationStack,
             $logger,
         );
+
+        $this->disableOrchestrations = $disableOrchestrations;
     }
 
     public function correct(string $componentId, stdClass $configuration, string $backendType): stdClass
@@ -42,7 +47,9 @@ class ConfigurationCorrector
         foreach ($configuration->tasks ?? [] as $task) {
             $task->task->componentId = $this->componentIdTranslator->translate($task->task->componentId, $backendType);
         }
-
+        if ($this->disableOrchestrations) {
+            $configuration->isDisabled = $this->disableOrchestrations;
+        }
         return $configuration;
     }
 
