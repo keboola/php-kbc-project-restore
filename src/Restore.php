@@ -166,7 +166,7 @@ abstract class Restore
                     $configCorrector->correct(
                         $componentId,
                         $configurationData->configuration,
-                        $verifyToken['owner']['defaultBackend']
+                        $verifyToken['owner']['defaultBackend'],
                     ),
                 );
 
