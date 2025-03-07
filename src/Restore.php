@@ -45,6 +45,8 @@ abstract class Restore
 
     protected Token $token;
 
+    private const ORCHESTRATOR_COMPONENT_ID = 'keboola.orchestrator';
+
     protected bool $dryRun = false;
 
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
@@ -153,6 +155,9 @@ abstract class Restore
                 $configuration->setConfigurationId($componentConfiguration['id']);
                 $configuration->setDescription($configurationData->description);
                 $configuration->setName($configurationData->name);
+                if ($componentId === self::ORCHESTRATOR_COMPONENT_ID) {
+                    $configuration->setIsDisabled(true);
+                }
                 $components->addConfiguration($configuration);
 
                 // update configuration and state

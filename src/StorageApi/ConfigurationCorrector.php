@@ -42,7 +42,6 @@ class ConfigurationCorrector
         foreach ($configuration->tasks ?? [] as $task) {
             $task->task->componentId = $this->componentIdTranslator->translate($task->task->componentId, $backendType);
         }
-        $configuration->isDisabled = true;
         return $configuration;
     }
 
