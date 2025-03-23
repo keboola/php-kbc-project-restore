@@ -158,7 +158,16 @@ abstract class Restore
                 if ($componentId === self::ORCHESTRATOR_COMPONENT_ID) {
                     $configuration->setIsDisabled(true);
                 }
-                $components->addConfiguration($configuration);
+
+                if ($this->dryRun === false) {
+                    $components->addConfiguration($configuration);
+                } else {
+                    $this->logger->info(sprintf(
+                        '[dry-run] Create configuration %s (component "%s")',
+                        $componentConfiguration['id'],
+                        $componentId,
+                    ));
+                }
 
                 // update configuration and state
                 $configuration->setChangeDescription(sprintf(
@@ -179,7 +188,7 @@ abstract class Restore
                     $components->updateConfiguration($configuration);
                 } else {
                     $this->logger->info(sprintf(
-                        '[dry-run] Restore configuration %s (component "%s")',
+                        '[dry-run] Update configuration %s (component "%s")',
                         $componentConfiguration['id'],
                         $componentId,
                     ));
