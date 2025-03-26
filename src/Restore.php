@@ -217,7 +217,16 @@ abstract class Restore
                         // create empty row
                         $configurationRow = new ConfigurationRow($configuration);
                         $configurationRow->setRowId($row->id);
-                        $components->addConfigurationRow($configurationRow);
+                        if ($this->dryRun === false) {
+                            $components->addConfigurationRow($configurationRow);
+                        } else {
+                            $this->logger->info(sprintf(
+                                '[dry-run] Create configuration row %s (configuration %s, component "%s")',
+                                $row->id,
+                                $componentConfiguration['id'],
+                                $componentId,
+                            ));
+                        }
 
                         // update row configuration and state
                         $configurationRow->setConfiguration($row->configuration);
@@ -230,7 +239,7 @@ abstract class Restore
                             $components->updateConfigurationRow($configurationRow);
                         } else {
                             $this->logger->info(sprintf(
-                                '[dry-run] Restore row %s of configuration %s (component "%s")',
+                                '[dry-run] Update row %s of configuration %s (component "%s")',
                                 $row->id,
                                 $componentConfiguration['id'],
                                 $componentId,
