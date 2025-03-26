@@ -8,6 +8,8 @@ use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\Container;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use MicrosoftAzure\Storage\Blob\Models\ListContainersOptions;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
@@ -28,9 +30,11 @@ $absClient = BlobRestProxy::createBlobService(sprintf(
 ));
 
 echo 'Cleanup files in ABS' . PHP_EOL;
-$containers = $absClient->listContainers();
-$listContainers = array_map(fn(Container $v) => $v->getName(), $containers->getContainers());
+$options = new ListContainersOptions();
+$options->setPrefix((string) getenv('TEST_AZURE_CONTAINER_NAME'));
+$containers = $absClient->listContainers($options);
 
+$listContainers = array_map(fn(Container $v) => $v->getName(), $containers->getContainers());
 echo 'Copying new files into ABS' . PHP_EOL;
 $finder = new Finder();
 $dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
@@ -38,7 +42,13 @@ $dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
 foreach ($dirs as $dir) {
     $container = getenv('TEST_AZURE_CONTAINER_NAME') . '-' . $dir->getRelativePathname();
     if (!in_array($container, $listContainers)) {
-        $absClient->createContainer($container);
+        try {
+            $absClient->createContainer($container);
+        } catch (ServiceException $e) {
+            if (!str_contains($e->getErrorMessage(), 'container already exists')) {
+                throw $e;
+            }
+        }
     }
 
     $options = new ListBlobsOptions();
