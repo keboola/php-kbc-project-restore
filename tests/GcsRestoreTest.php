@@ -934,6 +934,23 @@ class GcsRestoreTest extends BaseTest
         self::assertEquals(['1', '2', '3', '4'], $columnNames);
     }
 
+    public function testRestoreTypedTableCrossBackends(): void
+    {
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('typed-table-cross-backend'),
+        );
+
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.firstTable'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertTrue($table['isTyped']);
+        self::assertEquals(['1'], $table['definition']['primaryKeysNames']);
+    }
+
     public function testRestoreTriggers(): void
     {
         $logger = new TestLogger();
