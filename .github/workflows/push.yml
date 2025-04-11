@@ -30,9 +30,9 @@ env:
   TEST_STORAGE_API_TOKEN_S3: "${{ secrets.TEST_STORAGE_API_TOKEN_S3 }}"
   # https://connection.keboola.com/admin/projects/10143/dashboard
   TEST_STORAGE_API_TOKEN_ABS: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS }}"
-  # https://connection.keboola.com/admin/projects/10333/dashboard
-  TEST_STORAGE_API_TOKEN_GCS_BQ: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
-  TEST_STORAGE_API_URL_GCS_BQ: "https://connection.europe-west3.gcp.keboola.com/"
+  # https://connection.europe-west3.gcp.keboola.com/admin/projects/1521/dashboard
+  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
+  TEST_STORAGE_API_URL_GCS: "https://connection.europe-west3.gcp.keboola.com/"
 
 
 jobs:
@@ -89,9 +89,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - run: composer tests-typed-tables
+          - run: composer ci-except-tests
+            token: TEST_STORAGE_API_TOKEN_S3
+            url: https://connection.keboola.com/
+          - run: composer tests-s3
+            token: TEST_STORAGE_API_TOKEN_S3
+            url: https://connection.keboola.com/
+          - run: composer tests-abs
+            token: TEST_STORAGE_API_TOKEN_ABS
+            url: https://connection.keboola.com/
+          - run: composer tests-gcs
             token: TEST_STORAGE_API_TOKEN_GCS_BQ
             url: https://connection.europe-west3.gcp.keboola.com/
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

@@ -702,30 +702,21 @@ abstract class Restore
             if ($destinationBucketBackendType !== $tableInfo['bucket']['backend']) {
                 $sourceBaseType = $this->getBaseType(
                     $tableInfo['bucket']['backend'],
-                    $columnMetadata['KBC.datatype.type']
+                    $columnMetadata['KBC.datatype.type'],
                 );
-                echo 'destination backend type: ' . $destinationBucketBackendType . "\n";
-                echo 'Source Base Type: ' . $sourceBaseType . "\n";
                 switch ($destinationBucketBackendType) {
                     case 'snowflake':
-                        $definition = (Snowflake::getDefinitionForBasetype($sourceBaseType))->toArray();
+                        $definition = (Snowflake::getDefinitionForBasetype((string) $sourceBaseType))->toArray();
                         break;
                     case 'bigquery':
-                        $definition = (Bigquery::getDefinitionForBasetype($sourceBaseType))->toArray();
+                        $definition = (Bigquery::getDefinitionForBasetype((string) $sourceBaseType))->toArray();
                         break;
                     default:
                         $this->logger->warning('unsupported typed backend type');
                         continue 2;
                 }
-                echo "\ndefinition ";
-                var_dump($definition);
+                // the nullable property is required for PK compatability
                 $definition['nullable'] = $columnMetadata['KBC.datatype.nullable'] === '1';
-                if (isset($columnMetadata['KBC.datatype.length'])) {
-                    $definition['length'] = $columnMetadata['KBC.datatype.length'];
-                }
-                if (isset($columnMetadata['KBC.datatype.default'])) {
-                    $definition['default'] = $columnMetadata['KBC.datatype.default'];
-                }
             } else {
                 $definition = [
                     'type' => $columnMetadata['KBC.datatype.type'],
