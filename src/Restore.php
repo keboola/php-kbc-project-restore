@@ -719,7 +719,13 @@ abstract class Restore
                 }
                 echo "\ndefinition ";
                 var_dump($definition);
-                echo "\n";
+                $definition['nullable'] = $columnMetadata['KBC.datatype.nullable'] === '1';
+                if (isset($columnMetadata['KBC.datatype.length'])) {
+                    $definition['length'] = $columnMetadata['KBC.datatype.length'];
+                }
+                if (isset($columnMetadata['KBC.datatype.default'])) {
+                    $definition['default'] = $columnMetadata['KBC.datatype.default'];
+                }
             } else {
                 $definition = [
                     'type' => $columnMetadata['KBC.datatype.type'],
