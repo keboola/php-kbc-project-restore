@@ -708,10 +708,10 @@ abstract class Restore
                 echo 'Source Base Type: ' . $sourceBaseType . "\n";
                 switch ($destinationBucketBackendType) {
                     case 'snowflake':
-                        $definition = Snowflake::getDefinitionForBasetype($sourceBaseType);
+                        $definition = (Snowflake::getDefinitionForBasetype($sourceBaseType))->toArray();
                         break;
                     case 'bigquery':
-                        $definition = Bigquery::getDefinitionForBasetype($sourceBaseType);
+                        $definition = (Bigquery::getDefinitionForBasetype($sourceBaseType))->toArray();
                         break;
                     default:
                         $this->logger->warning('unsupported typed backend type');
