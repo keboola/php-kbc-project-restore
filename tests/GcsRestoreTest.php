@@ -941,7 +941,7 @@ class GcsRestoreTest extends BaseTest
             $this->getListOfSignedUrls('typed-table-cross-backend'),
         );
 
-        $restore->restoreBuckets();
+        $restore->restoreBuckets(false);
         $restore->restoreTables();
 
         self::assertTrue($this->sapiClient->tableExists('in.c-bucket.firstTable'));

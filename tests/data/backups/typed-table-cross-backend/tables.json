@@ -38,7 +38,7 @@
       "dataSizeBytes": 6247936,
       "rowsCount": 675727,
       "isMaintenance": false,
-      "backend": "bigquery"
+      "backend": "snowflake"
     },
     "metadata": [
       {

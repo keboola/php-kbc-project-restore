@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore;
 
 use Keboola\Csv\CsvFile;
+use Keboola\Datatype\Definition\Bigquery;
+use Keboola\Datatype\Definition\Snowflake;
 use Keboola\NotificationClient\Requests\PostSubscription\EmailRecipient;
 use Keboola\NotificationClient\Requests\PostSubscription\Filter;
 use Keboola\NotificationClient\Requests\PostSubscription\FilterOperator;
@@ -509,12 +511,9 @@ abstract class Restore
         /** @var array $tables */
         $tables = json_decode((string) $fileContent, true);
 
-        $restoredBuckets = array_map(
-            function ($bucket) {
-                return $bucket['id'];
-            },
-            $this->sapiClient->listBuckets(),
-        );
+        // carry the backend type to use for typed tables
+        $restoredBuckets = array_column($this->sapiClient->listBuckets(), 'backend', 'id');
+
         $metadataClient = new Metadata($this->sapiClient);
 
         /** @var array $tableInfo */
@@ -527,7 +526,7 @@ abstract class Restore
             $tableId = $tableInfo['id'];
             $bucketId = $tableInfo['bucket']['id'];
 
-            if (!in_array($bucketId, $restoredBuckets)) {
+            if (!in_array($bucketId, array_keys($restoredBuckets))) {
                 $this->logger->warning(sprintf('Skipping table %s', $tableId));
                 continue;
             }
@@ -546,7 +545,7 @@ abstract class Restore
 
             $isTyped = $tableInfo['isTyped'] ?? false;
             if ($isTyped) {
-                $tableId = $this->restoreTypedTable($tableInfo);
+                $tableId = $this->restoreTypedTable($tableInfo, $restoredBuckets[$bucketId]);
             } else {
                 $tableId = $this->restoreTable($tableInfo, $headerFile);
             }
@@ -685,7 +684,7 @@ abstract class Restore
         return $tableId;
     }
 
-    private function restoreTypedTable(array $tableInfo): string
+    private function restoreTypedTable(array $tableInfo, string $destinationBucketBackendType): string
     {
         $columns = [];
         foreach ($tableInfo['columns'] as $column) {
@@ -700,18 +699,39 @@ abstract class Restore
                 }
                 $columnMetadata[$metadata['key']] = $metadata['value'];
             }
-
-            $definition = [
-                'type' => $columnMetadata['KBC.datatype.type'],
-                'nullable' => $columnMetadata['KBC.datatype.nullable'] === '1',
-            ];
-            if (isset($columnMetadata['KBC.datatype.length'])) {
-                $definition['length'] = $columnMetadata['KBC.datatype.length'];
+            if ($destinationBucketBackendType !== $tableInfo['bucket']['backend']) {
+                $sourceBaseType = $this->getBaseType(
+                    $tableInfo['bucket']['backend'],
+                    $columnMetadata['KBC.datatype.type']
+                );
+                echo 'destination backend type: ' . $destinationBucketBackendType . "\n";
+                echo 'Source Base Type: ' . $sourceBaseType . "\n";
+                switch ($destinationBucketBackendType) {
+                    case 'snowflake':
+                        $definition = Snowflake::getDefinitionForBasetype($sourceBaseType);
+                        break;
+                    case 'bigquery':
+                        $definition = Bigquery::getDefinitionForBasetype($sourceBaseType);
+                        break;
+                    default:
+                        $this->logger->warning('unsupported typed backend type');
+                        continue 2;
+                }
+                echo "\ndefinition ";
+                var_dump($definition);
+                echo "\n";
+            } else {
+                $definition = [
+                    'type' => $columnMetadata['KBC.datatype.type'],
+                    'nullable' => $columnMetadata['KBC.datatype.nullable'] === '1',
+                ];
+                if (isset($columnMetadata['KBC.datatype.length'])) {
+                    $definition['length'] = $columnMetadata['KBC.datatype.length'];
+                }
+                if (isset($columnMetadata['KBC.datatype.default'])) {
+                    $definition['default'] = $columnMetadata['KBC.datatype.default'];
+                }
             }
-            if (isset($columnMetadata['KBC.datatype.default'])) {
-                $definition['default'] = $columnMetadata['KBC.datatype.default'];
-            }
-
             $columns[$columnName] = [
                 'name' => $columnName,
                 'definition' => $definition,
@@ -757,6 +777,17 @@ abstract class Restore
                 ));
             }
             throw $e;
+        }
+    }
+    private function getBaseType(string $backend, string $originalType): ?string
+    {
+        switch ($backend) {
+            case 'snowflake':
+                return (new Snowflake($originalType))->getBasetype();
+            case 'bigquery':
+                return (new Bigquery($originalType))->getBasetype();
+            default:
+                return null;
         }
     }
 

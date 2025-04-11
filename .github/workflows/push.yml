@@ -31,7 +31,8 @@ env:
   # https://connection.keboola.com/admin/projects/10143/dashboard
   TEST_STORAGE_API_TOKEN_ABS: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS }}"
   # https://connection.keboola.com/admin/projects/10333/dashboard
-  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS }}"
+  TEST_STORAGE_API_TOKEN_GCS_BQ: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
+  TEST_STORAGE_API_URL_GCS_BQ: "https://connection.europe-west3.gcp.keboola.com/"
 
 
 jobs:
@@ -88,14 +89,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - run: composer ci-except-tests
-            token: TEST_STORAGE_API_TOKEN_S3
-          - run: composer tests-s3
-            token: TEST_STORAGE_API_TOKEN_S3
-          - run: composer tests-abs
-            token: TEST_STORAGE_API_TOKEN_ABS
-          - run: composer tests-gcs
-            token: TEST_STORAGE_API_TOKEN_GCS
+          - run: composer tests-typed-tables
+            token: TEST_STORAGE_API_TOKEN_GCS_BQ
+            url: https://connection.europe-west3.gcp.keboola.com/
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -108,7 +104,7 @@ jobs:
         run: docker load -i /tmp/php-kbc-project-restore.tar
       - name: Run tests
         run: docker run
-          -e TEST_STORAGE_API_URL
+          -e TEST_STORAGE_API_URL=${{matrix.url}}
           -e TEST_STORAGE_API_TOKEN=${{ secrets[matrix.token] }}
           -e TEST_AWS_ACCESS_KEY_ID
           -e TEST_AWS_SECRET_ACCESS_KEY
