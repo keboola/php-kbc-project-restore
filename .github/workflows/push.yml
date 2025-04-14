@@ -99,8 +99,11 @@ jobs:
             token: TEST_STORAGE_API_TOKEN_ABS
             url: https://connection.keboola.com/
           - run: composer tests-gcs
+            token: TEST_STORAGE_API_TOKEN_GCS
+            url: https://connection.keboola.com/
+          - run: composer tests-cross-backends
             token: TEST_STORAGE_API_TOKEN_GCS_BQ
-            url: https://connection.europe-west3.gcp.keboola.com/
+            url: https://connectio.europe-west3.gcp.keboola.com/
 
     steps:
       - name: Check out the repo
