@@ -31,8 +31,9 @@ env:
   # https://connection.keboola.com/admin/projects/10143/dashboard
   TEST_STORAGE_API_TOKEN_ABS: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS }}"
   # https://connection.europe-west3.gcp.keboola.com/admin/projects/1521/dashboard
-  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
-  TEST_STORAGE_API_URL_GCS: "https://connection.europe-west3.gcp.keboola.com/"
+  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS }}"
+  TEST_STORAGE_API_TOKEN_GCS_BQ: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
+  TEST_STORAGE_API_URL_GCS_BQ: "https://connection.europe-west3.gcp.keboola.com/"
 
 
 jobs:
@@ -119,14 +120,5 @@ jobs:
         run: docker run
           -e TEST_STORAGE_API_URL=${{matrix.url}}
           -e TEST_STORAGE_API_TOKEN=${{ secrets[matrix.token] }}
-          -e TEST_AWS_ACCESS_KEY_ID
-          -e TEST_AWS_SECRET_ACCESS_KEY
-          -e TEST_AWS_REGION
-          -e TEST_AWS_S3_BUCKET
-          -e TEST_AZURE_ACCOUNT_NAME
-          -e TEST_AZURE_ACCOUNT_KEY
-          -e TEST_AZURE_CONTAINER_NAME
-          -e TEST_GCP_SERVICE_ACCOUNT
-          -e TEST_GCP_BUCKET
           ${{env.APP_IMAGE}}
           ${{matrix.run}}
