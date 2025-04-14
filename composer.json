@@ -34,18 +34,14 @@
         "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
         "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
         "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
-        "tests-abs": [
+        "prepare-test-data": [
             "php ./tests/loadToAbs.php",
-            "phpunit tests/AbsRestoreTest.php"
-        ],
-        "tests-s3": [
             "php ./tests/loadToS3.php",
-            "phpunit ./tests/S3RestoreTest.php"
+            "php ./tests/loadToGcs.php"
         ],
-        "tests-gcs": [
-            "php ./tests/loadToGcs.php",
-            "phpunit ./tests/GcsRestoreTest.php"
-        ],
+        "tests-abs": "phpunit tests/AbsRestoreTest.php",
+        "tests-s3": "phpunit ./tests/S3RestoreTest.php",
+        "tests-gcs": "phpunit ./tests/GcsRestoreTest.php",
         "tests": [
             "@tests-abs",
             "@tests-s3"
