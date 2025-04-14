@@ -103,7 +103,7 @@ jobs:
             url: https://connection.keboola.com/
           - run: composer tests-cross-backends
             token: TEST_STORAGE_API_TOKEN_GCS_BQ
-            url: https://connectio.europe-west3.gcp.keboola.com/
+            url: https://connection.europe-west3.gcp.keboola.com/
 
     steps:
       - name: Check out the repo
