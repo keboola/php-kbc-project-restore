@@ -121,5 +121,14 @@ jobs:
         run: docker run
           -e TEST_STORAGE_API_URL=${{matrix.url}}
           -e TEST_STORAGE_API_TOKEN=${{ secrets[matrix.token] }}
+          -e TEST_AWS_ACCESS_KEY_ID
+          -e TEST_AWS_SECRET_ACCESS_KEY
+          -e TEST_AWS_REGION
+          -e TEST_AWS_S3_BUCKET
+          -e TEST_AZURE_ACCOUNT_NAME
+          -e TEST_AZURE_ACCOUNT_KEY
+          -e TEST_AZURE_CONTAINER_NAME
+          -e TEST_GCP_SERVICE_ACCOUNT
+          -e TEST_GCP_BUCKET
           ${{env.APP_IMAGE}}
           ${{matrix.run}}
