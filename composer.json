@@ -42,6 +42,7 @@
         "tests-abs": "phpunit tests/AbsRestoreTest.php",
         "tests-s3": "phpunit ./tests/S3RestoreTest.php",
         "tests-gcs": "phpunit ./tests/GcsRestoreTest.php",
+        "tests-cross-backends": "phpunit ./tests/CrossBackendRestoreTest.php",
         "tests": [
             "@tests-abs",
             "@tests-s3"
