@@ -839,11 +839,12 @@ abstract class Restore
         }
         /** @var array $permanentFile */
         foreach ($permanentFiles as $permanentFile) {
+            $permanentFileId = $permanentFile['id'];
             $permanentFileName = $permanentFile['name'];
-            $this->logger->info(sprintf('Restoring file %s', $permanentFileName));
+            $this->logger->info(sprintf('Restoring file %s (ID: %s)', $permanentFileName, $permanentFileId));
 
             $fileName = $tmp->createFile($permanentFileName)->getPathname();
-            $this->copyFileFromStorage('files/' . $permanentFileName, $fileName);
+            $this->copyFileFromStorage('files/' . $permanentFileId, $fileName);
 
             $fileOption = new FileUploadOptions();
             $fileOption->setIsPermanent(true);
