@@ -96,7 +96,7 @@ class BucketInfoTest extends BaseTest
 
         $bucketId = $this->createTestBucket();
 
-        $this->sapiClient->shareBucket($bucketId, ['sharing' => 'organization']);
+        $this->sapiClient->shareOrganizationBucket($bucketId, true);
         $linkedBucketId = $this->sapiClient->linkBucket(
             self::BUCKET_NAME,
             Client::STAGE_OUT,
