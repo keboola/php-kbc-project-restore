@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Keboola\Csv\CsvFile;
-use Keboola\ProjectRestore\Tests\AbsRestoreTest;
+use Keboola\ProjectRestore\Tests\RestoreTests\AbsRestoreTestPart1;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\Container;
@@ -19,7 +19,7 @@ error_reporting(E_ALL);
 
 $basedir = dirname(__FILE__);
 
-require_once $basedir . '/bootstrap.php';
+require_once $basedir . '/../bootstrap.php';
 
 echo 'Loading fixtures to ABS' . PHP_EOL;
 
@@ -37,7 +37,7 @@ $containers = $absClient->listContainers($options);
 $listContainers = array_map(fn(Container $v) => $v->getName(), $containers->getContainers());
 echo 'Copying new files into ABS' . PHP_EOL;
 $finder = new Finder();
-$dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
+$dirs = $finder->depth(0)->in($basedir . '/data')->directories();
 
 foreach ($dirs as $dir) {
     $container = getenv('TEST_AZURE_CONTAINER_NAME') . '-' . $dir->getRelativePathname();
@@ -83,14 +83,14 @@ $slicesPath = $temp->getTmpFolder() . '/in/c-bucket';
 
 $system->mkdir($temp->getTmpFolder());
 
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $temp->getTmpFolder(), null, [
+$system->mirror($basedir . '/data/table-multiple-slices', $temp->getTmpFolder(), null, [
     'override' => true,
     'delete' => true,
 ]);
 
 $system->remove((new Finder())->files()->in($slicesPath)->getIterator());
 
-for ($i = 0; $i < AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
+for ($i = 0; $i < AbsRestoreTestPart1::TEST_ITERATOR_SLICES_COUNT; $i++) {
     $part = str_pad((string) $i, 5, '0', STR_PAD_LEFT);
 
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));
@@ -115,7 +115,7 @@ $files = $finder->in($source)->files();
 $container = sprintf(
     '%s-table-%s-slices',
     getenv('TEST_AZURE_CONTAINER_NAME'),
-    AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT,
+    AbsRestoreTestPart1::TEST_ITERATOR_SLICES_COUNT,
 );
 if (!in_array($container, $listContainers)) {
     $absClient->createContainer($container);

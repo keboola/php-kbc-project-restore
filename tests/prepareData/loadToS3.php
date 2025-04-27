@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Aws\S3\S3Client;
 use Aws\S3\Transfer;
 use Keboola\Csv\CsvFile;
-use Keboola\ProjectRestore\Tests\S3RestoreTest;
+use Keboola\ProjectRestore\Tests\RestoreTests\S3RestoreTestPart1;
 use Keboola\Temp\Temp;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -16,7 +16,7 @@ error_reporting(E_ALL);
 
 $basedir = dirname(__FILE__);
 
-require_once $basedir . '/bootstrap.php';
+require_once $basedir . '/../bootstrap.php';
 
 echo 'Loading fixtures to S3' . PHP_EOL;
 
@@ -34,7 +34,7 @@ echo 'Cleanup files in S3' . PHP_EOL;
 $s3Client->deleteMatchingObjects((string) getenv('TEST_AWS_S3_BUCKET'), '*');
 
 // copy new files
-$source = $basedir . '/data/backups';
+$source = $basedir . '/data';
 $dest = 's3://' . getenv('TEST_AWS_S3_BUCKET') . '/';
 
 echo 'Copying new files into S3' . PHP_EOL;
@@ -46,19 +46,19 @@ $system = new Filesystem();
 
 $temp = new Temp('loadToS3');
 
-$tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), S3RestoreTest::TEST_ITERATOR_SLICES_COUNT);
+$tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), S3RestoreTestPart1::TEST_ITERATOR_SLICES_COUNT);
 $slicesPath = $tablesPath . '/in/c-bucket';
 
 $system->mkdir($tablesPath);
 
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $tablesPath, null, [
+$system->mirror($basedir . '/data/table-multiple-slices', $tablesPath, null, [
     'override' => true,
     'delete' => true,
 ]);
 
 $system->remove((new Finder())->files()->in($slicesPath)->getIterator());
 
-for ($i = 0; $i < S3RestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
+for ($i = 0; $i < S3RestoreTestPart1::TEST_ITERATOR_SLICES_COUNT; $i++) {
     $part = str_pad((string) $i, 5, '0', STR_PAD_LEFT);
 
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));

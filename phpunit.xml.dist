@@ -1,14 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         backupGlobals="false"
-         colors="true"
-         processIsolation="false"
-         stopOnFailure="false"
-         bootstrap="./tests/bootstrap.php"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.3/phpunit.xsd"
-         cacheDirectory=".phpunit.cache"
-         backupStaticProperties="false">
-    <testsuite name="Main Test Suite">
-        <directory>./tests</directory>
-    </testsuite>
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="abs-part1">
+            <file>tests/phpunit/RestoreTests/AbsRestoreTestPart1.php</file>
+        </testsuite>
+        <testsuite name="abs-part2">
+            <file>tests/phpunit/RestoreTests/AbsRestoreTestPart2.php</file>
+        </testsuite>
+        <testsuite name="s3-part1">
+            <file>tests/phpunit/RestoreTests/S3RestoreTestPart1.php</file>
+        </testsuite>
+        <testsuite name="s3-part2">
+            <file>tests/phpunit/RestoreTests/S3RestoreTestPart2.php</file>
+        </testsuite>
+        <testsuite name="gcs-part1">
+            <file>tests/phpunit/RestoreTests/GcsRestoreTestPart1.php</file>
+        </testsuite>
+        <testsuite name="gcs-part2">
+            <file>tests/phpunit/RestoreTests/GcsRestoreTestPart2.php</file>
+        </testsuite>
+        <testsuite name="cross-backends">
+            <file>tests/phpunit/CrossBackendRestoreTest.php</file>
+        </testsuite>
+        <testsuite name="other">
+            <file>tests/phpunit/CommonRestoreTest.php</file>
+            <file>tests/phpunit/BaseTest.php</file>
+            <directory>tests/phpunit/StorageApi</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="test"/>
+    </php>
 </phpunit>
