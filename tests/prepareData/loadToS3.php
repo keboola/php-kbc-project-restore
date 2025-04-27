@@ -16,7 +16,7 @@ error_reporting(E_ALL);
 
 $basedir = dirname(__FILE__);
 
-require_once $basedir . '/bootstrap.php';
+require_once $basedir . '/../bootstrap.php';
 
 echo 'Loading fixtures to S3' . PHP_EOL;
 
@@ -34,7 +34,7 @@ echo 'Cleanup files in S3' . PHP_EOL;
 $s3Client->deleteMatchingObjects((string) getenv('TEST_AWS_S3_BUCKET'), '*');
 
 // copy new files
-$source = $basedir . '/data/backups';
+$source = $basedir . '/data';
 $dest = 's3://' . getenv('TEST_AWS_S3_BUCKET') . '/';
 
 echo 'Copying new files into S3' . PHP_EOL;
@@ -51,7 +51,7 @@ $slicesPath = $tablesPath . '/in/c-bucket';
 
 $system->mkdir($tablesPath);
 
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $tablesPath, null, [
+$system->mirror($basedir . '/data/table-multiple-slices', $tablesPath, null, [
     'override' => true,
     'delete' => true,
 ]);

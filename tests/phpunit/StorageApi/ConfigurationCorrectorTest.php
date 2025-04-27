@@ -30,7 +30,7 @@ class ConfigurationCorrectorTest extends TestCase
         $this->assertEquals(json_decode((string) json_encode($expectedOutConfigData)), $correctedConfigData);
     }
 
-    public function componentConfigurationsData(): iterable
+    public static function componentConfigurationsData(): iterable
     {
         yield 'with-oauth' => [
             'some-component',

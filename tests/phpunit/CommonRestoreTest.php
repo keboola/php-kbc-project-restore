@@ -56,6 +56,7 @@ class CommonRestoreTest extends TestCase
             JSON));
 
         $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->token = 'token';
 
         $storageClientMock
             ->method('apiGet')
@@ -74,6 +75,18 @@ class CommonRestoreTest extends TestCase
         $storageClientMock
             ->method('getTokenString')
             ->willReturn('token');
+
+        $storageClientMock
+            ->method('verifyToken')
+            ->willReturn([
+                'id' => '123',
+                'token' => 'token',
+                'owner' => [
+                    'id' => '456',
+                    'name' => 'test',
+                    'defaultBackend' => 'snowflake',
+                ],
+            ]);
 
         $storageClientMock
             ->method('listBuckets')
@@ -103,7 +116,7 @@ class CommonRestoreTest extends TestCase
         $restore->restoreTables();
     }
 
-    public function createTableDefinitionExceptionsProvider(): iterable
+    public static function createTableDefinitionExceptionsProvider(): iterable
     {
         yield 'nullable-primary-keys-issue' => [
             new ClientException(
@@ -148,6 +161,7 @@ class CommonRestoreTest extends TestCase
             });
 
         $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->token = 'token';
 
         $storageClientMock
             ->method('apiGet')
@@ -166,6 +180,18 @@ class CommonRestoreTest extends TestCase
         $storageClientMock
             ->method('getTokenString')
             ->willReturn('token');
+
+        $storageClientMock
+            ->method('verifyToken')
+            ->willReturn([
+                'id' => '123',
+                'token' => 'token',
+                'owner' => [
+                    'id' => '456',
+                    'name' => 'test',
+                    'defaultBackend' => 'snowflake',
+                ],
+            ]);
 
         $storageClientMock
             ->method('listBuckets')
@@ -227,24 +253,29 @@ class CommonRestoreTest extends TestCase
                 '[dry-run] Restore bucket "in/c-bucket"',
                 '[dry-run] Restore metadata of bucket "in/c-bucket" (provider "system")',
                 '[dry-run] Restore metadata of bucket "in/c-bucket" (provider "system")',
-                '[dry-run] Restore configuration 213957449 (component "keboola.csv-import")',
+                '[dry-run] Create configuration 213957449 (component "keboola.csv-import")',
+                '[dry-run] Update configuration 213957449 (component "keboola.csv-import")',
                 '[dry-run] Restore state of configuration 213957449 (component "keboola.csv-import")',
-                '[dry-run] Restore configuration 213957518 (component "keboola.ex-slack")',
+                '[dry-run] Create configuration 213957518 (component "keboola.ex-slack")',
+                '[dry-run] Update configuration 213957518 (component "keboola.ex-slack")',
                 '[dry-run] Restore state of configuration 213957518 (component "keboola.ex-slack")',
-                '[dry-run] Restore configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Update configuration sapi-php-test (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration sapi-php-test (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561957 of configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561957 (configuration sapi-php-test, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561957 of configuration sapi-php-test (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561957 (configuration sapi-php-test, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore metadata of configuration sapi-php-test (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Update configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561957 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561957 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561957 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561957 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561958 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561958 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561958 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561958 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore rows sort order (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
-                '[dry-run] Restore table in.c-bucket.Account',
-                '[dry-run] Restore alias out.c-bucket.Account',
             ],
             $dryRunLogs,
         );
@@ -269,13 +300,13 @@ class CommonRestoreTest extends TestCase
 
     private function createBlobResultMockFromFile(string $backupName, string $filePath): GetBlobResult
     {
-        $content = file_get_contents(sprintf('%s/data/backups/%s/%s', __DIR__, $backupName, $filePath));
+        $content = file_get_contents(sprintf('%s/../prepareData/data/%s/%s', __DIR__, $backupName, $filePath));
         return $this->createBlobResultMock($content ?: '');
     }
 
     private function createListBlobsResultMockFromFile(string $backupName, string $pathPrefix): ListBlobsResult
     {
-        $dir = sprintf('%s/data/backups/%s/%s', __DIR__, $backupName, $pathPrefix);
+        $dir = sprintf('%s/../prepareData/data/%s/%s', __DIR__, $backupName, $pathPrefix);
         $finder = new Finder();
         $blobs = [];
         foreach ($finder->files()->in($dir) as $file) {

@@ -25,7 +25,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Keboola\\ProjectRestore\\Tests\\": "tests/"
+            "Keboola\\ProjectRestore\\Tests\\": "tests/phpunit/"
         }
     },
     "scripts": {
@@ -35,17 +35,21 @@
         "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
         "phpstan": "phpstan analyse ./src ./tests --level=max --no-progress -c phpstan.neon",
         "prepare-test-data": [
-            "php ./tests/loadToAbs.php",
-            "php ./tests/loadToS3.php",
-            "php ./tests/loadToGcs.php"
+            "php ./tests/prepareData/loadToAbs.php",
+            "php ./tests/prepareData/loadToS3.php",
+            "php ./tests/prepareData/loadToGcs.php"
         ],
-        "tests-abs": "phpunit tests/AbsRestoreTest.php",
-        "tests-s3": "phpunit ./tests/S3RestoreTest.php",
-        "tests-gcs": "phpunit ./tests/GcsRestoreTest.php",
-        "tests-cross-backends": "phpunit ./tests/CrossBackendRestoreTest.php",
+        "tests-abs": "phpunit --testsuite abs",
+        "tests-s3": "phpunit --testsuite s3",
+        "tests-gcs": "phpunit --testsuite gcs",
+        "tests-cross-backends": "phpunit --testsuite cross-backends",
+        "tests-other": "phpunit --testsuite other",
         "tests": [
             "@tests-abs",
-            "@tests-s3"
+            "@tests-s3",
+            "@tests-gcs",
+            "@tests-cross-backends",
+            "@tests-other"
         ],
         "build": [
             "@phplint",

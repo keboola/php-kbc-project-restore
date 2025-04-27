@@ -19,7 +19,7 @@ error_reporting(E_ALL);
 
 $basedir = dirname(__FILE__);
 
-require_once $basedir . '/bootstrap.php';
+require_once $basedir . '/../bootstrap.php';
 
 echo 'Loading fixtures to ABS' . PHP_EOL;
 
@@ -37,7 +37,7 @@ $containers = $absClient->listContainers($options);
 $listContainers = array_map(fn(Container $v) => $v->getName(), $containers->getContainers());
 echo 'Copying new files into ABS' . PHP_EOL;
 $finder = new Finder();
-$dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
+$dirs = $finder->depth(0)->in($basedir . '/data')->directories();
 
 foreach ($dirs as $dir) {
     $container = getenv('TEST_AZURE_CONTAINER_NAME') . '-' . $dir->getRelativePathname();
@@ -83,7 +83,7 @@ $slicesPath = $temp->getTmpFolder() . '/in/c-bucket';
 
 $system->mkdir($temp->getTmpFolder());
 
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $temp->getTmpFolder(), null, [
+$system->mirror($basedir . '/data/table-multiple-slices', $temp->getTmpFolder(), null, [
     'override' => true,
     'delete' => true,
 ]);

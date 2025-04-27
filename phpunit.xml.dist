@@ -1,14 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         backupGlobals="false"
-         colors="true"
-         processIsolation="false"
-         stopOnFailure="false"
-         bootstrap="./tests/bootstrap.php"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.3/phpunit.xsd"
-         cacheDirectory=".phpunit.cache"
-         backupStaticProperties="false">
-    <testsuite name="Main Test Suite">
-        <directory>./tests</directory>
-    </testsuite>
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="abs">
+            <file>tests/phpunit/AbsRestoreTest.php</file>
+        </testsuite>
+        <testsuite name="s3">
+            <file>tests/phpunit/S3RestoreTest.php</file>
+        </testsuite>
+        <testsuite name="gcs">
+            <file>tests/phpunit/GcsRestoreTest.php</file>
+        </testsuite>
+        <testsuite name="cross-backends">
+            <file>tests/phpunit/CrossBackendRestoreTest.php</file>
+        </testsuite>
+        <testsuite name="other">
+            <file>tests/phpunit/CommonRestoreTest.php</file>
+            <file>tests/phpunit/BaseTest.php</file>
+            <directory>tests/phpunit/StorageApi</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="test"/>
+    </php>
 </phpunit>

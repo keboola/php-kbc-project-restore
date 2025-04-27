@@ -16,7 +16,7 @@ error_reporting(E_ALL);
 
 $basedir = dirname(__FILE__);
 
-require_once $basedir . '/bootstrap.php';
+require_once $basedir . '/../bootstrap.php';
 
 echo 'Loading fixtures to GCS' . PHP_EOL;
 
@@ -37,7 +37,7 @@ $temp = new Temp('loadToGCS');
 
 $source = $temp->getTmpFolder();
 $finder = new Finder();
-$dirs = $finder->depth(0)->in($basedir . '/data/backups')->directories();
+$dirs = $finder->depth(0)->in($basedir . '/data')->directories();
 
 echo 'Copying new files into GCS' . PHP_EOL;
 foreach ($dirs as $dir) {
@@ -49,7 +49,7 @@ $tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), GcsRestoreTes
 $slicesPath = $tablesPath . '/in/c-bucket';
 
 $system->mkdir($tablesPath);
-$system->mirror($basedir . '/data/backups/table-multiple-slices', $tablesPath, null, [
+$system->mirror($basedir . '/data/table-multiple-slices', $tablesPath, null, [
     'override' => true,
     'delete' => true,
 ]);
