@@ -39,9 +39,24 @@
             "php ./tests/prepareData/loadToS3.php",
             "php ./tests/prepareData/loadToGcs.php"
         ],
-        "tests-abs": "phpunit --testsuite abs",
-        "tests-s3": "phpunit --testsuite s3",
-        "tests-gcs": "phpunit --testsuite gcs",
+        "tests-abs-part1": "phpunit --testsuite abs-part1",
+        "tests-abs-part2": "phpunit --testsuite abs-part2",
+        "tests-s3-part1": "phpunit --testsuite s3-part1",
+        "tests-s3-part2": "phpunit --testsuite s3-part2",
+        "tests-gcs-part1": "phpunit --testsuite gcs-part1",
+        "tests-gcs-part2": "phpunit --testsuite gcs-part2",
+        "tests-abs": [
+            "@tests-abs-part1",
+            "@tests-abs-part2"
+        ],
+        "tests-s3": [
+            "@tests-s3-part1",
+            "@tests-s3-part2"
+        ],
+        "tests-gcs": [
+            "@tests-gcs-part1",
+            "@tests-gcs-part2"
+        ],
         "tests-cross-backends": "phpunit --testsuite cross-backends",
         "tests-other": "phpunit --testsuite other",
         "tests": [

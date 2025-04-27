@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ProjectRestore\Tests;
+namespace Keboola\ProjectRestore\Tests\RestoreTests;
 
 use Keboola\ProjectRestore\AbsRestore;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use Psr\Log\LoggerInterface;
 
-class AbsRestoreTest extends AbstractRestoreTest
+trait AbsRestoreTestTrait
 {
     private BlobRestProxy $blobClient;
 

@@ -4,14 +4,23 @@
          bootstrap="vendor/autoload.php"
          colors="true">
     <testsuites>
-        <testsuite name="abs">
-            <file>tests/phpunit/AbsRestoreTest.php</file>
+        <testsuite name="abs-part1">
+            <file>tests/phpunit/RestoreTests/AbsRestoreTestPart1.php</file>
         </testsuite>
-        <testsuite name="s3">
-            <file>tests/phpunit/S3RestoreTest.php</file>
+        <testsuite name="abs-part2">
+            <file>tests/phpunit/RestoreTests/AbsRestoreTestPart2.php</file>
         </testsuite>
-        <testsuite name="gcs">
-            <file>tests/phpunit/GcsRestoreTest.php</file>
+        <testsuite name="s3-part1">
+            <file>tests/phpunit/RestoreTests/S3RestoreTestPart1.php</file>
+        </testsuite>
+        <testsuite name="s3-part2">
+            <file>tests/phpunit/RestoreTests/S3RestoreTestPart2.php</file>
+        </testsuite>
+        <testsuite name="gcs-part1">
+            <file>tests/phpunit/RestoreTests/GcsRestoreTestPart1.php</file>
+        </testsuite>
+        <testsuite name="gcs-part2">
+            <file>tests/phpunit/RestoreTests/GcsRestoreTestPart2.php</file>
         </testsuite>
         <testsuite name="cross-backends">
             <file>tests/phpunit/CrossBackendRestoreTest.php</file>

@@ -27,11 +27,17 @@ env:
   # KBC Credentials
   TEST_STORAGE_API_URL: "https://connection.keboola.com/"
   # https://connection.keboola.com/admin/projects/9017/dashboard
-  TEST_STORAGE_API_TOKEN_S3: "${{ secrets.TEST_STORAGE_API_TOKEN_S3 }}"
+  TEST_STORAGE_API_TOKEN_S3_PART1: "${{ secrets.TEST_STORAGE_API_TOKEN_S3_PART1 }}"
+  # https://connection.keboola.com/admin/projects/10379/dashboard
+  TEST_STORAGE_API_TOKEN_S3_PART2: "${{ secrets.TEST_STORAGE_API_TOKEN_S3_PART2 }}"
   # https://connection.keboola.com/admin/projects/10143/dashboard
-  TEST_STORAGE_API_TOKEN_ABS: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS }}"
+  TEST_STORAGE_API_TOKEN_ABS_PART1: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS_PART1 }}"
+  # https://connection.keboola.com/admin/projects/10380/dashboard
+  TEST_STORAGE_API_TOKEN_ABS_PART2: "${{ secrets.TEST_STORAGE_API_TOKEN_ABS_PART2 }}"
   # https://connection.keboola.com/admin/projects/10333/dashboard
-  TEST_STORAGE_API_TOKEN_GCS: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS }}"
+  TEST_STORAGE_API_TOKEN_GCS_PART1: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_PART1 }}"
+  # https://connection.keboola.com/admin/projects/10381/dashboard
+  TEST_STORAGE_API_TOKEN_GCS_PART2: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_PART2 }}"
   # https://connection.europe-west3.gcp.keboola.com/admin/projects/1521/dashboard
   TEST_STORAGE_API_TOKEN_GCS_BQ: "${{ secrets.TEST_STORAGE_API_TOKEN_GCS_BQ }}"
   TEST_STORAGE_API_URL_GCS_BQ: "https://connection.europe-west3.gcp.keboola.com/"
@@ -91,18 +97,32 @@ jobs:
     strategy:
       matrix:
         include:
+          # Static code checks
           - run: composer ci-except-tests
-            token: TEST_STORAGE_API_TOKEN_S3
+            token: TEST_STORAGE_API_TOKEN_S3_PART1
             url: https://connection.keboola.com/
-          - run: composer tests-s3
-            token: TEST_STORAGE_API_TOKEN_S3
+          # ABS Tests
+          - run: composer tests-abs-part1
+            token: TEST_STORAGE_API_TOKEN_ABS_PART1
             url: https://connection.keboola.com/
-          - run: composer tests-abs
-            token: TEST_STORAGE_API_TOKEN_ABS
+          - run: composer tests-abs-part2
+            token: TEST_STORAGE_API_TOKEN_ABS_PART2
             url: https://connection.keboola.com/
-          - run: composer tests-gcs
-            token: TEST_STORAGE_API_TOKEN_GCS
+          # S3 Tests
+          - run: composer tests-s3-part1
+            token: TEST_STORAGE_API_TOKEN_S3_PART1
             url: https://connection.keboola.com/
+          - run: composer tests-s3-part2
+            token: TEST_STORAGE_API_TOKEN_S3_PART2
+            url: https://connection.keboola.com/
+          # GCS Tests
+          - run: composer tests-gcs-part1
+            token: TEST_STORAGE_API_TOKEN_GCS_PART1
+            url: https://connection.keboola.com/
+          - run: composer tests-gcs-part2
+            token: TEST_STORAGE_API_TOKEN_GCS_PART2
+            url: https://connection.keboola.com/
+          # Cross Backend Tests
           - run: composer tests-cross-backends
             token: TEST_STORAGE_API_TOKEN_GCS_BQ
             url: https://connection.europe-west3.gcp.keboola.com/

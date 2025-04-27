@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ProjectRestore\Tests;
+namespace Keboola\ProjectRestore\Tests\RestoreTests;
 
 use Aws\S3\S3Client;
 use Keboola\ProjectRestore\S3Restore;
 use Psr\Log\LoggerInterface;
 
-class S3RestoreTest extends AbstractRestoreTest
+trait S3RestoreTestTrait
 {
     private S3Client $s3Client;
 

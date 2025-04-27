@@ -2,16 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ProjectRestore\Tests;
+namespace Keboola\ProjectRestore\Tests\RestoreTests;
 
 use Google\Cloud\Storage\StorageClient;
 use Keboola\ProjectRestore\GcsRestore;
 use Psr\Log\LoggerInterface;
 
-class GcsRestoreTest extends AbstractRestoreTest
+trait GcsRestoreTestTrait
 {
-    public const TEST_ITERATOR_SLICES_COUNT = 120;
-
     private StorageClient $storageClient;
 
     public function setUp(): void
