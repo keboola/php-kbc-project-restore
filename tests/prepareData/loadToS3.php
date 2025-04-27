@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Aws\S3\S3Client;
 use Aws\S3\Transfer;
 use Keboola\Csv\CsvFile;
-use Keboola\ProjectRestore\Tests\S3RestoreTest;
+use Keboola\ProjectRestore\Tests\RestoreTests\S3RestoreTestPart1;
 use Keboola\Temp\Temp;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -46,7 +46,7 @@ $system = new Filesystem();
 
 $temp = new Temp('loadToS3');
 
-$tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), S3RestoreTest::TEST_ITERATOR_SLICES_COUNT);
+$tablesPath = sprintf('%s/table-%s-slices', $temp->getTmpFolder(), S3RestoreTestPart1::TEST_ITERATOR_SLICES_COUNT);
 $slicesPath = $tablesPath . '/in/c-bucket';
 
 $system->mkdir($tablesPath);
@@ -58,7 +58,7 @@ $system->mirror($basedir . '/data/table-multiple-slices', $tablesPath, null, [
 
 $system->remove((new Finder())->files()->in($slicesPath)->getIterator());
 
-for ($i = 0; $i < S3RestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
+for ($i = 0; $i < S3RestoreTestPart1::TEST_ITERATOR_SLICES_COUNT; $i++) {
     $part = str_pad((string) $i, 5, '0', STR_PAD_LEFT);
 
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));

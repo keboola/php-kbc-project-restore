@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Keboola\Csv\CsvFile;
-use Keboola\ProjectRestore\Tests\AbsRestoreTest;
+use Keboola\ProjectRestore\Tests\RestoreTests\AbsRestoreTestPart1;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\Container;
@@ -90,7 +90,7 @@ $system->mirror($basedir . '/data/table-multiple-slices', $temp->getTmpFolder(),
 
 $system->remove((new Finder())->files()->in($slicesPath)->getIterator());
 
-for ($i = 0; $i < AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT; $i++) {
+for ($i = 0; $i < AbsRestoreTestPart1::TEST_ITERATOR_SLICES_COUNT; $i++) {
     $part = str_pad((string) $i, 5, '0', STR_PAD_LEFT);
 
     $csv = new CsvFile(sprintf('%s/Account.part_%s.csv', $slicesPath, $part));
@@ -115,7 +115,7 @@ $files = $finder->in($source)->files();
 $container = sprintf(
     '%s-table-%s-slices',
     getenv('TEST_AZURE_CONTAINER_NAME'),
-    AbsRestoreTest::TEST_ITERATOR_SLICES_COUNT,
+    AbsRestoreTestPart1::TEST_ITERATOR_SLICES_COUNT,
 );
 if (!in_array($container, $listContainers)) {
     $absClient->createContainer($container);
