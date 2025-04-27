@@ -6,9 +6,9 @@ namespace Keboola\ProjectRestore\Tests;
 
 use Keboola\ProjectRestore\Restore;
 use Keboola\StorageApi\Components;
-use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\DevBranchesMetadata;
 use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\Assert;
 use Psr\Log\LoggerInterface;
