@@ -7,6 +7,8 @@ namespace Keboola\ProjectRestore\Tests;
 use Keboola\ProjectRestore\Restore;
 use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
+use Keboola\StorageApi\DevBranchesMetadata;
+use Keboola\StorageApi\Metadata;
 use Keboola\Temp\Temp;
 use PHPUnit\Framework\Assert;
 use Psr\Log\LoggerInterface;
@@ -229,6 +231,42 @@ abstract class AbstractRestoreTestPart2 extends BaseTest
         self::assertEquals([], $config[0]->configuration->queries);
     }
 
+    public function testRestoreTableMetadata(): void
+    {
+        $restore = $this->createRestoreInstance('metadata');
+        $restore->restoreBuckets(true);
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.Account'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.Account');
+
+        self::assertEquals('tableKey', $table['metadata'][0]['key']);
+        self::assertEquals('tableValue', $table['metadata'][0]['value']);
+        self::assertEquals('columnKey', $table['columnMetadata']['Id'][0]['key']);
+        self::assertEquals('columnValue', $table['columnMetadata']['Id'][0]['value']);
+
+        $bucket = $this->sapiClient->listBuckets(['include' => 'metadata'])[0];
+        self::assertEquals('bucketKey', $bucket['metadata'][0]['key']);
+        self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
+    }
+
+    public function testRestoreAliasMetadata(): void
+    {
+        $restore = $this->createRestoreInstance('alias-metadata');
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+        $restore->restoreTableAliases();
+
+        self::assertTrue($this->sapiClient->tableExists('out.c-bucket.Account'));
+
+        $aliasTable = $this->sapiClient->getTable('out.c-bucket.Account');
+        self::assertEquals('tableKey', $aliasTable['metadata'][0]['key']);
+        self::assertEquals('tableValue', $aliasTable['metadata'][0]['value']);
+        self::assertEquals('columnKey', $aliasTable['columnMetadata']['Id'][0]['key']);
+        self::assertEquals('columnValue', $aliasTable['columnMetadata']['Id'][0]['value']);
+    }
+
     public function testRestoreTransformationMetadata(): void
     {
         $restore = $this->createRestoreInstance('transformation-with-metadata');
@@ -317,5 +355,149 @@ JSON;
             (string) json_encode($expectedNotifications, JSON_PRETTY_PRINT),
             (string) json_encode($restoreNotifications, JSON_PRETTY_PRINT),
         );
+    }
+
+    public function testProjectMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = $this->createRestoreInstance('branches-metadata');
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+
+        self::assertEquals(1, count($metadataList));
+        self::assertEquals('KBC.projectDescription', $metadataList[0]['key']);
+        self::assertEquals('project description', $metadataList[0]['value']);
+    }
+
+    public function testProjectEmptyMetadataRestore(): void
+    {
+        $metadata = new DevBranchesMetadata($this->branchAwareClient);
+        $metadataList = $metadata->listBranchMetadata();
+        foreach ($metadataList as $item) {
+            $metadata->deleteBranchMetadata((int) $item['id']);
+        }
+
+        $restore = $this->createRestoreInstance('branches-empty-metadata');
+        $restore->restoreProjectMetadata();
+
+        $metadataList = $metadata->listBranchMetadata();
+        self::assertEquals(0, count($metadataList));
+    }
+
+    public function testRestoreMetadata(): void
+    {
+        $restore = $this->createRestoreInstance('metadata');
+        $restore->restoreBuckets(true);
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.Account'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.Account');
+
+        self::assertEquals('tableKey', $table['metadata'][0]['key']);
+        self::assertEquals('tableValue', $table['metadata'][0]['value']);
+        self::assertEquals('columnKey', $table['columnMetadata']['Id'][0]['key']);
+        self::assertEquals('columnValue', $table['columnMetadata']['Id'][0]['value']);
+
+        $bucket = $this->sapiClient->listBuckets(['include' => 'metadata'])[0];
+        self::assertEquals('bucketKey', $bucket['metadata'][0]['key']);
+        self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
+    }
+
+    public function testBucketMetadataRestore(): void
+    {
+        $restore = $this->createRestoreInstance('metadata');
+        $buckets = $restore->getBucketsInBackup();
+        foreach ($buckets as $bucketInfo) {
+            $restore->restoreBucket($bucketInfo);
+        }
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(1, $buckets);
+        self::assertEquals('in.c-bucket', $buckets[0]['id']);
+
+        // metadata check
+        $this->sapiClient->getBucket('in.c-bucket');
+
+        $metadata = new Metadata($this->sapiClient);
+        $bucketMetadata = $metadata->listBucketMetadata('in.c-bucket');
+
+        self::assertCount(1, $bucketMetadata);
+
+        self::assertArrayHasKey('key', $bucketMetadata[0]);
+        self::assertEquals('bucketKey', $bucketMetadata[0]['key']);
+
+        self::assertArrayHasKey('value', $bucketMetadata[0]);
+        self::assertEquals('bucketValue', $bucketMetadata[0]['value']);
+
+        self::assertArrayHasKey('provider', $bucketMetadata[0]);
+        self::assertEquals('system', $bucketMetadata[0]['provider']);
+    }
+
+    public function testRestoreAlias(): void
+    {
+        $restore = $this->createRestoreInstance('alias');
+        $restore->restoreBuckets(true);
+        $restore->restoreTables();
+        $restore->restoreTableAliases();
+
+        $aliasTable = $this->sapiClient->getTable('out.c-bucket.Account');
+        self::assertEquals(true, $aliasTable['isAlias']);
+        self::assertEquals(true, $aliasTable['aliasColumnsAutoSync']);
+        self::assertEquals(['Id', 'Name'], $aliasTable['columns']);
+        self::assertEquals('in.c-bucket.Account', $aliasTable['sourceTable']['id']);
+    }
+
+    public function testRestoreFilteredAlias(): void
+    {
+        $restore = $this->createRestoreInstance('alias-filtered');
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+        $restore->restoreTableAliases();
+
+        $aliasTable = $this->sapiClient->getTable('out.c-bucket.Account');
+        self::assertEquals(true, $aliasTable['isAlias']);
+        self::assertEquals(false, $aliasTable['aliasColumnsAutoSync']);
+        self::assertEquals(['Id'], $aliasTable['columns']);
+        self::assertEquals('in.c-bucket.Account', $aliasTable['sourceTable']['id']);
+        self::assertEquals(
+            [
+                'column' => 'Name',
+                'operator' => 'eq',
+                'values' => ['Keboola'],
+            ],
+            $aliasTable['aliasFilter'],
+        );
+    }
+
+    public function testRestoreAliasWithSourceTableDoesntExists(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = $this->createRestoreInstance('alias-source-table-doesnt-exists', $testLogger);
+        $restore->restoreTableAliases();
+
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping alias out.c-bucket.Account - ' .
+            'source table with id "in.c-bucket-doesnt-exists.tables-doesnt-exists" does not exist',
+        ));
+    }
+
+    public function testRestoreTableWithDisplayName(): void
+    {
+        $restore = $this->createRestoreInstance('table-with-display-name');
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        $firstTable = $this->sapiClient->getTable('in.c-bucket.firstTable');
+        self::assertEquals('DisplayNameFirstTable', $firstTable['displayName']);
+
+        $secondTable = $this->sapiClient->getTable('in.c-bucket.secondTable');
+        self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
     }
 }
