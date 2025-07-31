@@ -1,6 +1,6 @@
 [
   {
-    "id": "keboola.csv-import",
+    "id": "transformation",
     "type": "transformation",
     "name": "Transformations",
     "description": "Transformation API",
