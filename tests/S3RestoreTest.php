@@ -315,6 +315,21 @@ class S3RestoreTest extends BaseTest
         self::assertCount(0, $configs);
     }
 
+    public function testRestoreConfigWithBrokenRowsOrder(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'configuration-broken-rows-order',
+        );
+
+        $restore->restoreConfigs();
+        $components = new Components($this->sapiClient);
+        $config = $components->getConfiguration('transformation', '1');
+        self::assertSame(['4', '3', '5'], $config['rowsSortOrder']);
+    }
+
     public function testRestoreBuckets(): void
     {
         $backup = new S3Restore(

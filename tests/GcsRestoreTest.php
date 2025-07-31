@@ -289,6 +289,19 @@ class GcsRestoreTest extends BaseTest
         self::assertCount(0, $configs);
     }
 
+    public function testRestoreConfigWithBrokenRowsOrder(): void
+    {
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('configuration-broken-rows-order'),
+        );
+
+        $restore->restoreConfigs();
+        $components = new Components($this->sapiClient);
+        $config = $components->getConfiguration('transformation', '1');
+        self::assertSame(['4', '3', '5'], $config['rowsSortOrder']);
+    }
+
     public function testRestoreBuckets(): void
     {
         $restore = new GcsRestore(

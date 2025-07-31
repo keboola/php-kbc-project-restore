@@ -214,8 +214,10 @@ abstract class Restore
                 }
 
                 // create configuration rows
+                $rowIds = [];
                 if (count($configurationData->rows)) {
                     foreach ($configurationData->rows as $row) {
+                        $rowIds[] = $row->id;
                         // create empty row
                         $configurationRow = new ConfigurationRow($configuration);
                         $configurationRow->setRowId($row->id);
@@ -271,7 +273,10 @@ abstract class Restore
 
                 // restore row sorting
                 if (!empty($configurationData->rowsSortOrder)) {
-                    $configuration->setRowsSortOrder($configurationData->rowsSortOrder);
+                    $configuration->setRowsSortOrder(array_merge(
+                        $configurationData->rowsSortOrder,
+                        array_diff($rowIds, $configurationData->rowsSortOrder),
+                    ));
                     $configuration->setChangeDescription('Restored rows sort order from backup');
 
                     if ($this->dryRun === false) {

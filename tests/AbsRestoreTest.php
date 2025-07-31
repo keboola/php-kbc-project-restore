@@ -302,6 +302,20 @@ class AbsRestoreTest extends BaseTest
         self::assertCount(0, $configs);
     }
 
+    public function testRestoreConfigWithBrokenRowsOrder(): void
+    {
+        $restore = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-configuration-broken-rows-order',
+        );
+
+        $restore->restoreConfigs();
+        $components = new Components($this->sapiClient);
+        $config = $components->getConfiguration('transformation', '1');
+        self::assertSame(['4', '3', '5'], $config['rowsSortOrder']);
+    }
+
     public function testRestoreBuckets(): void
     {
         $backup = new AbsRestore(
