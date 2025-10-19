@@ -782,6 +782,63 @@ class S3RestoreTest extends BaseTest
         self::assertCount(1, $componentsList[0]['configurations']);
     }
 
+    public function testAllowComponentConfigurations(): void
+    {
+        $testLogger = new TestLogger();
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'configuration-skip',
+            $testLogger,
+        );
+        $backup->setDryRunMode(true);
+
+        // Test with allowComponentConfigurations parameter
+        $backup->restoreConfigs(
+            [], // skipComponents
+            ['1'], // allowComponentConfigurations - only allow configuration with ID '1'
+        );
+
+        // Should log warnings about skipping configurations not in allowed list
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration 48178597 of component gooddata-writer - configuration not in allowed list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration 213957890 of component orchestrator - configuration not in allowed list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration daily-reports of component pigeon-importer - configuration not in allowed list',
+        ));
+    }
+
+    public function testAllowComponentConfigurationsEmpty(): void
+    {
+        $testLogger = new TestLogger();
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'configuration-skip',
+            $testLogger,
+        );
+        $backup->setDryRunMode(true);
+
+        // Test with empty allowComponentConfigurations parameter
+        $backup->restoreConfigs(
+            [], // skipComponents
+            [], // allowComponentConfigurations - empty array
+        );
+
+        // Should not log warnings about skipping configurations not in allowed list
+        $warningMessages = array_filter($testLogger->records, function ($record) {
+            return $record['level'] === 'warning' &&
+                   str_contains($record['message'], 'configuration not in allowed list');
+        });
+
+        self::assertEmpty($warningMessages, 'Should not log warnings when allowComponentConfigurations is empty');
+    }
+
     public function testRestoreEmptyObjectInConfiguration(): void
     {
         $backup = new S3Restore(
@@ -1134,5 +1191,52 @@ JSON;
 
         $secondTable = $this->sapiClient->getTable('in.c-bucket.secondTable');
         self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
+    }
+
+    public function testAllowTables(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-display-name',
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+        $restore->restoreBuckets();
+
+        // Test with allowTables parameter - only allow firstTable
+        $restore->restoreTables(['in.c-bucket.firstTable']);
+
+        // Should log warning about skipping secondTable
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping table in.c-bucket.secondTable - not in allowed tables list',
+        ));
+    }
+
+    public function testAllowTablesEmpty(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-display-name',
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+        $restore->restoreBuckets();
+
+        // Test with empty allowTables parameter
+        $restore->restoreTables([]);
+
+        // Should not log warnings about skipping tables not in allowed list
+        $warningMessages = array_filter($testLogger->records, function ($record) {
+            return $record['level'] === 'warning' &&
+                   str_contains($record['message'], 'not in allowed tables list');
+        });
+
+        self::assertEmpty($warningMessages, 'Should not log warnings when allowTables is empty');
     }
 }
