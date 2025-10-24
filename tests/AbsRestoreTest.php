@@ -1149,18 +1149,22 @@ JSON;
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-with-display-name',
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-filtered',
             $testLogger,
         );
         $restore->setDryRunMode(true);
         $restore->restoreBuckets();
 
-        // Test with allowTables parameter - only allow firstTable
-        $restore->restoreTables(['in.c-bucket.firstTable']);
+        // Test with allowTables parameter - don't allow any tables or aliases
+        $restore->restoreTables(['non-existent-table']); // Don't allow the actual table
+        $restore->restoreTableAliases(['non-existent-alias']); // Don't allow the actual alias
 
-        // Should log warning about skipping secondTable
+        // Should log warnings about skipping both table and alias
         self::assertTrue($testLogger->hasWarning(
-            'Skipping table in.c-bucket.secondTable - not in allowed tables list',
+            'Skipping table in.c-bucket.Account - not in allowed tables list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping table alias out.c-bucket.Account - not in allowed tables list',
         ));
     }
 
@@ -1170,7 +1174,7 @@ JSON;
         $restore = new AbsRestore(
             $this->sapiClient,
             $this->absClient,
-            getenv('TEST_AZURE_CONTAINER_NAME') . '-table-with-display-name',
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-alias-filtered',
             $testLogger,
         );
         $restore->setDryRunMode(true);
@@ -1178,6 +1182,7 @@ JSON;
 
         // Test with empty allowTables parameter
         $restore->restoreTables([]);
+        $restore->restoreTableAliases([]);
 
         // Should not log warnings about skipping tables not in allowed list
         $warningMessages = array_filter($testLogger->records, function ($record) {

@@ -446,7 +446,7 @@ abstract class Restore
         }
     }
 
-    public function restoreTableAliases(): void
+    public function restoreTableAliases(array $allowTables = []): void
     {
         $this->logger->info('Downloading tables');
 
@@ -465,6 +465,13 @@ abstract class Restore
         /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] !== true) {
+                continue;
+            }
+            if ($allowTables && !in_array($tableInfo['id'], $allowTables, true)) {
+                $this->logger->warning(sprintf(
+                    'Skipping table alias %s - not in allowed tables list',
+                    $tableInfo['id'],
+                ));
                 continue;
             }
 
