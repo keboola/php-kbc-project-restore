@@ -51,3 +51,7 @@ docker-compose run --rm tests
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
