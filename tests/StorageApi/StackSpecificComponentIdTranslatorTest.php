@@ -93,4 +93,47 @@ class StackSpecificComponentIdTranslatorTest extends TestCase
             . 'for the destination stack "connection.north-europe.azure.keboola.com".',
         ));
     }
+
+    public function testAwsStackTranslation(): void
+    {
+        $testHandler = new TestHandler();
+        $logger = new Logger('test', [$testHandler]);
+
+        $translator = new StackSpecificComponentIdTranslator(
+            'connection.keboola.com',
+            $logger,
+        );
+
+        self::assertSame(
+            'keboola.wr-db-snowflake',
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake'),
+        );
+
+        $translator = new StackSpecificComponentIdTranslator(
+            'connection.eu-central-1.keboola.com',
+            $logger,
+        );
+
+        self::assertSame(
+            'keboola.wr-db-snowflake',
+            $translator->translate('keboola.wr-snowflake-blob-storage', 'snowflake'),
+        );
+
+        /** @var array{array} $logRecords */
+        $logRecords = $testHandler->getRecords();
+
+        self::assertCount(2, $logRecords);
+
+        self::assertSame(
+            'Translated component ID from "keboola.wr-snowflake-blob-storage" to "keboola.wr-db-snowflake" '
+            . 'for stack "connection.keboola.com".',
+            array_shift($logRecords)['message'],
+        );
+
+        self::assertSame(
+            'Translated component ID from "keboola.wr-snowflake-blob-storage" to "keboola.wr-db-snowflake" '
+            . 'for stack "connection.eu-central-1.keboola.com".',
+            array_shift($logRecords)['message'],
+        );
+    }
 }
