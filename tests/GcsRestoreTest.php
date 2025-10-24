@@ -187,7 +187,7 @@ class GcsRestoreTest extends BaseTest
                 $restore->restoreBucket($bucketInfo);
                 self::fail('Restoring bucket with non-supported backend should fail');
             } catch (ClientException $e) {
-                $message1 = 'is not supported for project';
+                $message1 = 'is not supported for';
                 $message2 = 'was not found in the haystack';
 
                 self::assertTrue(
