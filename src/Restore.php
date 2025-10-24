@@ -92,7 +92,7 @@ abstract class Restore
         }
     }
 
-    public function restoreConfigs(array $skipComponents = []): void
+    public function restoreConfigs(array $skipComponents = [], array $allowComponentConfigurations = []): void
     {
         $this->logger->info('Downloading configurations');
 
@@ -143,6 +143,17 @@ abstract class Restore
 
             /** @var array $componentConfiguration */
             foreach ($componentWithConfigurations['configurations'] as $componentConfiguration) {
+                if ($allowComponentConfigurations &&
+                    !in_array($componentConfiguration['id'], $allowComponentConfigurations, true)) {
+                    $this->logger->warning(
+                        sprintf(
+                            'Skipping configuration %s of component %s - configuration not in allowed list',
+                            $componentConfiguration['id'],
+                            $componentId,
+                        ),
+                    );
+                    continue;
+                }
                 // configurations as objects to preserve empty arrays or empty objects
                 /** @var stdClass $configurationData */
                 $configurationData = json_decode((string) $this->getDataFromStorage(sprintf(
@@ -435,7 +446,7 @@ abstract class Restore
         }
     }
 
-    public function restoreTableAliases(): void
+    public function restoreTableAliases(array $allowTables = []): void
     {
         $this->logger->info('Downloading tables');
 
@@ -454,6 +465,13 @@ abstract class Restore
         /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] !== true) {
+                continue;
+            }
+            if ($allowTables && !in_array($tableInfo['id'], $allowTables, true)) {
+                $this->logger->warning(sprintf(
+                    'Skipping table alias %s - not in allowed tables list',
+                    $tableInfo['id'],
+                ));
                 continue;
             }
 
@@ -501,7 +519,7 @@ abstract class Restore
         }
     }
 
-    public function restoreTables(): void
+    public function restoreTables(array $allowTables = []): void
     {
         $this->logger->info('Downloading tables');
 
@@ -519,6 +537,13 @@ abstract class Restore
         /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] === true) {
+                continue;
+            }
+            if ($allowTables && !in_array($tableInfo['id'], $allowTables, true)) {
+                $this->logger->warning(sprintf(
+                    'Skipping table %s - not in allowed tables list',
+                    $tableInfo['id'],
+                ));
                 continue;
             }
             $this->checkTableRestorable($tableInfo);

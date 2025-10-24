@@ -187,7 +187,7 @@ class GcsRestoreTest extends BaseTest
                 $restore->restoreBucket($bucketInfo);
                 self::fail('Restoring bucket with non-supported backend should fail');
             } catch (ClientException $e) {
-                $message1 = 'is not supported for project';
+                $message1 = 'is not supported for';
                 $message2 = 'was not found in the haystack';
 
                 self::assertTrue(
@@ -722,6 +722,59 @@ class GcsRestoreTest extends BaseTest
         self::assertCount(1, $componentsList[0]['configurations']);
     }
 
+    public function testAllowComponentConfigurations(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('configuration-skip'),
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+
+        // Test with allowComponentConfigurations parameter
+        $restore->restoreConfigs(
+            [], // skipComponents
+            ['1'], // allowComponentConfigurations - only allow configuration with ID '1'
+        );
+
+        // Should log warnings about skipping configurations not in allowed list
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration 48178597 of component gooddata-writer - configuration not in allowed list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration 213957890 of component orchestrator - configuration not in allowed list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping configuration daily-reports of component pigeon-importer - configuration not in allowed list',
+        ));
+    }
+
+    public function testAllowComponentConfigurationsEmpty(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('configuration-skip'),
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+
+        // Test with empty allowComponentConfigurations parameter
+        $restore->restoreConfigs(
+            [], // skipComponents
+            [], // allowComponentConfigurations - empty array
+        );
+
+        // Should not log warnings about skipping configurations not in allowed list
+        $warningMessages = array_filter($testLogger->records, function ($record) {
+            return $record['level'] === 'warning' &&
+                   str_contains($record['message'], 'configuration not in allowed list');
+        });
+
+        self::assertEmpty($warningMessages, 'Should not log warnings when allowComponentConfigurations is empty');
+    }
+
     public function testRestoreEmptyObjectInConfiguration(): void
     {
         $restore = new GcsRestore(
@@ -1046,6 +1099,54 @@ JSON;
 
         $secondTable = $this->sapiClient->getTable('in.c-bucket.secondTable');
         self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
+    }
+
+    public function testAllowTables(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('alias-filtered'),
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+        $restore->restoreBuckets();
+
+        // Test with allowTables parameter - don't allow any tables or aliases
+        $restore->restoreTables(['non-existent-table']); // Don't allow the actual table
+        $restore->restoreTableAliases(['non-existent-alias']); // Don't allow the actual alias
+
+        // Should log warnings about skipping both table and alias
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping table in.c-bucket.Account - not in allowed tables list',
+        ));
+        self::assertTrue($testLogger->hasWarning(
+            'Skipping table alias out.c-bucket.Account - not in allowed tables list',
+        ));
+    }
+
+    public function testAllowTablesEmpty(): void
+    {
+        $testLogger = new TestLogger();
+        $restore = new GcsRestore(
+            $this->sapiClient,
+            $this->getListOfSignedUrls('alias-filtered'),
+            $testLogger,
+        );
+        $restore->setDryRunMode(true);
+        $restore->restoreBuckets();
+
+        // Test with empty allowTables parameter
+        $restore->restoreTables([]);
+        $restore->restoreTableAliases([]);
+
+        // Should not log warnings about skipping tables not in allowed list
+        $warningMessages = array_filter($testLogger->records, function ($record) {
+            return $record['level'] === 'warning' &&
+                   str_contains($record['message'], 'not in allowed tables list');
+        });
+
+        self::assertEmpty($warningMessages, 'Should not log warnings when allowTables is empty');
     }
 
     private function getListOfSignedUrls(string $string): array
