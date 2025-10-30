@@ -34,6 +34,8 @@ class StackSpecificComponentIdTranslator
             'connection.us-east4.gcp.keboola.com'     => 'keboola.wr-db-snowflake-gcs',
             'connection.europe-west2.gcp.keboola.com' => 'keboola.wr-db-snowflake-gcs',
             'connection.us-central1.gcp.keboola.dev'  => 'keboola.wr-db-snowflake-gcs',
+            'connection.keboola.com'                  => 'keboola.wr-db-snowflake',
+            'connection.eu-central-1.keboola.com'     => 'keboola.wr-db-snowflake',
         ],
     ];
 
