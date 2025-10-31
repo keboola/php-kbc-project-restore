@@ -15,6 +15,8 @@ use Keboola\StorageApi\Metadata;
 use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\Assert;
 use Psr\Log\Test\TestLogger;
 use stdClass;
@@ -943,11 +945,15 @@ class S3RestoreTest extends BaseTest
 
     public function testRestoreMetadataWithManyColumns(): void
     {
+        $testHandler = new TestHandler();
+        $logger = new Logger('test', [$testHandler]);
+
         $backup = new S3Restore(
             $this->sapiClient,
             $this->s3Client,
             (string) getenv('TEST_AWS_S3_BUCKET'),
             'metadata-bulk',
+            $logger,
         );
         $backup->restoreBuckets(true);
         $backup->restoreTables();
@@ -970,6 +976,17 @@ class S3RestoreTest extends BaseTest
             self::assertEquals("key_{$i}", $table['columnMetadata'][$columnName][0]['key']);
             self::assertEquals("value_{$i}", $table['columnMetadata'][$columnName][0]['value']);
         }
+
+        // Verify batching logs (150 columns should be split into 2 batches of 100 and 50)
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processing table in.c-bucket.LargeTable metadata in 2 batches',
+        ));
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processed batch 1/2 for table in.c-bucket.LargeTable',
+        ));
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processed batch 2/2 for table in.c-bucket.LargeTable',
+        ));
     }
 
     public function testRestoreTransformationMetadata(): void
