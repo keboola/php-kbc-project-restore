@@ -811,14 +811,39 @@ abstract class Restore
             if ($provider === 'storage') {
                 continue;
             }
-            $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
-                $tableId,
-                (string) $provider,
-                $metadata['table'] ?? null,
-                $metadata['columns'] ?? null,
-            );
 
-            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            $tableMetadata = $metadata['table'] ?? null;
+            $columnsMetadata = $metadata['columns'] ?? [];
+
+            $chunkSize = 100;
+            if (empty($columnsMetadata)) {
+                $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                    $tableId,
+                    (string) $provider,
+                    $tableMetadata,
+                    null,
+                );
+                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            } else {
+                $columnNames = array_keys($columnsMetadata);
+                $columnChunks = array_chunk($columnNames, $chunkSize);
+
+                foreach ($columnChunks as $index => $columnNamesChunk) {
+                    $chunkColumnsMetadata = [];
+                    foreach ($columnNamesChunk as $columnName) {
+                        $chunkColumnsMetadata[$columnName] = $columnsMetadata[$columnName];
+                    }
+
+                    $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                        $tableId,
+                        (string) $provider,
+                        $index === 0 ? $tableMetadata : null,
+                        $chunkColumnsMetadata,
+                    );
+
+                    $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+                }
+            }
         }
     }
 
