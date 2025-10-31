@@ -1,0 +1,16 @@
+[
+  {
+    "uri": "https://connection.keboola.com/v2/storage/buckets/in.c-bucket",
+    "id": "in.c-bucket",
+    "name": "c-bucket",
+    "stage": "in",
+    "description": "",
+    "tables": "https://connection.keboola.com/v2/storage/buckets/in.c-bucket/tables",
+    "created": "2024-10-31T09:00:00+0000",
+    "lastChangeDate": "2024-10-31T09:00:00+0000",
+    "isReadOnly": false,
+    "dataSizeBytes": 0,
+    "rowsCount": 0,
+    "backend": "snowflake"
+  }
+]

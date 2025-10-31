@@ -1129,4 +1129,50 @@ JSON;
         $secondTable = $this->sapiClient->getTable('in.c-bucket.secondTable');
         self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
     }
+
+    public function testRestoreTableWithManyColumnsChunking(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-many-columns',
+        );
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.LargeTable'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.LargeTable');
+
+        self::assertEquals('LargeTable', $table['name']);
+        self::assertCount(150, $table['columns']);
+
+        self::assertEquals('KBC.description', $table['metadata'][0]['key']);
+        self::assertEquals('Table with many columns for chunking test', $table['metadata'][0]['value']);
+
+        self::assertCount(150, $table['columnMetadata']);
+
+        for ($i = 0; $i < 150; $i++) {
+            $columnName = sprintf('column_%03d', $i);
+            self::assertArrayHasKey($columnName, $table['columnMetadata']);
+
+            $columnMetadata = $table['columnMetadata'][$columnName];
+            self::assertGreaterThanOrEqual(2, count($columnMetadata));
+
+            $metadataKeys = array_column($columnMetadata, 'key');
+            self::assertContains('KBC.datatype.type', $metadataKeys);
+            self::assertContains('KBC.datatype.nullable', $metadataKeys);
+
+            foreach ($columnMetadata as $metadata) {
+                if ($metadata['key'] === 'KBC.datatype.type') {
+                    self::assertEquals('VARCHAR', $metadata['value']);
+                    self::assertEquals('snowflake', $metadata['provider']);
+                } elseif ($metadata['key'] === 'KBC.datatype.nullable') {
+                    self::assertEquals('1', $metadata['value']);
+                    self::assertEquals('snowflake', $metadata['provider']);
+                }
+            }
+        }
+    }
 }
