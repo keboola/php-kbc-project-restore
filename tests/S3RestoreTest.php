@@ -941,6 +941,37 @@ class S3RestoreTest extends BaseTest
         self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
     }
 
+    public function testRestoreMetadataWithManyColumns(): void
+    {
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'metadata-bulk',
+        );
+        $backup->restoreBuckets(true);
+        $backup->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.LargeTable'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.LargeTable');
+
+        // Verify table metadata
+        self::assertEquals('tableKey', $table['metadata'][0]['key']);
+        self::assertEquals('tableValue', $table['metadata'][0]['value']);
+
+        // Verify table has 150 columns
+        self::assertCount(150, $table['columns']);
+
+        // Verify column metadata for all 150 columns
+        for ($i = 1; $i <= 150; $i++) {
+            $columnName = "column_{$i}";
+            self::assertArrayHasKey($columnName, $table['columnMetadata'], "Column {$columnName} should have metadata");
+            self::assertEquals("key_{$i}", $table['columnMetadata'][$columnName][0]['key']);
+            self::assertEquals("value_{$i}", $table['columnMetadata'][$columnName][0]['value']);
+        }
+    }
+
     public function testRestoreTransformationMetadata(): void
     {
         $backup = new S3Restore(
