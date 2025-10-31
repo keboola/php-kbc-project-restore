@@ -49,6 +49,8 @@ abstract class Restore
 
     private const ORCHESTRATOR_COMPONENT_ID = 'keboola.orchestrator';
 
+    private const METADATA_BATCH_SIZE = 100;
+
     protected bool $dryRun = false;
 
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
@@ -812,37 +814,44 @@ abstract class Restore
                 continue;
             }
 
-            $tableMetadata = $metadata['table'] ?? null;
-            $columnsMetadata = $metadata['columns'] ?? [];
+            if (isset($metadata['columns']) && count($metadata['columns']) > self::METADATA_BATCH_SIZE) {
+                $columnChunks = array_chunk($metadata['columns'], self::METADATA_BATCH_SIZE, true);
+                $totalBatches = count($columnChunks);
 
-            $chunkSize = 100;
-            if (empty($columnsMetadata)) {
-                $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                $this->logger->info(sprintf(
+                    'Processing table %s metadata in %d batches (%d columns per batch)',
                     $tableId,
-                    (string) $provider,
-                    $tableMetadata,
-                    null,
-                );
-                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
-            } else {
-                $columnNames = array_keys($columnsMetadata);
-                $columnChunks = array_chunk($columnNames, $chunkSize);
+                    $totalBatches,
+                    self::METADATA_BATCH_SIZE,
+                ));
 
-                foreach ($columnChunks as $index => $columnNamesChunk) {
-                    $chunkColumnsMetadata = [];
-                    foreach ($columnNamesChunk as $columnName) {
-                        $chunkColumnsMetadata[$columnName] = $columnsMetadata[$columnName];
-                    }
+                foreach ($columnChunks as $batchIndex => $columnChunk) {
+                    $batchNumber = $batchIndex + 1;
 
                     $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
                         $tableId,
                         (string) $provider,
-                        $index === 0 ? $tableMetadata : null,
-                        $chunkColumnsMetadata,
+                        $batchIndex === 0 ? ($metadata['table'] ?? null) : null,
+                        $columnChunk,
                     );
 
                     $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+                    $this->logger->info(sprintf(
+                        'Processed batch %d/%d for table %s',
+                        $batchNumber,
+                        $totalBatches,
+                        $tableId,
+                    ));
                 }
+            } else {
+                $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                    $tableId,
+                    (string) $provider,
+                    $metadata['table'] ?? null,
+                    $metadata['columns'] ?? null,
+                );
+
+                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
             }
         }
     }

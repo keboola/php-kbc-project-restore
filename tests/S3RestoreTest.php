@@ -1130,6 +1130,78 @@ JSON;
         self::assertEquals('DisplayNameSecondTable', $secondTable['displayName']);
     }
 
+    public function testRestoreTableWith100Columns(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-100-columns',
+        );
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.Table100Cols'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.Table100Cols');
+
+        self::assertEquals('Table100Cols', $table['name']);
+        self::assertCount(100, $table['columns']);
+
+        self::assertEquals('KBC.description', $table['metadata'][0]['key']);
+        self::assertEquals('Table with 100 columns for boundary test', $table['metadata'][0]['value']);
+
+        self::assertCount(100, $table['columnMetadata']);
+
+        for ($i = 0; $i < 100; $i++) {
+            $columnName = sprintf('column_%03d', $i);
+            self::assertArrayHasKey($columnName, $table['columnMetadata']);
+
+            $columnMetadata = $table['columnMetadata'][$columnName];
+            self::assertGreaterThanOrEqual(2, count($columnMetadata));
+
+            $metadataKeys = array_column($columnMetadata, 'key');
+            self::assertContains('KBC.datatype.type', $metadataKeys);
+            self::assertContains('KBC.datatype.nullable', $metadataKeys);
+        }
+    }
+
+    public function testRestoreTableWith101Columns(): void
+    {
+        $restore = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'table-with-101-columns',
+        );
+        $restore->restoreBuckets();
+        $restore->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.Table101Cols'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.Table101Cols');
+
+        self::assertEquals('Table101Cols', $table['name']);
+        self::assertCount(101, $table['columns']);
+
+        self::assertEquals('KBC.description', $table['metadata'][0]['key']);
+        self::assertEquals('Table with 101 columns for boundary test', $table['metadata'][0]['value']);
+
+        self::assertCount(101, $table['columnMetadata']);
+
+        for ($i = 0; $i < 101; $i++) {
+            $columnName = sprintf('column_%03d', $i);
+            self::assertArrayHasKey($columnName, $table['columnMetadata']);
+
+            $columnMetadata = $table['columnMetadata'][$columnName];
+            self::assertGreaterThanOrEqual(2, count($columnMetadata));
+
+            $metadataKeys = array_column($columnMetadata, 'key');
+            self::assertContains('KBC.datatype.type', $metadataKeys);
+            self::assertContains('KBC.datatype.nullable', $metadataKeys);
+        }
+    }
+
     public function testRestoreTableWithManyColumnsChunking(): void
     {
         $restore = new S3Restore(
