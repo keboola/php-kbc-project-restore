@@ -49,6 +49,8 @@ abstract class Restore
 
     private const ORCHESTRATOR_COMPONENT_ID = 'keboola.orchestrator';
 
+    private const METADATA_BATCH_SIZE = 100;
+
     protected bool $dryRun = false;
 
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
@@ -811,14 +813,49 @@ abstract class Restore
             if ($provider === 'storage') {
                 continue;
             }
-            $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
-                $tableId,
-                (string) $provider,
-                $metadata['table'] ?? null,
-                $metadata['columns'] ?? null,
-            );
 
-            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            // Split column metadata into batches to avoid AWS SNS message size limits
+            if (isset($metadata['columns']) && count($metadata['columns']) > self::METADATA_BATCH_SIZE) {
+                $columnChunks = array_chunk($metadata['columns'], self::METADATA_BATCH_SIZE, true);
+                $totalBatches = count($columnChunks);
+
+                $this->logger->info(sprintf(
+                    'Processing table %s metadata in %d batches (%d columns per batch)',
+                    $tableId,
+                    $totalBatches,
+                    self::METADATA_BATCH_SIZE,
+                ));
+
+                foreach ($columnChunks as $batchIndex => $columnChunk) {
+                    $batchNumber = $batchIndex + 1;
+
+                    // Include table metadata only in the first batch
+                    $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                        $tableId,
+                        (string) $provider,
+                        $batchIndex === 0 ? ($metadata['table'] ?? null) : null,
+                        $columnChunk,
+                    );
+
+                    $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+                    $this->logger->info(sprintf(
+                        'Processed batch %d/%d for table %s',
+                        $batchNumber,
+                        $totalBatches,
+                        $tableId,
+                    ));
+                }
+            } else {
+                // Small number of columns, process in single batch
+                $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                    $tableId,
+                    (string) $provider,
+                    $metadata['table'] ?? null,
+                    $metadata['columns'] ?? null,
+                );
+
+                $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+            }
         }
     }
 

@@ -15,6 +15,8 @@ use Keboola\StorageApi\Options\Components\ListConfigurationMetadataOptions;
 use Keboola\StorageApi\TableExporter;
 use Keboola\Temp\Temp;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\Assert;
 use Psr\Log\Test\TestLogger;
 use stdClass;
@@ -917,6 +919,51 @@ class AbsRestoreTest extends BaseTest
         $bucket = $this->sapiClient->listBuckets(['include' => 'metadata'])[0];
         self::assertEquals('bucketKey', $bucket['metadata'][0]['key']);
         self::assertEquals('bucketValue', $bucket['metadata'][0]['value']);
+    }
+
+    public function testRestoreMetadataWithManyColumns(): void
+    {
+        $testHandler = new TestHandler();
+        $logger = new Logger('test', [$testHandler]);
+
+        $backup = new AbsRestore(
+            $this->sapiClient,
+            $this->absClient,
+            getenv('TEST_AZURE_CONTAINER_NAME') . '-metadata-bulk',
+            $logger,
+        );
+        $backup->restoreBuckets(true);
+        $backup->restoreTables();
+
+        self::assertTrue($this->sapiClient->tableExists('in.c-bucket.LargeTable'));
+
+        $table = $this->sapiClient->getTable('in.c-bucket.LargeTable');
+
+        // Verify table metadata
+        self::assertEquals('tableKey', $table['metadata'][0]['key']);
+        self::assertEquals('tableValue', $table['metadata'][0]['value']);
+
+        // Verify table has 150 columns
+        self::assertCount(150, $table['columns']);
+
+        // Verify column metadata for all 150 columns
+        for ($i = 1; $i <= 150; $i++) {
+            $columnName = "column_{$i}";
+            self::assertArrayHasKey($columnName, $table['columnMetadata'], "Column {$columnName} should have metadata");
+            self::assertEquals("key_{$i}", $table['columnMetadata'][$columnName][0]['key']);
+            self::assertEquals("value_{$i}", $table['columnMetadata'][$columnName][0]['value']);
+        }
+
+        // Verify batching logs (150 columns should be split into 2 batches of 100 and 50)
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processing table in.c-bucket.LargeTable metadata in 2 batches',
+        ));
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processed batch 1/2 for table in.c-bucket.LargeTable',
+        ));
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processed batch 2/2 for table in.c-bucket.LargeTable',
+        ));
     }
 
     public function testRestoreAliasWithSourceTableDoesntExists(): void
