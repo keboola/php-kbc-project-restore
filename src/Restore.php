@@ -49,7 +49,7 @@ abstract class Restore
 
     private const ORCHESTRATOR_COMPONENT_ID = 'keboola.orchestrator';
 
-    private const METADATA_BATCH_SIZE = 100;
+    private const METADATA_BATCH_SIZE = 50;
 
     protected bool $dryRun = false;
 

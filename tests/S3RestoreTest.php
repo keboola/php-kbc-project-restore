@@ -977,15 +977,18 @@ class S3RestoreTest extends BaseTest
             self::assertEquals("value_{$i}", $table['columnMetadata'][$columnName][0]['value']);
         }
 
-        // Verify batching logs (150 columns should be split into 2 batches of 100 and 50)
+        // Verify batching logs (150 columns should be split into 3 batches of 50 each)
         self::assertTrue($testHandler->hasInfoThatContains(
-            'Processing table in.c-bucket.LargeTable metadata in 2 batches',
+            'Processing table in.c-bucket.LargeTable metadata in 3 batches',
         ));
         self::assertTrue($testHandler->hasInfoThatContains(
-            'Processed batch 1/2 for table in.c-bucket.LargeTable',
+            'Processed batch 1/3 for table in.c-bucket.LargeTable',
         ));
         self::assertTrue($testHandler->hasInfoThatContains(
-            'Processed batch 2/2 for table in.c-bucket.LargeTable',
+            'Processed batch 2/3 for table in.c-bucket.LargeTable',
+        ));
+        self::assertTrue($testHandler->hasInfoThatContains(
+            'Processed batch 3/3 for table in.c-bucket.LargeTable',
         ));
     }
 
