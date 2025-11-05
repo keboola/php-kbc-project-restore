@@ -1244,4 +1244,66 @@ JSON;
 
         self::assertEmpty($warningMessages, 'Should not log warnings when allowTables is empty');
     }
+
+    public function testRestoreBucketsWithAllowTables(): void
+    {
+        $backup = new S3Restore(
+            $this->sapiClient,
+            $this->s3Client,
+            (string) getenv('TEST_AWS_S3_BUCKET'),
+            'buckets-with-tables',
+        );
+
+        // Test 1: Restore all buckets when allowTables is empty (default behavior)
+        $backup->restoreBuckets(true, []);
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(2, $buckets);
+        $bucketIds = array_column($buckets, 'id');
+        self::assertContains('in.c-bucket1', $bucketIds);
+        self::assertContains('in.c-bucket2', $bucketIds);
+
+        // Clean up
+        foreach ($buckets as $bucket) {
+            $this->sapiClient->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+        }
+
+        // Test 2: Restore only bucket1 when allowTables contains only table from bucket1
+        $backup->restoreBuckets(true, ['in.c-bucket1.table1']);
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(1, $buckets);
+        self::assertEquals('in.c-bucket1', $buckets[0]['id']);
+
+        // Clean up
+        foreach ($buckets as $bucket) {
+            $this->sapiClient->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+        }
+
+        // Test 3: Restore only bucket2 when allowTables contains only table from bucket2
+        $backup->restoreBuckets(true, ['in.c-bucket2.table2']);
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(1, $buckets);
+        self::assertEquals('in.c-bucket2', $buckets[0]['id']);
+
+        // Clean up
+        foreach ($buckets as $bucket) {
+            $this->sapiClient->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+        }
+
+        // Test 4: Restore both buckets when allowTables contains tables from both buckets
+        $backup->restoreBuckets(true, ['in.c-bucket1.table1', 'in.c-bucket2.table2']);
+
+        $buckets = $this->sapiClient->listBuckets();
+        self::assertCount(2, $buckets);
+        $bucketIds = array_column($buckets, 'id');
+        self::assertContains('in.c-bucket1', $bucketIds);
+        self::assertContains('in.c-bucket2', $bucketIds);
+
+        // Clean up
+        foreach ($buckets as $bucket) {
+            $this->sapiClient->dropBucket($bucket['id'], ['force' => true, 'async' => true]);
+        }
+    }
 }

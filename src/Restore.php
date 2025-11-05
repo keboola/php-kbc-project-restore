@@ -392,9 +392,32 @@ abstract class Restore
         return true;
     }
 
-    public function restoreBuckets(bool $checkBackend = true): void
+    public function restoreBuckets(bool $checkBackend = true, array $allowTables = []): void
     {
         $buckets = $this->getBucketsInBackup();
+
+        // if allowTables is provided, filter buckets based on tables.json
+        if (count($allowTables) > 0) {
+            $fileContent = $this->getDataFromStorage('tables.json');
+            /** @var array $tables */
+            $tables = json_decode((string) $fileContent, true);
+
+            // extract unique bucket IDs from allowed tables
+            $allowedBucketIds = [];
+            /** @var array $tableInfo */
+            foreach ($tables as $tableInfo) {
+                if (in_array($tableInfo['id'], $allowTables, true)) {
+                    $allowedBucketIds[] = $tableInfo['bucket']['id'];
+                }
+            }
+            $allowedBucketIds = array_unique($allowedBucketIds);
+
+            // filter buckets to only those that contain allowed tables
+            $buckets = array_values(array_filter(
+                $buckets,
+                fn($bucketInfo) => in_array($bucketInfo->getId(), $allowedBucketIds, true),
+            ));
+        }
 
         if ($checkBackend) {
             foreach ($buckets as $bucketInfo) {
