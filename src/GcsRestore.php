@@ -74,8 +74,8 @@ class GcsRestore extends Restore
 
         $parts = [];
         foreach ($actualList as $fileName => $url) {
-            // Only include .csv.gz data files, exclude .json metadata files
-            if (str_starts_with($fileName, $table . '.') && str_ends_with($fileName, '.csv.gz')) {
+            // Exclude .json metadata files, only include data files (.csv, .csv.gz)
+            if (str_starts_with($fileName, $table . '.') && !str_ends_with($fileName, '.json')) {
                 $parts[] = implode('/', $tablePath) . '/' . $fileName;
             }
         }
