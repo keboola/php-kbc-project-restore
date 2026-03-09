@@ -920,29 +920,30 @@ abstract class Restore
                 continue;
             }
             $this->logger->info(sprintf('Restoring trigger "%s"', $trigger['id']));
-            $tokenOptions = new TokenCreateOptions();
-            $tokenOptions->setDescription(sprintf(
-                '[_internal] Token for triggering %s',
-                $trigger['configurationId'],
-            ));
-            $tokenOptions->setCanManageBuckets(true);
-            $tokenOptions->setCanReadAllFileUploads(true);
-
-            $token = $tokensEndpoint->createToken($tokenOptions);
-            $trigger['runWithTokenId'] = $token['id'];
-            $trigger['creatorToken'] = [
-                'id' => $actualToken->getId(),
-                'description' => $actualToken->getDescription(),
-            ];
-            $trigger['tableIds'] = array_map(fn($v) => $v['tableId'], $trigger['tables']);
-
-            unset($trigger['tables']);
-
             try {
+                $tokenOptions = new TokenCreateOptions();
+                $tokenOptions->setDescription(sprintf(
+                    '[_internal] Token for triggering %s',
+                    $trigger['configurationId'],
+                ));
+                $tokenOptions->setCanManageBuckets(true);
+                $tokenOptions->setCanReadAllFileUploads(true);
+
+                $token = $tokensEndpoint->createToken($tokenOptions);
+                $trigger['runWithTokenId'] = $token['id'];
+                $trigger['creatorToken'] = [
+                    'id' => $actualToken->getId(),
+                    'description' => $actualToken->getDescription(),
+                ];
+                $trigger['tableIds'] = array_map(fn($v) => $v['tableId'], $trigger['tables']);
+
+                unset($trigger['tables']);
+
                 $this->sapiClient->createTrigger($trigger);
             } catch (ClientException $e) {
                 $this->logger->warning(sprintf(
-                    'Trigger cannot be restored: %s',
+                    'Trigger "%s" cannot be restored: %s',
+                    $trigger['id'],
                     $e->getMessage(),
                 ));
             }
