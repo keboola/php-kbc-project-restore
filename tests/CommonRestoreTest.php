@@ -251,6 +251,106 @@ class CommonRestoreTest extends TestCase
         // phpcs:enable Generic.Files.LineLength.MaxExceeded
     }
 
+    public function testRestoreTypedTableSnowflakeToBigqueryThrowsForNumericScaleOver9(): void
+    {
+        $tableJson = json_encode([[
+            'id' => 'in.c-bucket.amounts',
+            'name' => 'amounts',
+            'isTyped' => true,
+            'isAlias' => false,
+            'primaryKey' => [],
+            'columns' => ['amount'],
+            'bucket' => ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+            'columnMetadata' => [
+                'amount' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'NUMBER'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '0'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.length', 'value' => '38,12'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'NUMERIC'],
+                ],
+            ],
+        ]]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([[
+            'id' => 123,
+            'isDefault' => true,
+        ]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn([
+            'id' => '123',
+            'description' => 'test',
+            'owner' => ['id' => 1, 'name' => 'test'],
+        ]);
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-bucket', 'backend' => 'bigquery'],
+        ]);
+        $storageClientMock->expects($this->never())->method('createTableDefinition');
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        $this->expectException(StorageApiException::class);
+        $this->expectExceptionMessage('Column "amount" has type NUMBER(38,12)');
+        $restore->restoreTables();
+    }
+
+    public function testRestoreTypedTableSnowflakeToBigqueryAllowsNumericScaleOf9(): void
+    {
+        $tableJson = json_encode([[
+            'id' => 'in.c-bucket.amounts',
+            'name' => 'amounts',
+            'isTyped' => true,
+            'isAlias' => false,
+            'primaryKey' => [],
+            'columns' => ['amount'],
+            'bucket' => ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+            'columnMetadata' => [
+                'amount' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'NUMBER'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '0'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.length', 'value' => '38,9'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'NUMERIC'],
+                ],
+            ],
+        ]]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([[
+            'id' => 123,
+            'isDefault' => true,
+        ]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn([
+            'id' => '123',
+            'description' => 'test',
+            'owner' => ['id' => 1, 'name' => 'test'],
+        ]);
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-bucket', 'backend' => 'bigquery'],
+        ]);
+        $storageClientMock->expects($this->once())->method('createTableDefinition')->willReturn('in.c-bucket.amounts');
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+        $restore->restoreTables();
+    }
+
     private function createBlobResultMock(string $content): GetBlobResult
     {
         /** @var resource $resource */
