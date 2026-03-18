@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ProjectRestore;
 
 use Closure;
+use Composer\Autoload\ClassLoader;
 use Keboola\Csv\CsvFile;
 use Keboola\Datatype\Definition\Bigquery;
 use Keboola\Datatype\Definition\Snowflake;
@@ -36,6 +37,7 @@ use Keboola\StorageApi\Tokens;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use ReflectionClass;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\Process\Process;
@@ -769,6 +771,9 @@ abstract class Restore
         if ($this->workerProcessFactory !== null) {
             return ($this->workerProcessFactory)($input);
         }
+
+        $classLoaderFile = (new ReflectionClass(ClassLoader::class))->getFileName();
+        $input['autoloadPath'] = dirname((string) $classLoaderFile, 2) . '/autoload.php';
 
         $process = new Process([PHP_BINARY, __DIR__ . '/worker-create-table.php']);
         $process->setInput((string) json_encode($input));

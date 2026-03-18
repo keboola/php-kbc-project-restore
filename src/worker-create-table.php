@@ -2,36 +2,36 @@
 
 declare(strict_types=1);
 
+$raw = json_decode((string) stream_get_contents(STDIN), true);
+
+/** @var array{autoloadPath: string, sapiUrl: string, sapiToken: string, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName?: string, tableDefinition?: array<string, mixed>} $raw */
+require $raw['autoloadPath'];
+
 use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\Temp\Temp;
 
-require __DIR__ . '/../vendor/autoload.php';
-
-/** @var array{sapiUrl: string, sapiToken: string, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName?: string, tableDefinition?: array<string, mixed>} $input */
-$input = json_decode((string) stream_get_contents(STDIN), true);
-
-$client = new Client(['url' => $input['sapiUrl'], 'token' => $input['sapiToken']]);
+$client = new Client(['url' => $raw['sapiUrl'], 'token' => $raw['sapiToken']]);
 
 try {
-    if ($input['isTyped']) {
-        $tableId = $client->createTableDefinition($input['bucketId'], $input['tableDefinition'] ?? []);
+    if ($raw['isTyped']) {
+        $tableId = $client->createTableDefinition($raw['bucketId'], $raw['tableDefinition'] ?? []);
     } else {
         $tmp = new Temp();
-        $headerFile = new CsvFile($tmp->createFile(sprintf('%s.header.csv', $input['tableName']))->getPathname());
-        $headerFile->writeRow($input['columns']);
+        $headerFile = new CsvFile($tmp->createFile(sprintf('%s.header.csv', $raw['tableName']))->getPathname());
+        $headerFile->writeRow($raw['columns']);
 
         $tableId = $client->createTableAsync(
-            $input['bucketId'],
-            $input['tableName'],
+            $raw['bucketId'],
+            $raw['tableName'],
             $headerFile,
-            ['primaryKey' => implode(',', $input['primaryKey'])],
+            ['primaryKey' => implode(',', $raw['primaryKey'])],
         );
     }
 
-    if (isset($input['displayName'])) {
-        $client->updateTable($tableId, ['displayName' => $input['displayName']]);
+    if (isset($raw['displayName'])) {
+        $client->updateTable($tableId, ['displayName' => $raw['displayName']]);
     }
 
     echo json_encode(['tableId' => $tableId, 'error' => null]);
