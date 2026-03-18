@@ -7,7 +7,8 @@
         "keboola/php-temp": "^2.0",
         "keboola/storage-api-client": "^15.2",
         "monolog/monolog": "^2.3",
-        "keboola/notification-api-php-client": "^3.0"
+        "keboola/notification-api-php-client": "^3.0",
+        "symfony/process": "^6.0"
     },
     "require-dev": {
         "cweagans/composer-patches": "^1.7",
