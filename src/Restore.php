@@ -784,6 +784,7 @@ abstract class Restore
             throw $e;
         }
     }
+
     private function validateSnowflakeToBigqueryNumericScale(
         string $sourceBackend,
         string $destinationBackend,
