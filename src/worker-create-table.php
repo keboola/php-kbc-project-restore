@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 $raw = json_decode((string) stream_get_contents(STDIN), true);
 
-/** @var array{autoloadPath: string, sapiUrl: string, sapiToken: string, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName?: string, tableDefinition?: array<string, mixed>} $raw */
+/** @var array{autoloadPath: string, sapiUrl: string, sapiToken: string, runId: string|null, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName?: string, tableDefinition?: array<string, mixed>} $raw */
 require $raw['autoloadPath'];
 
 use Keboola\Csv\CsvFile;
@@ -13,6 +13,9 @@ use Keboola\StorageApi\ClientException;
 use Keboola\Temp\Temp;
 
 $client = new Client(['url' => $raw['sapiUrl'], 'token' => $raw['sapiToken']]);
+if ($raw['runId'] !== null) {
+    $client->setRunId($raw['runId']);
+}
 
 try {
     if ($raw['isTyped']) {

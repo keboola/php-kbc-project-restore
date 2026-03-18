@@ -774,6 +774,7 @@ abstract class Restore
 
         $classLoaderFile = (new ReflectionClass(ClassLoader::class))->getFileName();
         $input['autoloadPath'] = dirname((string) $classLoaderFile, 2) . '/autoload.php';
+        $input['runId'] = $this->sapiClient->getRunId();
 
         $process = new Process([PHP_BINARY, __DIR__ . '/worker-create-table.php']);
         $process->setInput((string) json_encode($input));
