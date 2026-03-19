@@ -198,7 +198,7 @@ class AbsRestoreTest extends BaseTest
                 $backup->restoreBucket($bucketInfo);
                 self::fail('Restoring bucket with non-supported backend should fail');
             } catch (ClientException $e) {
-                self::assertSame('storage.buckets.backendNotSupported', $e->getStringCode());
+                self::assertSame('storage.buckets.validation', $e->getStringCode());
                 $fails++;
             }
         }

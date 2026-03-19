@@ -702,6 +702,12 @@ abstract class Restore
                 $columnMetadata[$metadata['key']] = $metadata['value'];
             }
             if ($destinationBucketBackendType !== $tableInfo['bucket']['backend']) {
+                $this->validateSnowflakeToBigqueryNumericScale(
+                    $tableInfo['bucket']['backend'],
+                    $destinationBucketBackendType,
+                    $columnName,
+                    $columnMetadata,
+                );
                 $sourceBaseType = $this->getBaseType(
                     $tableInfo['bucket']['backend'],
                     $columnMetadata['KBC.datatype.type'],
@@ -778,6 +784,39 @@ abstract class Restore
             throw $e;
         }
     }
+
+    private function validateSnowflakeToBigqueryNumericScale(
+        string $sourceBackend,
+        string $destinationBackend,
+        string $columnName,
+        array $columnMetadata,
+    ): void {
+        if ($sourceBackend !== 'snowflake' || $destinationBackend !== 'bigquery') {
+            return;
+        }
+        if (strtoupper((string) ($columnMetadata['KBC.datatype.basetype'] ?? '')) !== 'NUMERIC') {
+            return;
+        }
+        $length = $columnMetadata['KBC.datatype.length'] ?? null;
+        if ($length === null) {
+            return;
+        }
+        $parts = explode(',', $length);
+        if (count($parts) !== 2) {
+            return;
+        }
+        $scale = (int) trim($parts[1]);
+        if ($scale > 9) {
+            throw new StorageApiException(sprintf(
+                'Column "%s" has type NUMBER(%s) which exceeds BigQuery\'s maximum scale of 9. '
+                . 'BigQuery supports NUMERIC with scale up to 9. '
+                . 'Please adjust the column type before restoring.',
+                $columnName,
+                $length,
+            ));
+        }
+    }
+
     private function getBaseType(string $backend, string $originalType): ?string
     {
         switch ($backend) {

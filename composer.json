@@ -67,6 +67,11 @@
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "cweagans/composer-patches": true
         },
+        "audit": {
+            "ignore": {
+                "PKSA-y2cr-5h3j-g3ys": "CVE-2025-45769 (low severity) - firebase/php-jwt <7.0.0; no v7 release available yet"
+            }
+        },
         "sort-packages": true
     },
     "extra": {
