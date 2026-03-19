@@ -576,13 +576,10 @@ abstract class Restore
                 'isTyped' => $isTyped,
                 'bucketId' => $bucketId,
                 'tableName' => $tableInfo['name'],
+                'displayName' => $tableInfo['displayName'],
                 'columns' => $tableInfo['columns'],
                 'primaryKey' => $tableInfo['primaryKey'],
             ];
-
-            if (isset($tableInfo['displayName'])) {
-                $workerInput['displayName'] = $tableInfo['displayName'];
-            }
 
             if ($isTyped) {
                 $workerInput['tableDefinition'] = $this->buildTypedTableDefinition(
@@ -758,6 +755,9 @@ abstract class Restore
         }
 
         if ($errors !== []) {
+            foreach ($errors as $error) {
+                $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
+            }
             throw $errors[0];
         }
 

@@ -9,7 +9,7 @@ use Keboola\Temp\Temp;
 
 $raw = json_decode((string) stream_get_contents(STDIN), true);
 
-/** @var array{autoloadPath: string, sapiUrl: string, sapiToken: string, runId: string|null, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName?: string, tableDefinition?: array<string, mixed>} $raw */
+/** @var array{autoloadPath: string, sapiUrl: string, sapiToken: string, runId: string|null, bucketId: string, tableName: string, columns: string[], primaryKey: string[], isTyped: bool, displayName: string, tableDefinition?: array<string, mixed>} $raw */
 require $raw['autoloadPath'];
 
 $client = new Client(['url' => $raw['sapiUrl'], 'token' => $raw['sapiToken']]);
@@ -33,9 +33,7 @@ try {
         );
     }
 
-    if (isset($raw['displayName'])) {
-        $client->updateTable($tableId, ['displayName' => $raw['displayName']]);
-    }
+    $client->updateTable($tableId, ['displayName' => $raw['displayName']]);
 
     echo json_encode(['tableId' => $tableId, 'error' => null]);
     exit(0);
