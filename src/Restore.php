@@ -576,7 +576,7 @@ abstract class Restore
                 'isTyped' => $isTyped,
                 'bucketId' => $bucketId,
                 'tableName' => $tableInfo['name'],
-                'displayName' => $tableInfo['displayName'],
+                'displayName' => $tableInfo['displayName'] ?? $tableInfo['name'],
                 'columns' => $tableInfo['columns'],
                 'primaryKey' => $tableInfo['primaryKey'],
             ];
