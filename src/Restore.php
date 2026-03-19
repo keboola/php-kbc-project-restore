@@ -1079,7 +1079,7 @@ abstract class Restore
                 if (isset($columnMetadataList['KBC.datatype.nullable']) &&
                     $columnMetadataList['KBC.datatype.nullable'] === '1') {
                     if ($this->forcePrimaryKeyNotNull) {
-                        $this->logger->info(sprintf(
+                        $this->logger->warning(sprintf(
                             'Table "%s": primary key column "%s" is nullable, will be forced to NOT NULL.',
                             $tableInfo['name'],
                             $columnName,

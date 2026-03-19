@@ -524,19 +524,13 @@ class CommonRestoreTest extends TestCase
         $restore->setForcePrimaryKeyNotNull(true);
         $restore->restoreTables();
 
-        $infoMessages = array_map(
-            fn($r) => $r['message'],
-            array_filter($logsHandler->getRecords(), fn($r) => $r['level'] === 200), // INFO = 200
-        );
-        self::assertContains(
-            'Table "Account": primary key column "Id" is nullable, will be forced to NOT NULL.',
-            $infoMessages,
-        );
-
-        // must NOT log the warning
         $warnMessages = array_map(
             fn($r) => $r['message'],
             array_filter($logsHandler->getRecords(), fn($r) => $r['level'] === 300), // WARNING = 300
+        );
+        self::assertContains(
+            'Table "Account": primary key column "Id" is nullable, will be forced to NOT NULL.',
+            $warnMessages,
         );
         self::assertNotContains(
             'Table "Account" cannot be restored because the primary key column "Id" is nullable.',
