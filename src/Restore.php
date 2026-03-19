@@ -6,6 +6,7 @@ namespace Keboola\ProjectRestore;
 
 use Closure;
 use Composer\Autoload\ClassLoader;
+use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
 use Keboola\Datatype\Definition\Bigquery;
 use Keboola\Datatype\Definition\Snowflake;
@@ -97,6 +98,9 @@ abstract class Restore
 
     public function setParallelism(int $parallelism): void
     {
+        if ($parallelism < 1) {
+            throw new InvalidArgumentException('Parallelism must be at least 1.');
+        }
         $this->parallelism = $parallelism;
     }
 
@@ -718,7 +722,7 @@ abstract class Restore
                     /** @var array{tableId?: string, error?: string, code?: int, isNullablePkError?: bool, isClientException?: bool}|null $output */
                     $output = json_decode($running['process']->getOutput(), true);
 
-                    if ($running['process']->getExitCode() !== 0 || isset($output['error'])) {
+                    if ($running['process']->getExitCode() !== 0 || !is_array($output) || isset($output['error'])) {
                         $errorMessage = ($output !== null && isset($output['error']))
                             ? (string) $output['error']
                             : $running['process']->getErrorOutput();
@@ -777,7 +781,7 @@ abstract class Restore
         $input['runId'] = $this->sapiClient->getRunId();
 
         $process = new Process([PHP_BINARY, __DIR__ . '/worker-create-table.php']);
-        $process->setInput((string) json_encode($input));
+        $process->setInput((string) json_encode($input, JSON_THROW_ON_ERROR));
         $process->setTimeout(3600);
         return $process;
     }
