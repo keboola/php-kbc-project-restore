@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\Tests;
 
+use InvalidArgumentException;
 use Keboola\ProjectRestore\AbsRestore;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -653,7 +654,7 @@ class CommonRestoreTest extends TestCase
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $restore->restoreTables(0);
     }
 
