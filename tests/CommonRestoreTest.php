@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore\Tests;
 
+use InvalidArgumentException;
 use Keboola\ProjectRestore\AbsRestore;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
@@ -18,6 +19,7 @@ use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class CommonRestoreTest extends TestCase
@@ -101,10 +103,6 @@ class CommonRestoreTest extends TestCase
                 ],
             ]);
 
-        $storageClientMock
-            ->method('createTableDefinition')
-            ->willThrowException($clientException);
-
         /**
          * @var Client $storageClientMock
          * @var BlobRestProxy $absClientMock
@@ -114,6 +112,19 @@ class CommonRestoreTest extends TestCase
             $absClientMock,
             'test-container',
             new NullLogger(),
+        );
+
+        $isNullablePkError = $clientException instanceof ClientException
+            && $clientException->getCode() === 400
+            && (bool) preg_match('/Primary keys columns must be set nullable false/', $clientException->getMessage());
+
+        $restore->setWorkerProcessFactory(
+            fn(array $input): Process => $this->createErrorProcessMock(
+                $clientException->getMessage(),
+                $clientException instanceof ClientException ? $clientException->getCode() : 0,
+                $isNullablePkError,
+                $clientException instanceof ClientException,
+            ),
         );
 
         $this->expectException($expectedExceptionClass);
@@ -331,8 +342,6 @@ class CommonRestoreTest extends TestCase
         $storageClientMock->method('listBuckets')->willReturn([
             ['id' => 'in.c-bucket', 'backend' => 'bigquery'],
         ]);
-        $storageClientMock->expects($this->never())->method('createTableDefinition');
-
         /** @var Client $storageClientMock */
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
@@ -384,12 +393,23 @@ class CommonRestoreTest extends TestCase
         $storageClientMock->method('listBuckets')->willReturn([
             ['id' => 'in.c-bucket', 'backend' => 'bigquery'],
         ]);
-        $storageClientMock->expects($this->once())->method('createTableDefinition')->willReturn('in.c-bucket.amounts');
-
         /** @var Client $storageClientMock */
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        /** @var array<string, mixed>|null $capturedWorkerInput */
+        $capturedWorkerInput = null;
+        $restore->setWorkerProcessFactory(function (array $input) use (&$capturedWorkerInput): Process {
+            $capturedWorkerInput = $input;
+            return $this->createSuccessProcessMock('in.c-bucket.amounts');
+        });
+
         $restore->restoreTables();
+
+        self::assertNotNull($capturedWorkerInput);
+        self::assertTrue($capturedWorkerInput['isTyped']);
+        // table definition should have been built (cross-backend Snowflake→BigQuery)
+        self::assertArrayHasKey('tableDefinition', $capturedWorkerInput);
     }
 
     public function testForcePrimaryKeyNotNullOverridesNullable(): void
@@ -442,28 +462,35 @@ class CommonRestoreTest extends TestCase
             ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
         ]);
 
-        $storageClientMock
-            ->expects($this->once())
-            ->method('createTableDefinition')
-            ->with(
-                'in.c-bucket',
-                $this->callback(function (array $data): bool {
-                    $idColumn = current(array_filter($data['columns'], fn($c) => $c['name'] === 'Id'));
-                    $nameColumn = current(array_filter($data['columns'], fn($c) => $c['name'] === 'Name'));
-                    // PK column must be forced to NOT NULL
-                    self::assertFalse($idColumn['definition']['nullable']);
-                    // non-PK column must remain nullable
-                    self::assertTrue($nameColumn['definition']['nullable']);
-                    return true;
-                }),
-            )
-            ->willReturn('in.c-bucket.Account');
-
         /** @var Client $storageClientMock */
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
         $restore->setForcePrimaryKeyNotNull(true);
+
+        /** @var array<string, mixed>|null $capturedWorkerInput */
+        $capturedWorkerInput = null;
+        $restore->setWorkerProcessFactory(function (array $input) use (&$capturedWorkerInput): Process {
+            $capturedWorkerInput = $input;
+            return $this->createSuccessProcessMock('in.c-bucket.Account');
+        });
+
         $restore->restoreTables();
+
+        self::assertNotNull($capturedWorkerInput);
+        /** @var array{columns: array<int, array{name: string, definition: array{nullable: bool}}>} $tableDefinition */
+        $tableDefinition = $capturedWorkerInput['tableDefinition'];
+        $idColumnMatches = array_values(
+            array_filter($tableDefinition['columns'], fn(array $c): bool => $c['name'] === 'Id'),
+        );
+        $nameColumnMatches = array_values(
+            array_filter($tableDefinition['columns'], fn(array $c): bool => $c['name'] === 'Name'),
+        );
+        self::assertCount(1, $idColumnMatches);
+        self::assertCount(1, $nameColumnMatches);
+        // PK column must be forced to NOT NULL
+        self::assertFalse($idColumnMatches[0]['definition']['nullable']);
+        // non-PK column must remain nullable
+        self::assertTrue($nameColumnMatches[0]['definition']['nullable']);
 
         $messages = array_map(fn($r) => $r['message'], $logsHandler->getRecords());
         self::assertContains(
@@ -516,12 +543,13 @@ class CommonRestoreTest extends TestCase
         $storageClientMock->method('listBuckets')->willReturn([
             ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
         ]);
-        $storageClientMock->method('createTableDefinition')->willReturn('in.c-bucket.Account');
-
         /** @var Client $storageClientMock */
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
         $restore->setForcePrimaryKeyNotNull(true);
+        $restore->setWorkerProcessFactory(
+            fn(array $input): Process => $this->createSuccessProcessMock('in.c-bucket.Account'),
+        );
         $restore->restoreTables();
 
         $warnMessages = array_map(
@@ -582,12 +610,13 @@ class CommonRestoreTest extends TestCase
         $storageClientMock->method('listBuckets')->willReturn([
             ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
         ]);
-        $storageClientMock->method('createTableDefinition')->willReturn('in.c-bucket.Account');
-
         /** @var Client $storageClientMock */
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
         // setForcePrimaryKeyNotNull NOT called — default behaviour
+        $restore->setWorkerProcessFactory(
+            fn(array $input): Process => $this->createSuccessProcessMock('in.c-bucket.Account'),
+        );
         $restore->restoreTables();
 
         $warnMessages = array_map(
@@ -598,6 +627,121 @@ class CommonRestoreTest extends TestCase
             'Table "Account" cannot be restored because the primary key column "Id" is nullable.',
             $warnMessages,
         );
+    }
+
+    public function testRestoreTablesThrowsOnInvalidParallelism(): void
+    {
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock('[]'));
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([['id' => 1, 'isDefault' => true]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn(
+            ['id' => '1', 'description' => '', 'owner' => ['id' => 1, 'name' => 'test']],
+        );
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([]);
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        $this->expectException(InvalidArgumentException::class);
+        $restore->restoreTables(0);
+    }
+
+    public function testInterleaveByBucket(): void
+    {
+        // 3 buckets: A has 3 tables, B has 2, C has 1
+        // Expected round-robin order: A1, B1, C1, A2, B2, A3
+        $tableJson = json_encode([
+            ['id' => 'in.c-a.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-a.t2', 'name' => 't2', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-a.t3', 'name' => 't3', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-b.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-b', 'backend' => 'snowflake']],
+            ['id' => 'in.c-b.t2', 'name' => 't2', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-b', 'backend' => 'snowflake']],
+            ['id' => 'in.c-c.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-c', 'backend' => 'snowflake']],
+        ]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([['id' => 1, 'isDefault' => true]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn(
+            ['id' => '1', 'description' => '', 'owner' => ['id' => 1, 'name' => 'test']],
+        );
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-a', 'backend' => 'snowflake'],
+            ['id' => 'in.c-b', 'backend' => 'snowflake'],
+            ['id' => 'in.c-c', 'backend' => 'snowflake'],
+        ]);
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        $capturedBuckets = [];
+        $restore->setWorkerProcessFactory(function (array $input) use (&$capturedBuckets): Process {
+            $capturedBuckets[] = $input['bucketId'];
+            return $this->createSuccessProcessMock($input['bucketId'] . '.' . $input['tableName']);
+        });
+
+        $restore->restoreTables();
+
+        self::assertSame(
+            ['in.c-a', 'in.c-b', 'in.c-c', 'in.c-a', 'in.c-b', 'in.c-a'],
+            $capturedBuckets,
+        );
+    }
+
+    private function createSuccessProcessMock(string $tableId): Process
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('start')->willReturn(null);
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getExitCode')->willReturn(0);
+        $process->method('getOutput')->willReturn((string) json_encode([
+            'tableId' => $tableId,
+            'error' => null,
+        ]));
+        /** @var Process $process */
+        return $process;
+    }
+
+    private function createErrorProcessMock(
+        string $errorMessage,
+        int $code,
+        bool $isNullablePkError,
+        bool $isClientException,
+    ): Process {
+        $process = $this->createMock(Process::class);
+        $process->method('start')->willReturn(null);
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getExitCode')->willReturn(1);
+        $process->method('getOutput')->willReturn((string) json_encode([
+            'tableId' => null,
+            'error' => $errorMessage,
+            'code' => $code,
+            'isNullablePkError' => $isNullablePkError,
+            'isClientException' => $isClientException,
+        ]));
+        /** @var Process $process */
+        return $process;
     }
 
     private function createBlobResultMock(string $content): GetBlobResult

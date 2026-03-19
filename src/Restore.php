@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ProjectRestore;
 
+use Closure;
+use Composer\Autoload\ClassLoader;
+use InvalidArgumentException;
 use Keboola\Csv\CsvFile;
 use Keboola\Datatype\Definition\Bigquery;
 use Keboola\Datatype\Definition\Snowflake;
@@ -35,7 +38,11 @@ use Keboola\StorageApi\Tokens;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use ReflectionClass;
+use RuntimeException;
 use stdClass;
+use Symfony\Component\Process\Process;
+use Throwable;
 
 abstract class Restore
 {
@@ -54,6 +61,9 @@ abstract class Restore
     protected bool $dryRun = false;
 
     private bool $forcePrimaryKeyNotNull = false;
+
+    /** @var Closure(array<string, mixed>): Process|null */
+    private ?Closure $workerProcessFactory = null;
 
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
     {
@@ -82,6 +92,12 @@ abstract class Restore
     public function setForcePrimaryKeyNotNull(bool $force = true): void
     {
         $this->forcePrimaryKeyNotNull = $force;
+    }
+
+    /** @param Closure(array<string, mixed>): Process $factory */
+    public function setWorkerProcessFactory(Closure $factory): void
+    {
+        $this->workerProcessFactory = $factory;
     }
 
     public function restoreProjectMetadata(): void
@@ -510,11 +526,13 @@ abstract class Restore
         }
     }
 
-    public function restoreTables(): void
+    public function restoreTables(int $parallelism = 5): void
     {
-        $this->logger->info('Downloading tables');
+        if ($parallelism < 1) {
+            throw new InvalidArgumentException('Parallelism must be at least 1.');
+        }
 
-        $tmp = new Temp();
+        $this->logger->info('Downloading tables');
 
         $fileContent = $this->getDataFromStorage('tables.json');
         /** @var array $tables */
@@ -525,6 +543,9 @@ abstract class Restore
 
         $metadataClient = new Metadata($this->sapiClient);
 
+        // Phase 1: prepare worker inputs (fast, no SAPI I/O)
+        /** @var array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}> $workItems */
+        $workItems = [];
         /** @var array $tableInfo */
         foreach ($tables as $tableInfo) {
             if ($tableInfo['isAlias'] === true) {
@@ -532,43 +553,77 @@ abstract class Restore
             }
             $this->checkTableRestorable($tableInfo);
 
-            $tableId = $tableInfo['id'];
+            $originalTableId = $tableInfo['id'];
             $bucketId = $tableInfo['bucket']['id'];
 
             if (!in_array($bucketId, array_keys($restoredBuckets))) {
-                $this->logger->warning(sprintf('Skipping table %s', $tableId));
+                $this->logger->warning(sprintf('Skipping table %s', $originalTableId));
                 continue;
             }
 
-            $this->logger->info(sprintf('Restoring table %s', $tableId));
+            $this->logger->info(sprintf('Restoring table %s', $originalTableId));
 
             if ($this->dryRun === true) {
-                $this->logger->info(sprintf('[dry-run] Restore table %s', $tableId));
-                // skip all code bellow in dry-run mode
+                $this->logger->info(sprintf('[dry-run] Restore table %s', $originalTableId));
+                continue;
+            }
+
+            $isTyped = $tableInfo['isTyped'] ?? false;
+            /** @var array<string, mixed> $workerInput */
+            $workerInput = [
+                'sapiUrl' => $this->sapiClient->getApiUrl(),
+                'sapiToken' => $this->sapiClient->getTokenString(),
+                'isTyped' => $isTyped,
+                'bucketId' => $bucketId,
+                'tableName' => $tableInfo['name'],
+                'displayName' => $tableInfo['displayName'] ?? $tableInfo['name'],
+                'columns' => $tableInfo['columns'],
+                'primaryKey' => $tableInfo['primaryKey'],
+            ];
+
+            if ($isTyped) {
+                $workerInput['tableDefinition'] = $this->buildTypedTableDefinition(
+                    $tableInfo,
+                    $restoredBuckets[$bucketId],
+                );
+            }
+
+            $workItems[] = [
+                'tableInfo' => $tableInfo,
+                'workerInput' => $workerInput,
+            ];
+        }
+
+        if ($workItems === []) {
+            return;
+        }
+
+        // Phase 2: parallel table creation
+        // Interleave by bucket so workers always operate on different buckets concurrently.
+        $createdTableIds = $this->createTablesParallel($this->interleaveByBucket($workItems), $parallelism);
+
+        // Phase 3: sequential metadata + data upload
+        $tmp = new Temp();
+        foreach ($workItems as $workItem) {
+            $tableInfo = $workItem['tableInfo'];
+            $originalTableId = $tableInfo['id'];
+            $tableId = $createdTableIds[$originalTableId] ?? null;
+            if ($tableId === null) {
+                continue;
+            }
+
+            $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
+
+            $slices = $this->listTableFiles($tableId);
+
+            // no files for the table found, probably an empty table
+            if (count($slices) === 0) {
                 continue;
             }
 
             $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableInfo['id']));
             $headerFile = new CsvFile($headerFile->getPathname());
             $headerFile->writeRow($tableInfo['columns']);
-
-            $isTyped = $tableInfo['isTyped'] ?? false;
-            if ($isTyped) {
-                $tableId = $this->restoreTypedTable($tableInfo, $restoredBuckets[$bucketId]);
-            } else {
-                $tableId = $this->restoreTable($tableInfo, $headerFile);
-            }
-
-            $this->restoreTableColumnsMetadata($tableInfo, $tableId, $metadataClient);
-
-            // upload data
-            $slices = $this->listTableFiles($tableId);
-
-            // no files for the table found, probably an empty table
-            if (count($slices) === 0) {
-                unset($headerFile);
-                continue;
-            }
 
             $firstSlice = reset($slices);
             if (count($slices) === 1 && substr($firstSlice, -14) !== '.part_0.csv.gz') {
@@ -623,6 +678,139 @@ abstract class Restore
     }
 
     /**
+     * @param array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}> $workItems
+     * @return array<string, string> map of originalTableId => createdTableId
+     */
+    private function createTablesParallel(array $workItems, int $parallelism): array
+    {
+        $pendingItems = $workItems;
+        /** @var array<string, array{process: Process, tableInfo: array<mixed>}> $runningProcesses */
+        $runningProcesses = [];
+        /** @var array<string, string> $createdTableIds */
+        $createdTableIds = [];
+        /** @var Throwable[] $errors */
+        $errors = [];
+
+        try {
+            while ($pendingItems !== [] || $runningProcesses !== []) {
+                while (count($runningProcesses) < $parallelism && $pendingItems !== []) {
+                    $item = array_shift($pendingItems);
+                    /** @var string $originalTableId */
+                    $originalTableId = $item['tableInfo']['id'];
+                    $process = $this->createWorkerProcess($item['workerInput']);
+                    $process->start();
+                    $runningProcesses[$originalTableId] = [
+                        'process' => $process,
+                        'tableInfo' => $item['tableInfo'],
+                    ];
+                }
+
+                foreach ($runningProcesses as $originalTableId => $running) {
+                    if ($running['process']->isRunning()) {
+                        continue;
+                    }
+                    unset($runningProcesses[$originalTableId]);
+
+                    /** @var array{tableId?: string, error?: string, code?: int, isNullablePkError?: bool, isClientException?: bool}|null $output */
+                    $output = json_decode($running['process']->getOutput(), true);
+
+                    if ($running['process']->getExitCode() !== 0 || !is_array($output) || isset($output['error'])) {
+                        $errorMessage = ($output !== null && isset($output['error']))
+                            ? (string) $output['error']
+                            : $running['process']->getErrorOutput();
+
+                        if ($output !== null && ($output['isNullablePkError'] ?? false)) {
+                            /** @var array{name: string} $tableInfo */
+                            $tableInfo = $running['tableInfo'];
+                            $errors[] = new StorageApiException(sprintf(
+                                'Table "%s" cannot be restored because the primary key cannot be'
+                                . ' set on a nullable column.',
+                                $tableInfo['name'],
+                            ));
+                        } elseif ($output !== null && ($output['isClientException'] ?? false)) {
+                            $errors[] = new ClientException($errorMessage, (int) ($output['code'] ?? 0));
+                        } else {
+                            $errors[] = new RuntimeException(sprintf(
+                                'Failed to create table %s: %s',
+                                $originalTableId,
+                                $errorMessage,
+                            ));
+                        }
+                        continue;
+                    }
+
+                    $createdTableIds[$originalTableId] = (string) ($output['tableId'] ?? $originalTableId);
+                }
+
+                if ($runningProcesses !== []) {
+                    usleep(100000);
+                }
+            }
+        } finally {
+            foreach ($runningProcesses as $running) {
+                if ($running['process']->isRunning()) {
+                    $running['process']->stop();
+                }
+            }
+        }
+
+        if ($errors !== []) {
+            foreach ($errors as $error) {
+                $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
+            }
+            throw $errors[0];
+        }
+
+        return $createdTableIds;
+    }
+
+    /** @param array<string, mixed> $input */
+    private function createWorkerProcess(array $input): Process
+    {
+        if ($this->workerProcessFactory !== null) {
+            return ($this->workerProcessFactory)($input);
+        }
+
+        $classLoaderFile = (new ReflectionClass(ClassLoader::class))->getFileName();
+        $input['autoloadPath'] = dirname((string) $classLoaderFile, 2) . '/autoload.php';
+        $input['runId'] = $this->sapiClient->getRunId();
+
+        $process = new Process([PHP_BINARY, __DIR__ . '/worker-create-table.php']);
+        $process->setInput((string) json_encode($input, JSON_THROW_ON_ERROR));
+        $process->setTimeout(3600);
+        return $process;
+    }
+
+    /**
+     * Reorder work items so consecutive entries come from different buckets.
+     * This maximises parallelism when workers cannot run concurrently within the same bucket.
+     *
+     * @param array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}> $workItems
+     * @return array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}>
+     */
+    private function interleaveByBucket(array $workItems): array
+    {
+        $byBucket = [];
+        foreach ($workItems as $item) {
+            /** @var array{id: string} $bucket */
+            $bucket = $item['tableInfo']['bucket'];
+            $byBucket[$bucket['id']][] = $item;
+        }
+
+        $result = [];
+        while ($byBucket !== []) {
+            foreach ($byBucket as $bucketId => $items) {
+                $result[] = array_shift($byBucket[$bucketId]);
+                if ($byBucket[$bucketId] === []) {
+                    unset($byBucket[$bucketId]);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return array<string|int, array<int, array{key: string, value: string, columnName?: string}>>
      */
     private function prepareMetadata(array $rawMetadata): array
@@ -673,27 +861,8 @@ abstract class Restore
 
     abstract protected function listTableFiles(string $tableId): array;
 
-    private function restoreTable(array $tableInfo, CsvFile $headerFile): string
-    {
-        // create empty table
-        $tableId = $this->sapiClient->createTableAsync(
-            $tableInfo['bucket']['id'],
-            $tableInfo['name'],
-            $headerFile,
-            [
-                'primaryKey' => join(',', $tableInfo['primaryKey']),
-            ],
-        );
-
-        if (isset($tableInfo['displayName'])) {
-            $this->sapiClient->updateTable($tableId, [
-                'displayName' => $tableInfo['displayName'],
-            ]);
-        }
-        return $tableId;
-    }
-
-    private function restoreTypedTable(array $tableInfo, string $destinationBucketBackendType): string
+    /** @return array<string, mixed> */
+    private function buildTypedTableDefinition(array $tableInfo, string $destinationBucketBackendType): array
     {
         $columns = [];
         foreach ($tableInfo['columns'] as $column) {
@@ -779,28 +948,7 @@ abstract class Restore
             ];
         }
 
-        try {
-            $tableId = $this->sapiClient->createTableDefinition(
-                $tableInfo['bucket']['id'],
-                $data,
-            );
-
-            if (isset($tableInfo['displayName'])) {
-                $this->sapiClient->updateTable($tableId, [
-                    'displayName' => $tableInfo['displayName'],
-                ]);
-            }
-            return $tableId;
-        } catch (ClientException $e) {
-            if ($e->getCode() === 400
-                && preg_match('/Primary keys columns must be set nullable false/', $e->getMessage())) {
-                throw new StorageApiException(sprintf(
-                    'Table "%s" cannot be restored because the primary key cannot be set on a nullable column.',
-                    $tableInfo['name'],
-                ));
-            }
-            throw $e;
-        }
+        return $data;
     }
 
     private function validateSnowflakeToBigqueryNumericScale(
