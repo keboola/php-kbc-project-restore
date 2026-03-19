@@ -634,6 +634,29 @@ class CommonRestoreTest extends TestCase
         );
     }
 
+    public function testRestoreTablesThrowsOnInvalidParallelism(): void
+    {
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock('[]'));
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([['id' => 1, 'isDefault' => true]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn(
+            ['id' => '1', 'description' => '', 'owner' => ['id' => 1, 'name' => 'test']],
+        );
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([]);
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $restore->restoreTables(0);
+    }
+
     public function testInterleaveByBucket(): void
     {
         // 3 buckets: A has 3 tables, B has 2, C has 1

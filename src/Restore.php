@@ -62,8 +62,6 @@ abstract class Restore
 
     private bool $forcePrimaryKeyNotNull = false;
 
-    private int $parallelism = 5;
-
     /** @var Closure(array<string, mixed>): Process|null */
     private ?Closure $workerProcessFactory = null;
 
@@ -94,14 +92,6 @@ abstract class Restore
     public function setForcePrimaryKeyNotNull(bool $force = true): void
     {
         $this->forcePrimaryKeyNotNull = $force;
-    }
-
-    public function setParallelism(int $parallelism): void
-    {
-        if ($parallelism < 1) {
-            throw new InvalidArgumentException('Parallelism must be at least 1.');
-        }
-        $this->parallelism = $parallelism;
     }
 
     /** @param Closure(array<string, mixed>): Process $factory */
@@ -536,8 +526,12 @@ abstract class Restore
         }
     }
 
-    public function restoreTables(): void
+    public function restoreTables(int $parallelism = 5): void
     {
+        if ($parallelism < 1) {
+            throw new InvalidArgumentException('Parallelism must be at least 1.');
+        }
+
         $this->logger->info('Downloading tables');
 
         $fileContent = $this->getDataFromStorage('tables.json');
@@ -609,7 +603,7 @@ abstract class Restore
 
         // Phase 2: parallel table creation
         // Interleave by bucket so workers always operate on different buckets concurrently.
-        $createdTableIds = $this->createTablesParallel($this->interleaveByBucket($workItems));
+        $createdTableIds = $this->createTablesParallel($this->interleaveByBucket($workItems), $parallelism);
 
         // Phase 3: sequential metadata + data upload
         $tmp = new Temp();
@@ -690,7 +684,7 @@ abstract class Restore
      * @param array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}> $workItems
      * @return array<string, string> map of originalTableId => createdTableId
      */
-    private function createTablesParallel(array $workItems): array
+    private function createTablesParallel(array $workItems, int $parallelism): array
     {
         $pendingItems = $workItems;
         /** @var array<string, array{process: Process, tableInfo: array<mixed>}> $runningProcesses */
@@ -702,7 +696,7 @@ abstract class Restore
 
         try {
             while ($pendingItems !== [] || $runningProcesses !== []) {
-                while (count($runningProcesses) < $this->parallelism && $pendingItems !== []) {
+                while (count($runningProcesses) < $parallelism && $pendingItems !== []) {
                     $item = array_shift($pendingItems);
                     /** @var string $originalTableId */
                     $originalTableId = $item['tableInfo']['id'];
