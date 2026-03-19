@@ -50,7 +50,14 @@ class CommonRestoreTest extends TestCase
                     },
                     "columns": [
                       "Id"
-                    ]
+                    ],
+                    "columnMetadata": {
+                      "Id": [
+                        {"provider": "storage", "key": "KBC.datatype.type", "value": "VARCHAR"},
+                        {"provider": "storage", "key": "KBC.datatype.nullable", "value": "0"},
+                        {"provider": "storage", "key": "KBC.datatype.basetype", "value": "STRING"}
+                      ]
+                    }
                   }
                 ]
             JSON));
@@ -76,10 +83,21 @@ class CommonRestoreTest extends TestCase
             ->willReturn('token');
 
         $storageClientMock
+            ->method('verifyToken')
+            ->willReturn([
+                'id' => '123',
+                'description' => 'test',
+                'owner' => ['id' => 1, 'name' => 'test'],
+            ]);
+
+        $storageClientMock->token = 'test-token';
+
+        $storageClientMock
             ->method('listBuckets')
             ->willReturn([
                 [
                     'id' => 'in.c-bucket',
+                    'backend' => 'snowflake',
                 ],
             ]);
 
@@ -103,7 +121,7 @@ class CommonRestoreTest extends TestCase
         $restore->restoreTables();
     }
 
-    public function createTableDefinitionExceptionsProvider(): iterable
+    public static function createTableDefinitionExceptionsProvider(): iterable
     {
         yield 'nullable-primary-keys-issue' => [
             new ClientException(
@@ -168,15 +186,31 @@ class CommonRestoreTest extends TestCase
             ->willReturn('token');
 
         $storageClientMock
+            ->method('verifyToken')
+            ->willReturn([
+                'id' => '123',
+                'description' => 'test',
+                'owner' => ['id' => 1, 'name' => 'test', 'defaultBackend' => 'snowflake'],
+            ]);
+
+        $storageClientMock->token = 'test-token';
+
+        $storageClientMock
             ->method('listBuckets')
             ->willReturn([
                 [
                     'id' => 'in.c-bucket',
+                    'backend' => 'snowflake',
                 ],
                 [
                     'id' => 'out.c-bucket',
+                    'backend' => 'snowflake',
                 ],
             ]);
+
+        $storageClientMock
+            ->method('tableExists')
+            ->willReturn(true);
 
         $storageClientMock
             ->method('indexAction')
@@ -227,20 +261,27 @@ class CommonRestoreTest extends TestCase
                 '[dry-run] Restore bucket "in/c-bucket"',
                 '[dry-run] Restore metadata of bucket "in/c-bucket" (provider "system")',
                 '[dry-run] Restore metadata of bucket "in/c-bucket" (provider "system")',
-                '[dry-run] Restore configuration 213957449 (component "keboola.csv-import")',
+                '[dry-run] Create configuration 213957449 (component "keboola.csv-import")',
+                '[dry-run] Update configuration 213957449 (component "keboola.csv-import")',
                 '[dry-run] Restore state of configuration 213957449 (component "keboola.csv-import")',
-                '[dry-run] Restore configuration 213957518 (component "keboola.ex-slack")',
+                '[dry-run] Create configuration 213957518 (component "keboola.ex-slack")',
+                '[dry-run] Update configuration 213957518 (component "keboola.ex-slack")',
                 '[dry-run] Restore state of configuration 213957518 (component "keboola.ex-slack")',
-                '[dry-run] Restore configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Update configuration sapi-php-test (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration sapi-php-test (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561957 of configuration sapi-php-test (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561957 (configuration sapi-php-test, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561957 of configuration sapi-php-test (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561957 (configuration sapi-php-test, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore metadata of configuration sapi-php-test (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Update configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561957 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561957 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561957 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561957 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
-                '[dry-run] Restore row 804561958 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
+                '[dry-run] Create configuration row 804561958 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
+                '[dry-run] Update row 804561958 of configuration sapi-php-test-2 (component "keboola.snowflake-transformation")',
                 '[dry-run] Restore state of configuration row 804561958 (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore rows sort order (configuration sapi-php-test-2, component "keboola.snowflake-transformation")',
                 '[dry-run] Restore table in.c-bucket.Account',
@@ -349,6 +390,214 @@ class CommonRestoreTest extends TestCase
         /** @var BlobRestProxy $absClientMock */
         $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
         $restore->restoreTables();
+    }
+
+    public function testForcePrimaryKeyNotNullOverridesNullable(): void
+    {
+        $tableJson = json_encode([[
+            'id' => 'in.c-bucket.Account',
+            'name' => 'Account',
+            'isTyped' => true,
+            'isAlias' => false,
+            'primaryKey' => ['Id'],
+            'columns' => ['Id', 'Name'],
+            'bucket' => ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+            'columnMetadata' => [
+                'Id' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'VARCHAR'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '1'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
+                ],
+                'Name' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'VARCHAR'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '1'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
+                ],
+            ],
+        ]]);
+
+        $logsHandler = new TestHandler();
+        $logger = new Logger('tests', [$logsHandler]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([[
+            'id' => 123,
+            'isDefault' => true,
+        ]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn([
+            'id' => '123',
+            'description' => 'test',
+            'owner' => ['id' => 1, 'name' => 'test'],
+        ]);
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+        ]);
+
+        $storageClientMock
+            ->expects($this->once())
+            ->method('createTableDefinition')
+            ->with(
+                'in.c-bucket',
+                $this->callback(function (array $data): bool {
+                    $idColumn = current(array_filter($data['columns'], fn($c) => $c['name'] === 'Id'));
+                    $nameColumn = current(array_filter($data['columns'], fn($c) => $c['name'] === 'Name'));
+                    // PK column must be forced to NOT NULL
+                    self::assertFalse($idColumn['definition']['nullable']);
+                    // non-PK column must remain nullable
+                    self::assertTrue($nameColumn['definition']['nullable']);
+                    return true;
+                }),
+            )
+            ->willReturn('in.c-bucket.Account');
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
+        $restore->setForcePrimaryKeyNotNull(true);
+        $restore->restoreTables();
+
+        $messages = array_map(fn($r) => $r['message'], $logsHandler->getRecords());
+        self::assertContains(
+            'Table "Account": primary key column "Id" is nullable in source, forcing NOT NULL in destination.',
+            $messages,
+        );
+    }
+
+    public function testCheckTableRestorableLogsInfoWhenForcePrimaryKeyNotNull(): void
+    {
+        $tableJson = json_encode([[
+            'id' => 'in.c-bucket.Account',
+            'name' => 'Account',
+            'isTyped' => true,
+            'isAlias' => false,
+            'primaryKey' => ['Id'],
+            'columns' => ['Id'],
+            'bucket' => ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+            'columnMetadata' => [
+                'Id' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'VARCHAR'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '1'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
+                ],
+            ],
+        ]]);
+
+        $logsHandler = new TestHandler();
+        $logger = new Logger('tests', [$logsHandler]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([[
+            'id' => 123,
+            'isDefault' => true,
+        ]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn([
+            'id' => '123',
+            'description' => 'test',
+            'owner' => ['id' => 1, 'name' => 'test'],
+        ]);
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+        ]);
+        $storageClientMock->method('createTableDefinition')->willReturn('in.c-bucket.Account');
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
+        $restore->setForcePrimaryKeyNotNull(true);
+        $restore->restoreTables();
+
+        $warnMessages = array_map(
+            fn($r) => $r['message'],
+            array_filter($logsHandler->getRecords(), fn($r) => $r['level'] === 300), // WARNING = 300
+        );
+        self::assertContains(
+            'Table "Account": primary key column "Id" is nullable, will be forced to NOT NULL.',
+            $warnMessages,
+        );
+        self::assertNotContains(
+            'Table "Account" cannot be restored because the primary key column "Id" is nullable.',
+            $warnMessages,
+        );
+    }
+
+    public function testCheckTableRestorableLogsWarningWithoutForcePrimaryKeyNotNull(): void
+    {
+        $tableJson = json_encode([[
+            'id' => 'in.c-bucket.Account',
+            'name' => 'Account',
+            'isTyped' => true,
+            'isAlias' => false,
+            'primaryKey' => ['Id'],
+            'columns' => ['Id'],
+            'bucket' => ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+            'columnMetadata' => [
+                'Id' => [
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.type', 'value' => 'VARCHAR'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.nullable', 'value' => '1'],
+                    ['provider' => 'storage', 'key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
+                ],
+            ],
+        ]]);
+
+        $logsHandler = new TestHandler();
+        $logger = new Logger('tests', [$logsHandler]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([[
+            'id' => 123,
+            'isDefault' => true,
+        ]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn([
+            'id' => '123',
+            'description' => 'test',
+            'owner' => ['id' => 1, 'name' => 'test'],
+        ]);
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-bucket', 'backend' => 'snowflake'],
+        ]);
+        $storageClientMock->method('createTableDefinition')->willReturn('in.c-bucket.Account');
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', $logger);
+        // setForcePrimaryKeyNotNull NOT called — default behaviour
+        $restore->restoreTables();
+
+        $warnMessages = array_map(
+            fn($r) => $r['message'],
+            array_filter($logsHandler->getRecords(), fn($r) => $r['level'] === 300), // WARNING = 300
+        );
+        self::assertContains(
+            'Table "Account" cannot be restored because the primary key column "Id" is nullable.',
+            $warnMessages,
+        );
     }
 
     private function createBlobResultMock(string $content): GetBlobResult

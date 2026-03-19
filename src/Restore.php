@@ -53,6 +53,8 @@ abstract class Restore
 
     protected bool $dryRun = false;
 
+    private bool $forcePrimaryKeyNotNull = false;
+
     public function __construct(Client $sapiClient, ?LoggerInterface $logger = null)
     {
         $this->sapiClient = $sapiClient;
@@ -75,6 +77,11 @@ abstract class Restore
     public function setDryRunMode(bool $dryRun = true): void
     {
         $this->dryRun = $dryRun;
+    }
+
+    public function setForcePrimaryKeyNotNull(bool $force = true): void
+    {
+        $this->forcePrimaryKeyNotNull = $force;
     }
 
     public function restoreProjectMetadata(): void
@@ -737,6 +744,17 @@ abstract class Restore
                     $definition['default'] = $columnMetadata['KBC.datatype.default'];
                 }
             }
+            if ($this->forcePrimaryKeyNotNull
+                && in_array($columnName, $tableInfo['primaryKey'], true)
+                && $definition['nullable'] === true
+            ) {
+                $this->logger->warning(sprintf(
+                    'Table "%s": primary key column "%s" is nullable in source, forcing NOT NULL in destination.',
+                    $tableInfo['name'],
+                    $columnName,
+                ));
+                $definition['nullable'] = false;
+            }
             $columns[$columnName] = [
                 'name' => $columnName,
                 'definition' => $definition,
@@ -1060,11 +1078,19 @@ abstract class Restore
                 );
                 if (isset($columnMetadataList['KBC.datatype.nullable']) &&
                     $columnMetadataList['KBC.datatype.nullable'] === '1') {
-                    $this->logger->warning(sprintf(
-                        'Table "%s" cannot be restored because the primary key column "%s" is nullable.',
-                        $tableInfo['name'],
-                        $columnName,
-                    ));
+                    if ($this->forcePrimaryKeyNotNull) {
+                        $this->logger->warning(sprintf(
+                            'Table "%s": primary key column "%s" is nullable, will be forced to NOT NULL.',
+                            $tableInfo['name'],
+                            $columnName,
+                        ));
+                    } else {
+                        $this->logger->warning(sprintf(
+                            'Table "%s" cannot be restored because the primary key column "%s" is nullable.',
+                            $tableInfo['name'],
+                            $columnName,
+                        ));
+                    }
                 }
             }
         }
