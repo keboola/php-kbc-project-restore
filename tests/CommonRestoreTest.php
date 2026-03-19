@@ -634,6 +634,63 @@ class CommonRestoreTest extends TestCase
         );
     }
 
+    public function testInterleaveByBucket(): void
+    {
+        // 3 buckets: A has 3 tables, B has 2, C has 1
+        // Expected round-robin order: A1, B1, C1, A2, B2, A3
+        $tableJson = json_encode([
+            ['id' => 'in.c-a.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-a.t2', 'name' => 't2', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-a.t3', 'name' => 't3', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-a', 'backend' => 'snowflake']],
+            ['id' => 'in.c-b.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-b', 'backend' => 'snowflake']],
+            ['id' => 'in.c-b.t2', 'name' => 't2', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-b', 'backend' => 'snowflake']],
+            ['id' => 'in.c-c.t1', 'name' => 't1', 'isAlias' => false, 'isTyped' => false,
+                'primaryKey' => [], 'columns' => ['id'], 'bucket' => ['id' => 'in.c-c', 'backend' => 'snowflake']],
+        ]);
+
+        $absClientMock = $this->createMock(BlobRestProxy::class);
+        $absClientMock->method('getBlob')->willReturn($this->createBlobResultMock((string) $tableJson));
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
+
+        $storageClientMock = $this->createMock(Client::class);
+        $storageClientMock->method('apiGet')->with('dev-branches/')->willReturn([['id' => 1, 'isDefault' => true]]);
+        $storageClientMock->method('getApiUrl')->willReturn('https://connection');
+        $storageClientMock->method('getTokenString')->willReturn('token');
+        $storageClientMock->method('verifyToken')->willReturn(
+            ['id' => '1', 'description' => '', 'owner' => ['id' => 1, 'name' => 'test']],
+        );
+        $storageClientMock->token = 'test-token';
+        $storageClientMock->method('listBuckets')->willReturn([
+            ['id' => 'in.c-a', 'backend' => 'snowflake'],
+            ['id' => 'in.c-b', 'backend' => 'snowflake'],
+            ['id' => 'in.c-c', 'backend' => 'snowflake'],
+        ]);
+
+        /** @var Client $storageClientMock */
+        /** @var BlobRestProxy $absClientMock */
+        $restore = new AbsRestore($storageClientMock, $absClientMock, 'test-container', new NullLogger());
+
+        $capturedBuckets = [];
+        $restore->setWorkerProcessFactory(function (array $input) use (&$capturedBuckets): Process {
+            $capturedBuckets[] = $input['bucketId'];
+            return $this->createSuccessProcessMock($input['bucketId'] . '.' . $input['tableName']);
+        });
+
+        $restore->restoreTables();
+
+        self::assertSame(
+            ['in.c-a', 'in.c-b', 'in.c-c', 'in.c-a', 'in.c-b', 'in.c-a'],
+            $capturedBuckets,
+        );
+    }
+
     private function createSuccessProcessMock(string $tableId): Process
     {
         $process = $this->createMock(Process::class);

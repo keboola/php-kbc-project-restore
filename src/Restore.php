@@ -608,7 +608,8 @@ abstract class Restore
         }
 
         // Phase 2: parallel table creation
-        $createdTableIds = $this->createTablesParallel($workItems);
+        // Interleave by bucket so workers always operate on different buckets concurrently.
+        $createdTableIds = $this->createTablesParallel($this->interleaveByBucket($workItems));
 
         // Phase 3: sequential metadata + data upload
         $tmp = new Temp();
@@ -784,6 +785,35 @@ abstract class Restore
         $process->setInput((string) json_encode($input, JSON_THROW_ON_ERROR));
         $process->setTimeout(3600);
         return $process;
+    }
+
+    /**
+     * Reorder work items so consecutive entries come from different buckets.
+     * This maximises parallelism when workers cannot run concurrently within the same bucket.
+     *
+     * @param array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}> $workItems
+     * @return array<int, array{tableInfo: array<mixed>, workerInput: array<string, mixed>}>
+     */
+    private function interleaveByBucket(array $workItems): array
+    {
+        $byBucket = [];
+        foreach ($workItems as $item) {
+            /** @var array{id: string} $bucket */
+            $bucket = $item['tableInfo']['bucket'];
+            $byBucket[$bucket['id']][] = $item;
+        }
+
+        $result = [];
+        while ($byBucket !== []) {
+            foreach ($byBucket as $bucketId => $items) {
+                $result[] = array_shift($byBucket[$bucketId]);
+                if ($byBucket[$bucketId] === []) {
+                    unset($byBucket[$bucketId]);
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
