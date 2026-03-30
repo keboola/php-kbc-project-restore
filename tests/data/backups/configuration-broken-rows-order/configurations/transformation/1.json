@@ -1,0 +1,162 @@
+{
+  "id": "2",
+  "name": "MySQL",
+  "description": "",
+  "created": "2016-11-07T02:06:34+0100",
+  "creatorToken": {
+    "id": 63470,
+    "description": "ondrej.hlavacek@keboola.com"
+  },
+  "version": 8,
+  "changeDescription": "Accounts changed to Account",
+  "configuration": {},
+  "rowsSortOrder": ["4", "3"],
+  "rows": [
+    {
+      "id": "4",
+      "configuration": {
+        "output": [
+          {
+            "source": "ratings",
+            "destination": "out.c-mysql.ratings"
+          }
+        ],
+        "queries": [],
+        "input": [
+          {
+            "source": "in.c-mysql.ratings",
+            "destination": "ratings",
+            "indexes": [],
+            "datatypes": {},
+            "whereColumn": "",
+            "whereValues": [],
+            "whereOperator": "eq",
+            "columns": []
+          }
+        ],
+        "name": "Ratings",
+        "packages": [],
+        "requires": [],
+        "backend": "mysql",
+        "queriesString": "",
+        "type": "simple",
+        "id": "213956392",
+        "phase": 1,
+        "disabled": false,
+        "description": ""
+      },
+      "version": 3,
+      "created": "2016-11-07T02:07:30+0100",
+      "creatorToken": {
+        "id": 63470,
+        "description": "ondrej.hlavacek@keboola.com"
+      },
+      "changeDescription": "Create output mapping in Ratings",
+      "state": {},
+      "name": "Ratings transformation",
+      "description": "Ratings transformation description",
+      "isDisabled": false
+    },
+    {
+      "id": "3",
+      "configuration": {
+        "output": [
+          {
+            "source": "Account",
+            "destination": "out.c-mysql.Account",
+            "primaryKey": [
+              "Id"
+            ]
+          }
+        ],
+        "queries": [],
+        "input": [
+          {
+            "source": "in.c-mysql.Account",
+            "destination": "Account",
+            "indexes": [],
+            "datatypes": {},
+            "whereColumn": "",
+            "whereValues": [],
+            "whereOperator": "eq",
+            "columns": []
+          }
+        ],
+        "name": "Account",
+        "packages": [],
+        "requires": [],
+        "backend": "mysql",
+        "queriesString": "",
+        "type": "simple",
+        "id": "213956235",
+        "phase": 1,
+        "disabled": false,
+        "description": ""
+      },
+      "version": 4,
+      "created": "2016-11-07T02:06:40+0100",
+      "creatorToken": {
+        "id": 63470,
+        "description": "ondrej.hlavacek@keboola.com"
+      },
+      "changeDescription": "Accounts changed to Account",
+      "state": {
+        "rowKey": "value"
+      },
+      "name": "Account transformation",
+      "description": "Account transformation description",
+      "isDisabled": true
+    },
+    {
+      "id": "5",
+      "configuration": {
+        "output": [
+          {
+            "source": "Account",
+            "destination": "out.c-mysql.Account",
+            "primaryKey": [
+              "Id"
+            ]
+          }
+        ],
+        "queries": [],
+        "input": [
+          {
+            "source": "in.c-mysql.Account",
+            "destination": "Account",
+            "indexes": [],
+            "datatypes": {},
+            "whereColumn": "",
+            "whereValues": [],
+            "whereOperator": "eq",
+            "columns": []
+          }
+        ],
+        "name": "Account",
+        "packages": [],
+        "requires": [],
+        "backend": "mysql",
+        "queriesString": "",
+        "type": "simple",
+        "id": "213956235",
+        "phase": 1,
+        "disabled": false,
+        "description": ""
+      },
+      "version": 4,
+      "created": "2016-11-07T02:06:40+0100",
+      "creatorToken": {
+        "id": 63470,
+        "description": "ondrej.hlavacek@keboola.com"
+      },
+      "changeDescription": "Accounts changed to Account",
+      "state": {
+        "rowKey": "value"
+      },
+      "name": "Account transformation",
+      "description": "Account transformation description",
+      "isDisabled": true
+    }
+  ],
+  "state": {}
+}
