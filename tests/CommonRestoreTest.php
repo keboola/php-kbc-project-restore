@@ -26,13 +26,14 @@ class CommonRestoreTest extends TestCase
 {
     /**
      * @dataProvider createTableDefinitionExceptionsProvider
-     * @param class-string<Throwable> $expectedExceptionClass
      */
     public function testHandleNullablePrimaryKeysIssue(
         Throwable $clientException,
-        string $expectedExceptionClass,
-        string $expectedExceptionMessage,
+        string $expectedWarningMessage,
     ): void {
+        $logsHandler = new TestHandler();
+        $logger = new Logger('tests', [$logsHandler]);
+
         $absClientMock = $this->createMock(BlobRestProxy::class);
         $absClientMock
             ->method('getBlob')
@@ -63,6 +64,10 @@ class CommonRestoreTest extends TestCase
                   }
                 ]
             JSON));
+
+        $listBlobsResult = $this->createMock(ListBlobsResult::class);
+        $listBlobsResult->method('getBlobs')->willReturn([]);
+        $absClientMock->method('listBlobs')->willReturn($listBlobsResult);
 
         $storageClientMock = $this->createMock(Client::class);
 
@@ -111,7 +116,7 @@ class CommonRestoreTest extends TestCase
             $storageClientMock,
             $absClientMock,
             'test-container',
-            new NullLogger(),
+            $logger,
         );
 
         $isNullablePkError = $clientException instanceof ClientException
@@ -127,9 +132,17 @@ class CommonRestoreTest extends TestCase
             ),
         );
 
-        $this->expectException($expectedExceptionClass);
-        $this->expectExceptionMessage($expectedExceptionMessage);
         $restore->restoreTables();
+
+        $warnMessages = array_map(
+            fn($r) => $r['message'],
+            array_filter($logsHandler->getRecords(), fn($r) => $r['level'] === 300),
+        );
+        self::assertNotEmpty($warnMessages, 'Expected at least one warning to be logged');
+        self::assertContains(
+            sprintf('Table creation failed: %s', $expectedWarningMessage),
+            $warnMessages,
+        );
     }
 
     public static function createTableDefinitionExceptionsProvider(): iterable
@@ -140,19 +153,16 @@ class CommonRestoreTest extends TestCase
                 . ' Primary keys columns must be set nullable false."',
                 400,
             ),
-            StorageApiException::class,
             'Table "Account" cannot be restored because the primary key cannot be set on a nullable column.',
         ];
 
         yield 'other-issue' => [
             new ClientException('Something went wrong', 400),
-            ClientException::class,
             'Something went wrong',
         ];
 
         yield 'other-issue-2' => [
             new ClientException('Service Unavailable', 503),
-            ClientException::class,
             'Service Unavailable',
         ];
     }

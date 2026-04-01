@@ -754,11 +754,8 @@ abstract class Restore
             }
         }
 
-        if ($errors !== []) {
-            foreach ($errors as $error) {
-                $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
-            }
-            throw $errors[0];
+        foreach ($errors as $error) {
+            $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
         }
 
         return $createdTableIds;
