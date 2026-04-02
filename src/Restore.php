@@ -722,15 +722,18 @@ abstract class Restore
                         if ($output !== null && ($output['isNullablePkError'] ?? false)) {
                             /** @var array{name: string} $tableInfo */
                             $tableInfo = $running['tableInfo'];
-                            $errors[] = new StorageApiException(sprintf(
+                            $errors[$originalTableId] = new StorageApiException(sprintf(
                                 'Table "%s" cannot be restored because the primary key cannot be'
                                 . ' set on a nullable column.',
                                 $tableInfo['name'],
                             ));
                         } elseif ($output !== null && ($output['isClientException'] ?? false)) {
-                            $errors[] = new ClientException($errorMessage, (int) ($output['code'] ?? 0));
+                            $errors[$originalTableId] = new ClientException(
+                                $errorMessage,
+                                (int) ($output['code'] ?? 0),
+                            );
                         } else {
-                            $errors[] = new RuntimeException(sprintf(
+                            $errors[$originalTableId] = new RuntimeException(sprintf(
                                 'Failed to create table %s: %s',
                                 $originalTableId,
                                 $errorMessage,
@@ -756,6 +759,15 @@ abstract class Restore
 
         foreach ($errors as $error) {
             $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
+        }
+
+        if ($errors !== []) {
+            $failedTableIds = array_keys($errors);
+            $this->logger->warning(sprintf(
+                'Table restoration completed with %d failed table(s): %s',
+                count($failedTableIds),
+                implode(', ', $failedTableIds),
+            ));
         }
 
         return $createdTableIds;
