@@ -3,7 +3,10 @@
 ## Initializing the Restore class
 
 ```php
-new S3Restore($sapiClient, $logger)  // or AbsRestore / GcsRestore
+$restore = new S3Restore($sapiClient, $s3Client, $bucket, $path, $logger);
+// or, for other backends:
+// $restore = new AbsRestore($sapiClient, $absClient, $container, $logger);
+// $restore = new GcsRestore($sapiClient, $listFiles, $logger);
 ```
 
 `Restore::__construct()` constructor:
@@ -151,7 +154,7 @@ Child process. Receives JSON from STDIN, creates one table via SAPI, returns JSO
 **Input:**
 ```json
 {
-  "sapiUrl": "...", "sapiToken": "...", "runId": "...",
+  "autoloadPath": "...", "sapiUrl": "...", "sapiToken": "...", "runId": "...",
   "bucketId": "in.c-bucket", "tableName": "my_table",
   "displayName": "My Table", "columns": [...],
   "primaryKey": [...], "isTyped": true,
@@ -159,13 +162,22 @@ Child process. Receives JSON from STDIN, creates one table via SAPI, returns JSO
 }
 ```
 
-**Output:**
+**Output (success):**
 ```json
 {
   "tableId": "in.c-bucket.my_table",
-  "error": null, "code": null,
+  "error": null
+}
+```
+
+**Output (error):**
+```json
+{
+  "tableId": null,
+  "error": "...",
+  "code": 400,
   "isNullablePkError": false,
-  "isClientException": false
+  "isClientException": true
 }
 ```
 
@@ -211,7 +223,7 @@ Abstract method `getDataFromStorage(string $name)` is implemented in each backen
 |---------|-------------|
 | `S3Restore` | `S3Client::getObject(Bucket, Key)` |
 | `AbsRestore` | `BlobRestProxy::getBlob(container, name)` |
-| `GcsRestore` | `StorageObject::downloadAsString()` |
+| `GcsRestore` | Looks up the file in the precomputed `listFiles` tree/URLs, copies it to a temporary local file, then reads that file |
 
 Returns file content as string or stream.
 

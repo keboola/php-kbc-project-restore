@@ -55,7 +55,7 @@ docker compose run --rm tests composer tests-gcs          # Google Cloud Storage
 docker compose run --rm tests composer tests-cross-backends
 docker compose run --rm tests composer tests-phpunit      # direct phpunit call (without data preparation)
 docker compose run --rm tests composer prepare-test-data  # test data preparation
-docker compose run --rm tests composer build              # phplint + phpcs + phpstan + tests
+docker compose run --rm tests composer build              # phplint + phpcs + phpstan
 docker compose run --rm tests composer ci-except-tests    # build without running tests
 ```
 

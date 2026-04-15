@@ -68,13 +68,22 @@ Child process launched via `symfony/process`. Creates one table in Storage API.
 
 **Output (JSON):**
 
+**Success:**
 ```json
 {
   "tableId": "in.c-bucket.table",
-  "error": null,
-  "code": null,
+  "error": null
+}
+```
+
+**Error:**
+```json
+{
+  "tableId": null,
+  "error": "...",
+  "code": 400,
   "isNullablePkError": false,
-  "isClientException": false
+  "isClientException": true
 }
 ```
 
