@@ -758,7 +758,6 @@ abstract class Restore
             foreach ($errors as $error) {
                 $this->logger->warning(sprintf('Table creation failed: %s', $error->getMessage()));
             }
-            throw $errors[0];
         }
 
         return $createdTableIds;
